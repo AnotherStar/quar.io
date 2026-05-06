@@ -1,0 +1,56 @@
+<script setup lang="ts">
+type Variant = 'primary' | 'dark' | 'secondary' | 'on-dark' | 'secondary-on-dark' | 'ghost' | 'link'
+type Size = 'sm' | 'md' | 'lg'
+
+const props = withDefaults(
+  defineProps<{
+    variant?: Variant
+    size?: Size
+    type?: 'button' | 'submit' | 'reset'
+    to?: string
+    href?: string
+    disabled?: boolean
+    loading?: boolean
+    block?: boolean
+  }>(),
+  { variant: 'primary', size: 'md', type: 'button' }
+)
+
+const variantClass: Record<Variant, string> = {
+  primary: 'bg-primary text-white hover:bg-primary-pressed disabled:bg-hairline disabled:text-muted',
+  dark: 'bg-ink-deep text-white hover:bg-ink',
+  secondary: 'bg-transparent text-ink border border-hairline-strong hover:bg-surface',
+  'on-dark': 'bg-white text-ink hover:bg-surface',
+  'secondary-on-dark': 'bg-transparent text-white border border-stone hover:bg-white/10',
+  ghost: 'bg-transparent text-ink hover:bg-surface',
+  link: 'bg-transparent text-link hover:underline px-0 py-0'
+}
+
+const sizeClass: Record<Size, string> = {
+  sm: 'px-sm py-xs text-btn rounded-md',
+  md: 'px-[18px] py-[10px] text-btn rounded-md',
+  lg: 'px-md py-sm text-body-sm-md rounded-md'
+}
+
+const Tag = computed(() => (props.to ? resolveComponent('NuxtLink') : props.href ? 'a' : 'button'))
+</script>
+
+<template>
+  <component
+    :is="Tag"
+    :to="to"
+    :href="href"
+    :type="!to && !href ? type : undefined"
+    :disabled="disabled || loading"
+    :class="[
+      'inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150',
+      'disabled:cursor-not-allowed select-none',
+      variant !== 'link' && sizeClass[size],
+      variantClass[variant],
+      block && 'w-full'
+    ]"
+  >
+    <span v-if="loading" class="i-loading inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+    <slot />
+  </component>
+</template>

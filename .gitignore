@@ -1,0 +1,16 @@
+node_modules
+.nuxt
+.output
+.data
+.cache
+dist
+*.log
+.env
+.env.local
+.env.*.local
+.DS_Store
+.vscode
+.idea
+coverage
+prisma/migrations/dev.db*
+.data
