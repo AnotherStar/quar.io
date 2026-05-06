@@ -54,6 +54,7 @@ const sidebarSlots = computed(() => {
   const mod = (data.value?.modules ?? []).filter((m) => m.slot === 'sidebar').sort((a, b) => a.position - b.position)
   return { sections: sec, modules: mod }
 })
+const hasSidebar = computed(() => sidebarSlots.value.sections.length > 0 || sidebarSlots.value.modules.length > 0)
 </script>
 
 <template>
@@ -68,8 +69,11 @@ const sidebarSlots = computed(() => {
       </div>
     </header>
 
-    <main class="container-page py-section grid grid-cols-1 gap-section md:grid-cols-[1fr_280px]">
-      <article id="instruction-root" class="prose-mo">
+    <main
+      class="container-page py-section grid grid-cols-1 gap-section"
+      :class="hasSidebar ? 'md:grid-cols-[1fr_280px]' : ''"
+    >
+      <article id="instruction-root" class="prose-mo" :class="hasSidebar ? '' : 'mx-auto w-full max-w-[880px]'">
         <h1 class="text-h1 text-ink mb-4">{{ data!.instruction.title }}</h1>
         <p v-if="data!.instruction.description" class="text-subtitle text-slate mb-8">{{ data!.instruction.description }}</p>
 
@@ -105,7 +109,7 @@ const sidebarSlots = computed(() => {
         </template>
       </article>
 
-      <aside v-if="sidebarSlots.sections.length || sidebarSlots.modules.length" class="space-y-md">
+      <aside v-if="hasSidebar" class="space-y-md">
         <template v-for="s in sidebarSlots.sections" :key="s.id">
           <UiCard>
             <h3 class="text-h5 mb-2">{{ s.name }}</h3>

@@ -23,9 +23,21 @@ function nearestBlock(target: HTMLElement | null): HTMLElement | null {
   return n
 }
 
+function isEmptyBlock(el: HTMLElement): boolean {
+  if ((el.textContent ?? '').trim().length > 0) return false
+  // Treat blocks with embedded media (images, video, iframes, modules) as non-empty.
+  return !el.querySelector('img, video, iframe, svg, canvas, audio, [data-module-code]')
+}
+
 function onPointerOver(e: PointerEvent) {
   const block = nearestBlock(e.target as HTMLElement)
   if (!block || hoverTarget === block) return
+  if (isEmptyBlock(block)) {
+    hoverTarget = block
+    activeBlockId.value = null
+    popoverPos.value = null
+    return
+  }
   hoverTarget = block
   activeBlockId.value = block.dataset.blockId!
   const rect = block.getBoundingClientRect()
