@@ -6,18 +6,24 @@ import Link from '@tiptap/extension-link'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Youtube from '@tiptap/extension-youtube'
+import TextAlign from '@tiptap/extension-text-align'
 import { BlockId } from './extensions/BlockId'
 import { SafetyBlock } from './extensions/SafetyBlock'
 import { SectionRef } from './extensions/SectionRef'
 import { ModuleRef } from './extensions/ModuleRef'
 import { ResizableImage } from './extensions/ResizableImage'
 import { Columns, Column } from './extensions/Columns'
+import { BlockDragHandle } from './extensions/BlockDragHandle'
 import SlashMenu from './SlashMenu.vue'
 import type { TiptapDoc } from '~~/shared/types/instruction'
 
 const props = defineProps<{
   modelValue: TiptapDoc | object
   placeholder?: string
+  // When true, the editor doesn't register SectionRef/ModuleRef extensions
+  // and the UI doesn't expose them — used inside the Section editor to
+  // prevent infinite recursion (section embedding section embedding...).
+  disableSectionRefs?: boolean
 }>()
 const emit = defineEmits<{
   'update:modelValue': [value: object]
@@ -28,17 +34,28 @@ const editor = useEditor({
   content: props.modelValue,
   extensions: [
     StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
-    Placeholder.configure({ placeholder: props.placeholder ?? 'Введите «/» для команд...' }),
+    Placeholder.configure({
+      // Show ¶ on every empty paragraph (not only the first), and the
+      // helpful hint only on the doc's very first empty line.
+      includeChildren: true,
+      showOnlyCurrent: false,
+      placeholder: ({ node, pos }) => {
+        if (node.type.name !== 'paragraph') return ''
+        if (pos === 0) return props.placeholder ?? 'Введите «/» для команд...'
+        return '¶'
+      }
+    }),
     ResizableImage,
     Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-link underline' } }),
     TaskList,
     TaskItem.configure({ nested: true }),
     Youtube.configure({ controls: true, nocookie: true, width: 720, height: 405 }),
+    TextAlign.configure({ types: ['heading', 'paragraph'], alignments: ['left', 'center', 'right', 'justify'] }),
     SafetyBlock,
-    SectionRef,
-    ModuleRef,
+    ...(props.disableSectionRefs ? [] : [SectionRef, ModuleRef]),
     Columns,
     Column,
+    BlockDragHandle,
     BlockId
   ],
   editorProps: {
@@ -75,9 +92,9 @@ defineExpose({
 
 <template>
   <div class="relative">
-    <EditorToolbar v-if="editor" :editor="editor" />
+    <EditorToolbar v-if="editor" :editor="editor" :disable-section-refs="disableSectionRefs" />
     <EditorContent :editor="editor" />
-    <SlashMenu v-if="editor" :editor="editor" />
+    <SlashMenu v-if="editor" :editor="editor" :disable-section-refs="disableSectionRefs" />
   </div>
 </template>
 
@@ -98,33 +115,90 @@ defineExpose({
 .tiptap pre code { @apply bg-transparent p-0; }
 .tiptap img { @apply rounded-md max-w-full; }
 .tiptap a { @apply text-link underline; }
-.tiptap p.is-editor-empty:first-child::before {
+/* Empty paragraphs anywhere in the doc — show ¶ at 20% opacity */
+.tiptap p.is-empty::before {
   content: attr(data-placeholder);
-  @apply text-stone float-left h-0 pointer-events-none;
+  color: var(--color-stone);
+  opacity: 0.2;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+/* Doc-level hint on the first empty line — slightly more readable */
+.tiptap p.is-editor-empty:first-child::before {
+  opacity: 0.5;
+}
+
+/* ProseMirror gap-cursor: shown between atom blocks (image, sectionRef,
+ * moduleRef) where a regular text cursor can't go. Default styling is a
+ * thin near-invisible horizontal line that looks like a rendering glitch.
+ * Make it a clear primary-colored caret-line so the user can see where
+ * a new block will be inserted on Enter / typing. */
+.ProseMirror-gapcursor::after {
+  border-top: 2px solid var(--color-primary) !important;
+  width: 80px !important;
+  margin-top: -1px;
+  animation: mo-gapcursor-blink 1s steps(2, start) infinite;
+}
+@keyframes mo-gapcursor-blink {
+  to { opacity: 0; }
 }
 .tiptap ul[data-type='taskList'] { @apply list-none pl-0; }
 .tiptap ul[data-type='taskList'] li { @apply flex items-start gap-2; }
 .tiptap ul[data-type='taskList'] li > label { @apply mt-1; }
 .tiptap iframe { @apply rounded-md max-w-full; }
 
-.tiptap .mo-columns,
-.mo-columns {
-  display: grid;
-  grid-template-columns: repeat(var(--mo-cols, 2), minmax(0, 1fr));
-  gap: 16px;
-  margin: 0.75em 0;
-}
-.tiptap .mo-column,
-.mo-column { min-width: 0; }
-/* Editor: visualize column boundaries subtly */
-.tiptap .mo-column {
+/* Block drag-handle (Notion-style). Mounted on <body> with position: fixed
+ * so the offset is computed against the viewport — independent of any
+ * transformed/scrolled ancestor. */
+.mo-block-handle {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
   border-radius: 6px;
-  padding: 6px 8px;
-  outline: 1px dashed var(--color-hairline);
-  outline-offset: -2px;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 50;
 }
-@media (max-width: 640px) {
-  .tiptap .mo-columns,
-  .mo-columns { grid-template-columns: 1fr; }
+.mo-block-handle--visible { opacity: 1; pointer-events: auto; }
+.mo-block-handle__btn {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 22px;
+  border-radius: 3px;
+  color: var(--color-stone);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
 }
+.mo-block-handle__btn:hover {
+  background: var(--color-surface);
+  color: var(--color-charcoal);
+}
+.mo-block-handle__grip { cursor: grab; }
+.mo-block-handle__grip:active { cursor: grabbing; }
+
+.mo-block-droppos {
+  position: fixed;
+  display: none;
+  height: 3px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 49;
+  box-shadow: 0 0 0 1px rgba(86, 69, 212, 0.2);
+}
+
+body.mo-dragging-block { cursor: grabbing !important; }
+body.mo-dragging-block * { cursor: grabbing !important; }
+
+/* Columns layout — actual grid template + alignment is set inline by the
+ * NodeView from columnWidths / verticalAlign. CSS in global.css covers the
+ * shared bits (gap, mobile collapse, resize handle). No padding/outline on
+ * .mo-column — keep them visually transparent inside the editor. */
 </style>

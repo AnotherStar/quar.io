@@ -1,16 +1,29 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
+import { onClickOutside } from '@vueuse/core'
 
 const api = useApi()
 const { data, refresh } = await useAsyncData('instructions', () => api<{ instructions: any[] }>('/api/instructions'))
+const { currentTenant } = useAuthState()
 
 const tab = ref<'active' | 'archive'>('active')
-const visible = computed(() => {
+const search = ref('')
+
+const baseList = computed(() => {
   const list = data.value?.instructions ?? []
   return tab.value === 'archive'
     ? list.filter((i) => i.status === 'ARCHIVED')
     : list.filter((i) => i.status !== 'ARCHIVED')
 })
+
+const visible = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return baseList.value
+  return baseList.value.filter(
+    (i) => i.title.toLowerCase().includes(q) || i.slug.toLowerCase().includes(q)
+  )
+})
+
 const counts = computed(() => {
   const list = data.value?.instructions ?? []
   return {
@@ -21,8 +34,6 @@ const counts = computed(() => {
 
 const creating = ref(false)
 const createError = ref<string | null>(null)
-
-// "+ Новая" creates an empty draft instantly and navigates to the editor.
 async function createNew() {
   creating.value = true; createError.value = null
   try {
@@ -37,13 +48,38 @@ async function createNew() {
   } finally { creating.value = false }
 }
 
+function publicUrlFor(i: any) {
+  return `/${currentTenant.value?.slug}/${i.slug}`
+}
+
+// Per-row kebab menu — only one open at a time
+const openMenuId = ref<string | null>(null)
+const menuRefs = ref<Record<string, HTMLElement | null>>({})
+function bindMenu(el: any, id: string) { menuRefs.value[id] = el as HTMLElement }
+watch(openMenuId, (id) => {
+  if (!id) return
+  // Close on outside click
+  const el = menuRefs.value[id]
+  if (!el) return
+  // Use document-level listener since onClickOutside on dynamic refs is awkward
+  const onDocClick = (ev: MouseEvent) => {
+    if (!el.contains(ev.target as Node)) {
+      openMenuId.value = null
+      document.removeEventListener('mousedown', onDocClick)
+    }
+  }
+  setTimeout(() => document.addEventListener('mousedown', onDocClick), 0)
+})
+
 async function archive(id: string) {
+  openMenuId.value = null
   if (!confirm('Перенести в архив? Публичная страница перестанет открываться, данные сохранятся.')) return
   await api(`/api/instructions/${id}/archive`, { method: 'POST' })
   await refresh()
 }
 
 async function unarchive(id: string) {
+  openMenuId.value = null
   try {
     await api(`/api/instructions/${id}/unarchive`, { method: 'POST' })
     await refresh()
@@ -57,70 +93,154 @@ async function unarchive(id: string) {
   <div class="space-y-xl">
     <div class="flex items-center justify-between gap-2">
       <h1 class="text-h2 text-ink">Инструкции</h1>
-      <UiButton :loading="creating" @click="createNew">+ Новая</UiButton>
+      <UiButton :loading="creating" @click="createNew">
+        <Icon name="lucide:plus" class="h-4 w-4" />
+        Новая
+      </UiButton>
     </div>
 
     <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
 
-    <div class="flex items-center gap-1 border-b border-hairline">
-      <button
-        :class="['px-md py-sm text-body-sm-md transition-colors',
-          tab === 'active' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
-        @click="tab = 'active'"
-      >
-        Активные · {{ counts.active }}
-      </button>
-      <button
-        :class="['px-md py-sm text-body-sm-md transition-colors',
-          tab === 'archive' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
-        @click="tab = 'archive'"
-      >
-        Архив · {{ counts.archive }}
-      </button>
+    <div class="flex flex-wrap items-center justify-between gap-md">
+      <div class="flex items-center gap-1 border-b border-hairline">
+        <button
+          :class="['px-md py-sm text-body-sm-md transition-colors',
+            tab === 'active' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
+          @click="tab = 'active'"
+        >
+          Активные · {{ counts.active }}
+        </button>
+        <button
+          :class="['px-md py-sm text-body-sm-md transition-colors',
+            tab === 'archive' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
+          @click="tab = 'archive'"
+        >
+          Архив · {{ counts.archive }}
+        </button>
+      </div>
+
+      <div class="relative w-full max-w-sm">
+        <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Поиск по названию или URL"
+          class="w-full rounded-md border border-hairline-strong bg-canvas px-md py-sm pl-9 text-body-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        >
+      </div>
     </div>
 
     <UiCard>
       <table v-if="visible.length" class="w-full">
         <thead>
           <tr class="border-b border-hairline text-caption text-steel uppercase">
-            <th class="pb-sm text-left">Название</th>
-            <th class="pb-sm text-left">Slug</th>
-            <th class="pb-sm text-left">Язык</th>
+            <th class="pb-sm text-left">Инструкция</th>
             <th class="pb-sm text-left">Статус</th>
-            <th class="pb-sm text-right">Обновлено</th>
-            <th class="pb-sm" />
+            <th class="pb-sm text-right">Просмотры · 30 дн</th>
+            <th class="pb-sm w-10" />
           </tr>
         </thead>
         <tbody>
           <tr v-for="i in visible" :key="i.id" class="border-b border-hairline-soft">
+            <!-- Title + slug, click → public preview in new tab -->
             <td class="py-sm">
-              <NuxtLink :to="`/dashboard/instructions/${i.id}/edit`" class="text-body-md text-ink hover:text-primary">{{ i.title }}</NuxtLink>
+              <a
+                :href="publicUrlFor(i)"
+                target="_blank"
+                rel="noopener"
+                class="group block"
+              >
+                <span class="text-body-md text-ink group-hover:text-primary">{{ i.title }}</span>
+                <span class="block text-caption text-steel group-hover:text-link">
+                  /{{ currentTenant?.slug }}/{{ i.slug }}
+                </span>
+              </a>
             </td>
-            <td class="py-sm text-body-sm text-steel">{{ i.slug }}</td>
-            <td class="py-sm text-body-sm text-steel">{{ i.language }}</td>
-            <td class="py-sm">
+            <td class="py-sm align-top">
               <UiBadge :variant="i.status === 'PUBLISHED' ? 'tag-green' : i.status === 'ARCHIVED' ? 'tag-orange' : i.status === 'IN_REVIEW' ? 'tag-orange' : 'tag-purple'">
                 {{ i.status }}
               </UiBadge>
             </td>
-            <td class="py-sm text-right text-caption text-steel whitespace-nowrap">{{ new Date(i.updatedAt).toLocaleDateString() }}</td>
-            <td class="py-sm text-right whitespace-nowrap">
-              <button
-                v-if="i.status !== 'ARCHIVED'"
-                class="text-caption text-steel hover:text-error hover:underline"
-                @click="archive(i.id)"
-              >В архив</button>
-              <button
-                v-else
-                class="text-caption text-steel hover:text-ink hover:underline"
-                @click="unarchive(i.id)"
-              >Восстановить</button>
+            <!-- Analytics, click → analytics page -->
+            <td class="py-sm align-top text-right">
+              <NuxtLink
+                :to="`/dashboard/instructions/${i.id}/analytics`"
+                class="inline-flex items-center gap-1 text-body-sm-md text-ink hover:text-primary"
+              >
+                {{ i.views30d ?? 0 }}
+                <Icon name="lucide:bar-chart-3" class="h-4 w-4 text-steel" />
+              </NuxtLink>
+            </td>
+            <!-- Kebab menu with row actions -->
+            <td class="py-sm align-top">
+              <div :ref="(el: any) => bindMenu(el, i.id)" class="relative">
+                <button
+                  type="button"
+                  class="grid h-7 w-7 place-items-center rounded-sm text-steel hover:bg-surface hover:text-ink"
+                  :title="'Действия'"
+                  @click.stop="openMenuId = openMenuId === i.id ? null : i.id"
+                >
+                  <Icon name="lucide:ellipsis-vertical" class="h-4 w-4" />
+                </button>
+                <div
+                  v-if="openMenuId === i.id"
+                  class="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-md border border-hairline bg-canvas shadow-modal"
+                >
+                  <NuxtLink
+                    :to="`/dashboard/instructions/${i.id}/edit`"
+                    class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
+                    @click="openMenuId = null"
+                  >
+                    <Icon name="lucide:pencil" class="h-4 w-4 text-steel" />
+                    Редактировать
+                  </NuxtLink>
+                  <a
+                    :href="publicUrlFor(i)"
+                    target="_blank"
+                    rel="noopener"
+                    class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
+                    @click="openMenuId = null"
+                  >
+                    <Icon name="lucide:eye" class="h-4 w-4 text-steel" />
+                    Просмотр
+                  </a>
+                  <NuxtLink
+                    :to="`/dashboard/instructions/${i.id}/analytics`"
+                    class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
+                    @click="openMenuId = null"
+                  >
+                    <Icon name="lucide:bar-chart-3" class="h-4 w-4 text-steel" />
+                    Аналитика
+                  </NuxtLink>
+                  <hr class="border-hairline">
+                  <button
+                    v-if="i.status !== 'ARCHIVED'"
+                    type="button"
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-error hover:bg-surface"
+                    @click="archive(i.id)"
+                  >
+                    <Icon name="lucide:archive" class="h-4 w-4" />
+                    В архив
+                  </button>
+                  <button
+                    v-else
+                    type="button"
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface"
+                    @click="unarchive(i.id)"
+                  >
+                    <Icon name="lucide:archive-restore" class="h-4 w-4 text-steel" />
+                    Восстановить
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
       <p v-else class="py-md text-body text-steel">
-        {{ tab === 'archive' ? 'Архив пуст.' : 'Пока пусто. Создайте первую инструкцию.' }}
+        <span v-if="search">Ничего не найдено по «{{ search }}».</span>
+        <span v-else-if="tab === 'archive'">Архив пуст.</span>
+        <span v-else>Пока пусто. Создайте первую инструкцию.</span>
       </p>
     </UiCard>
   </div>

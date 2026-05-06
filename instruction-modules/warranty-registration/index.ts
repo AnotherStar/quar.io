@@ -23,7 +23,12 @@ const definition: ModuleDefinition = {
       { key: 'successMessage', label: 'Сообщение об успехе', type: 'string', default: 'Спасибо! Гарантия зарегистрирована.' }
     ]
   },
-  PublicComponent: () => import('./Public.vue')
+  PublicComponent: () => import('./Public.vue'),
+  dashboardNavItem: {
+    to: '/dashboard/modules/warranty',
+    label: 'Регистрации',
+    icon: 'lucide:shield-check'
+  }
 }
 
 export default definition

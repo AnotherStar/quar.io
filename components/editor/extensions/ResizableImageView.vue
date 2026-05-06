@@ -18,6 +18,8 @@ const alignClass = computed(() =>
   align.value === 'left' ? 'mr-auto' : align.value === 'right' ? 'ml-auto' : 'mx-auto'
 )
 
+const showToolbar = computed(() => editable.value && (isHovered.value || isDragging.value))
+
 function startResize(e: PointerEvent) {
   if (!editable.value || !imgRef.value) return
   e.preventDefault()
@@ -41,32 +43,60 @@ function startResize(e: PointerEvent) {
   window.addEventListener('pointerup', onUp)
 }
 
-function setAlign(a: 'left' | 'center' | 'right') {
-  props.updateAttributes({ align: a })
-}
+function setAlign(a: 'left' | 'center' | 'right') { props.updateAttributes({ align: a }) }
 function setPreset(percent: number) {
   if (!wrapperRef.value) return
   const containerWidth = wrapperRef.value.parentElement?.getBoundingClientRect().width ?? 800
   props.updateAttributes({ width: Math.round((containerWidth * percent) / 100) })
 }
-function resetWidth() {
-  props.updateAttributes({ width: null })
-}
+function resetWidth() { props.updateAttributes({ width: null }) }
+
+// Tailwind classes for toolbar buttons
+const tbBtn = 'inline-flex h-7 w-7 items-center justify-center rounded-sm transition-colors'
+const tbBtnIdle = 'text-charcoal hover:bg-surface'
+const tbBtnActive = 'bg-ink-deep text-white'
+const tbDivider = 'mx-0.5 h-4 w-px bg-hairline'
 </script>
 
 <template>
   <NodeViewWrapper
-    class="my-3 not-prose flex"
+    class="my-4 not-prose flex"
     :class="[alignClass]"
     data-type="resizable-image"
   >
     <div
       ref="wrapperRef"
-      class="relative inline-block group"
+      class="relative inline-block"
       :style="widthPx ? { width: widthPx + 'px' } : undefined"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
     >
+      <!-- Floating toolbar — sits ABOVE the image (no overlap), centered horizontally -->
+      <div
+        v-if="showToolbar"
+        contenteditable="false"
+        class="absolute bottom-full left-1/2 z-10 mb-1 flex -translate-x-1/2 items-center gap-0.5 rounded-md border border-hairline bg-canvas px-1 py-1 shadow-card whitespace-nowrap"
+        @mousedown.prevent
+      >
+        <button type="button" :class="[tbBtn, align === 'left' ? tbBtnActive : tbBtnIdle]" title="Слева" @click="setAlign('left')">
+          <Icon name="lucide:align-left" class="h-4 w-4" />
+        </button>
+        <button type="button" :class="[tbBtn, align === 'center' ? tbBtnActive : tbBtnIdle]" title="По центру" @click="setAlign('center')">
+          <Icon name="lucide:align-center" class="h-4 w-4" />
+        </button>
+        <button type="button" :class="[tbBtn, align === 'right' ? tbBtnActive : tbBtnIdle]" title="Справа" @click="setAlign('right')">
+          <Icon name="lucide:align-right" class="h-4 w-4" />
+        </button>
+        <span :class="tbDivider" />
+        <button type="button" :class="[tbBtn, tbBtnIdle, 'text-caption']" title="25% ширины" @click="setPreset(25)">¼</button>
+        <button type="button" :class="[tbBtn, tbBtnIdle, 'text-caption']" title="50% ширины" @click="setPreset(50)">½</button>
+        <button type="button" :class="[tbBtn, tbBtnIdle, 'text-caption']" title="100% ширины" @click="setPreset(100)">1×</button>
+        <span :class="tbDivider" />
+        <button type="button" :class="[tbBtn, tbBtnIdle]" title="Сбросить размер" @click="resetWidth">
+          <Icon name="lucide:rotate-ccw" class="h-4 w-4" />
+        </button>
+      </div>
+
       <img
         ref="imgRef"
         :src="src"
@@ -76,38 +106,22 @@ function resetWidth() {
         draggable="false"
       >
 
-      <!-- Toolbar over the image when hovering or selected (editor only) -->
-      <div
-        v-if="editable && (isHovered || selected || isDragging)"
-        contenteditable="false"
-        class="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md border border-hairline bg-canvas px-1 py-0.5 shadow-card text-caption"
-      >
-        <button type="button" :class="['rounded-sm px-1.5', align === 'left' ? 'bg-ink-deep text-white' : 'hover:bg-surface']" @click="setAlign('left')">⇤</button>
-        <button type="button" :class="['rounded-sm px-1.5', align === 'center' ? 'bg-ink-deep text-white' : 'hover:bg-surface']" @click="setAlign('center')">⇔</button>
-        <button type="button" :class="['rounded-sm px-1.5', align === 'right' ? 'bg-ink-deep text-white' : 'hover:bg-surface']" @click="setAlign('right')">⇥</button>
-        <span class="mx-1 h-3 w-px bg-hairline" />
-        <button type="button" class="rounded-sm px-1.5 hover:bg-surface" title="25% ширины" @click="setPreset(25)">¼</button>
-        <button type="button" class="rounded-sm px-1.5 hover:bg-surface" title="50% ширины" @click="setPreset(50)">½</button>
-        <button type="button" class="rounded-sm px-1.5 hover:bg-surface" title="100% ширины" @click="setPreset(100)">1</button>
-        <span class="mx-1 h-3 w-px bg-hairline" />
-        <button type="button" class="rounded-sm px-1.5 hover:bg-surface" title="Авто" @click="resetWidth">↺</button>
-      </div>
-
-      <!-- Resize handles, only in editor mode -->
+      <!-- Resize handle in bottom-right corner -->
       <span
-        v-if="editable"
+        v-if="editable && (isHovered || isDragging)"
         contenteditable="false"
-        class="absolute bottom-1 right-1 grid h-4 w-4 cursor-se-resize place-items-center rounded-sm border border-hairline bg-canvas/90 text-[10px] text-steel opacity-0 group-hover:opacity-100 transition-opacity"
-        :class="{ 'opacity-100': isDragging || selected }"
+        class="absolute -bottom-1 -right-1 grid h-6 w-6 cursor-se-resize place-items-center rounded-sm border border-hairline bg-canvas text-steel shadow-subtle hover:text-ink"
         title="Перетащить, чтобы изменить размер"
         @pointerdown="startResize"
-      >⇲</span>
+      >
+        <Icon name="lucide:move-diagonal-2" class="h-3.5 w-3.5" />
+      </span>
 
       <!-- Subtle frame when selected -->
       <div
         v-if="editable && selected"
         contenteditable="false"
-        class="pointer-events-none absolute inset-0 rounded-md ring-2 ring-primary"
+        class="pointer-events-none absolute inset-0 rounded-md ring-2 ring-primary/60"
       />
     </div>
   </NodeViewWrapper>

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3'
 
-const props = defineProps<{ editor: Editor }>()
+const props = defineProps<{
+  editor: Editor
+  disableSectionRefs?: boolean
+}>()
 const open = ref(false)
 const position = ref({ top: 0, left: 0 })
 const search = ref('')
@@ -16,24 +19,22 @@ interface Cmd {
 }
 
 const COMMANDS: Cmd[] = [
-  { id: 'h1', title: 'Заголовок 1', hint: 'Большой заголовок', icon: 'H₁', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setHeading({ level: 1 }).run() },
-  { id: 'h2', title: 'Заголовок 2', hint: 'Средний заголовок', icon: 'H₂', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setHeading({ level: 2 }).run() },
-  { id: 'h3', title: 'Заголовок 3', hint: 'Маленький заголовок', icon: 'H₃', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setHeading({ level: 3 }).run() },
-  { id: 'p', title: 'Текст', hint: 'Обычный абзац', icon: '¶', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setParagraph().run() },
-  { id: 'ul', title: 'Список', hint: 'Маркированный список', icon: '•', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleBulletList().run() },
-  { id: 'ol', title: 'Нумерованный', hint: '1. 2. 3.', icon: '1.', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleOrderedList().run() },
-  { id: 'todo', title: 'Чек-лист', hint: 'Список задач', icon: '☐', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleTaskList().run() },
-  { id: 'quote', title: 'Цитата', hint: 'Выделенный блок', icon: '❝', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleBlockquote().run() },
-  { id: 'code', title: 'Код', hint: 'Блок кода', icon: '⌨', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleCodeBlock().run() },
-  { id: 'safety-info', title: 'Блок: Информация', hint: 'Информационный блок', icon: 'ℹ️', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setSafetyBlock('info').run() },
-  { id: 'safety-warn', title: 'Блок: Внимание', hint: 'Предупреждение', icon: '⚠️', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setSafetyBlock('warning').run() },
-  { id: 'safety-danger', title: 'Блок: Опасно', hint: 'Критическая опасность', icon: '⛔', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setSafetyBlock('danger').run() },
-  { id: 'section-ref', title: 'Секция', hint: 'Вставить переиспользуемую секцию', icon: '📎', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertSectionRef().run() },
-  { id: 'module-ref', title: 'Модуль', hint: 'Вставить модуль (гарантия, чат...)', icon: '🧩', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertModuleRef().run() },
-  { id: 'cols-2', title: 'Две колонки', hint: 'Контент в 2 колонки', icon: '⬓', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertColumns(2).run() },
-  { id: 'cols-3', title: 'Три колонки', hint: 'Контент в 3 колонки', icon: '⫲', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertColumns(3).run() },
-  { id: 'image', title: 'Изображение', hint: 'Загрузить картинку', icon: '🖼', run: () => triggerImageUpload() },
-  { id: 'youtube', title: 'YouTube', hint: 'Встроить видео', icon: '▶', run: (e) => {
+  { id: 'h1', title: 'Заголовок 1', hint: 'Большой заголовок', icon: 'lucide:heading-1', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setHeading({ level: 1 }).run() },
+  { id: 'h2', title: 'Заголовок 2', hint: 'Средний заголовок', icon: 'lucide:heading-2', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setHeading({ level: 2 }).run() },
+  { id: 'h3', title: 'Заголовок 3', hint: 'Маленький заголовок', icon: 'lucide:heading-3', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setHeading({ level: 3 }).run() },
+  { id: 'p', title: 'Текст', hint: 'Обычный абзац', icon: 'lucide:pilcrow', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setParagraph().run() },
+  { id: 'ul', title: 'Список', hint: 'Маркированный список', icon: 'lucide:list', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleBulletList().run() },
+  { id: 'ol', title: 'Нумерованный', hint: '1. 2. 3.', icon: 'lucide:list-ordered', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleOrderedList().run() },
+  { id: 'todo', title: 'Чек-лист', hint: 'Список задач', icon: 'lucide:list-checks', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleTaskList().run() },
+  { id: 'quote', title: 'Цитата', hint: 'Выделенный блок', icon: 'lucide:quote', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleBlockquote().run() },
+  { id: 'code', title: 'Код', hint: 'Блок кода', icon: 'lucide:square-code', run: (e) => e.chain().focus().deleteRange(currentRange.value!).toggleCodeBlock().run() },
+  { id: 'safety-info', title: 'Блок: Информация', hint: 'Информационный блок', icon: 'lucide:info', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setSafetyBlock('info').run() },
+  { id: 'safety-warn', title: 'Блок: Внимание', hint: 'Предупреждение', icon: 'lucide:triangle-alert', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setSafetyBlock('warning').run() },
+  { id: 'safety-danger', title: 'Блок: Опасно', hint: 'Критическая опасность', icon: 'lucide:octagon-x', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setSafetyBlock('danger').run() },
+  { id: 'section-ref', title: 'Секция', hint: 'Вставить переиспользуемую секцию', icon: 'lucide:blocks', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertSectionRef().run() },
+  { id: 'module-ref', title: 'Модуль', hint: 'Вставить модуль (гарантия, чат...)', icon: 'lucide:puzzle', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertModuleRef().run() },
+  { id: 'image', title: 'Изображение', hint: 'Загрузить картинку', icon: 'lucide:image', run: () => triggerImageUpload() },
+  { id: 'youtube', title: 'YouTube', hint: 'Встроить видео', icon: 'lucide:youtube', run: (e) => {
     const url = prompt('Ссылка на YouTube:')
     if (url) e.chain().focus().deleteRange(currentRange.value!).setYoutubeVideo({ src: url }).run()
   } }
@@ -41,8 +42,11 @@ const COMMANDS: Cmd[] = [
 
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  if (!q) return COMMANDS
-  return COMMANDS.filter((c) => c.title.toLowerCase().includes(q) || c.hint.toLowerCase().includes(q))
+  const base = props.disableSectionRefs
+    ? COMMANDS.filter((c) => c.id !== 'section-ref' && c.id !== 'module-ref')
+    : COMMANDS
+  if (!q) return base
+  return base.filter((c) => c.title.toLowerCase().includes(q) || c.hint.toLowerCase().includes(q))
 })
 
 const currentRange = ref<{ from: number; to: number } | null>(null)
@@ -126,7 +130,9 @@ onBeforeUnmount(() => {
         @mousedown.prevent="pick(cmd)"
         @mouseenter="selectedIndex = i"
       >
-        <span class="grid h-7 w-7 place-items-center rounded-sm bg-surface text-body-sm-md">{{ cmd.icon }}</span>
+        <span class="grid h-7 w-7 place-items-center rounded-sm bg-surface text-charcoal">
+          <Icon :name="cmd.icon" class="h-4 w-4" />
+        </span>
         <div class="flex-1 min-w-0">
           <p class="text-body-sm-md text-ink truncate">{{ cmd.title }}</p>
           <p class="text-caption text-steel truncate">{{ cmd.hint }}</p>

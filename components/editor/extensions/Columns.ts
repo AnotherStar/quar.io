@@ -1,7 +1,13 @@
 // Notion-style column layout. A `columns` node contains 2-4 `column` nodes,
-// each of which can hold any block content. Renders as CSS grid with equal
-// widths; on mobile collapses to single column via media query in global.css.
+// each of which can hold any block content. Renders as CSS grid.
+//
+// `columnWidths`: array of numbers (percent units, sum ≈ 100). When unset or
+// length-mismatched with child count, columns fall back to equal widths.
+// In the editor a NodeView (ColumnsView.vue) renders draggable resize
+// handles between columns.
 import { Node, mergeAttributes } from '@tiptap/core'
+import { VueNodeViewRenderer } from '@tiptap/vue-3'
+import ColumnsView from './ColumnsView.vue'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -11,6 +17,13 @@ declare module '@tiptap/core' {
   }
 }
 
+function gridTemplate(widths: number[] | null, count: number): string {
+  if (widths && widths.length === count) {
+    return widths.map((w) => `${w}fr`).join(' ')
+  }
+  return `repeat(${count}, minmax(0, 1fr))`
+}
+
 export const Columns = Node.create({
   name: 'columns',
   group: 'block',
@@ -18,18 +31,44 @@ export const Columns = Node.create({
   defining: true,
   isolating: true,
 
+  addAttributes() {
+    return {
+      columnWidths: {
+        default: null as number[] | null,
+        parseHTML: (el) => {
+          const raw = el.getAttribute('data-column-widths')
+          if (!raw) return null
+          try {
+            const arr = JSON.parse(raw)
+            return Array.isArray(arr) && arr.every((n) => typeof n === 'number') ? arr : null
+          } catch { return null }
+        },
+        renderHTML: (attrs) =>
+          attrs.columnWidths ? { 'data-column-widths': JSON.stringify(attrs.columnWidths) } : {}
+      },
+      verticalAlign: {
+        default: 'top' as 'top' | 'center' | 'bottom',
+        parseHTML: (el) => (el.getAttribute('data-valign') as any) || 'top',
+        renderHTML: (attrs) => ({ 'data-valign': attrs.verticalAlign || 'top' })
+      }
+    }
+  },
+
   parseHTML() {
     return [{ tag: 'div[data-type="columns"]' }]
   },
 
   renderHTML({ node, HTMLAttributes }) {
     const count = Math.max(2, node.childCount)
+    const widths = (node.attrs.columnWidths as number[] | null) ?? null
+    const valign = (node.attrs.verticalAlign as string) || 'top'
+    const alignItems = valign === 'center' ? 'center' : valign === 'bottom' ? 'end' : 'start'
     return [
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-type': 'columns',
         class: 'mo-columns',
-        style: `--mo-cols: ${count}`
+        style: `grid-template-columns: ${gridTemplate(widths, count)}; align-items: ${alignItems}`
       }),
       0
     ]
@@ -45,9 +84,14 @@ export const Columns = Node.create({
             type: 'column',
             content: [{ type: 'paragraph' }]
           }))
-          return commands.insertContent({ type: this.name, content: columns })
+          const widths = Array.from({ length: n }, () => Math.round((100 / n) * 100) / 100)
+          return commands.insertContent({ type: this.name, attrs: { columnWidths: widths }, content: columns })
         }
     }
+  },
+
+  addNodeView() {
+    return VueNodeViewRenderer(ColumnsView)
   }
 })
 

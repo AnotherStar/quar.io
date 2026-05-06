@@ -2,41 +2,31 @@
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const api = useApi()
-const { data, refresh } = await useAsyncData('sections', () => api<{ sections: any[] }>('/api/sections'))
+const { data } = await useAsyncData('sections', () => api<{ sections: any[] }>('/api/sections'))
 const { currentTenant } = useAuthState()
 const isPaid = computed(() => currentTenant.value?.plan && currentTenant.value.plan !== 'free')
 
-const showCreate = ref(false)
-const newName = ref('')
-const newDesc = ref('')
-const error = ref<string | null>(null)
-
-async function create() {
-  error.value = null
-  try {
-    await api('/api/sections', { method: 'POST', body: { name: newName.value, description: newDesc.value } })
-    showCreate.value = false; newName.value = ''; newDesc.value = ''
-    await refresh()
-  } catch (e: any) {
-    error.value = e?.data?.statusMessage ?? 'Ошибка'
-  }
-}
-
-async function remove(id: string) {
-  if (!confirm('Удалить секцию?')) return
-  await api(`/api/sections/${id}`, { method: 'DELETE' })
-  await refresh()
+function isEmpty(content: any): boolean {
+  if (!content?.content?.length) return true
+  return content.content.every((n: any) => !n.content?.length && !n.attrs?.src)
 }
 </script>
 
 <template>
   <div class="space-y-xl">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-md">
       <div>
         <h1 class="text-h2 text-ink">Переиспользуемые секции</h1>
         <p class="mt-1 text-body text-slate">Например: «Спасибо за покупку» или «Получи баллы за отзыв».</p>
       </div>
-      <UiButton :disabled="!isPaid" @click="showCreate = true">+ Новая секция</UiButton>
+      <UiButton v-if="isPaid" to="/dashboard/sections/new">
+        <Icon name="lucide:plus" class="h-4 w-4" />
+        Новая секция
+      </UiButton>
+      <UiButton v-else disabled>
+        <Icon name="lucide:plus" class="h-4 w-4" />
+        Новая секция
+      </UiButton>
     </div>
 
     <UiAlert v-if="!isPaid" kind="warning" title="Нужен платный тариф">
@@ -44,30 +34,33 @@ async function remove(id: string) {
       <NuxtLink to="/dashboard/billing" class="underline">Сменить тариф</NuxtLink>
     </UiAlert>
 
-    <UiCard v-if="data?.sections.length">
-      <ul class="divide-y divide-hairline">
-        <li v-for="s in data.sections" :key="s.id" class="flex items-center justify-between py-sm">
-          <NuxtLink :to="`/dashboard/sections/${s.id}`" class="text-body-md text-ink hover:text-primary">{{ s.name }}</NuxtLink>
-          <button class="text-caption text-error hover:underline" @click="remove(s.id)">Удалить</button>
-        </li>
-      </ul>
-    </UiCard>
+    <div v-if="data?.sections.length" class="space-y-md">
+      <NuxtLink
+        v-for="s in data.sections"
+        :key="s.id"
+        :to="`/dashboard/sections/${s.id}`"
+        class="group relative block overflow-hidden rounded-lg border border-hairline bg-canvas transition-shadow hover:shadow-card"
+      >
+        <div class="border-b border-hairline px-xl py-md">
+          <h3 class="text-h5 text-ink group-hover:text-primary">{{ s.name }}</h3>
+          <p v-if="s.description" class="mt-0.5 text-body-sm text-steel">{{ s.description }}</p>
+        </div>
+        <div class="relative max-h-[260px] overflow-hidden bg-canvas px-xl py-md">
+          <div v-if="isEmpty(s.content)" class="py-md text-body-sm text-stone">
+            Пусто — нажмите чтобы наполнить
+          </div>
+          <div v-else class="pointer-events-none">
+            <ClientOnly>
+              <InstructionContent :content="s.content" />
+            </ClientOnly>
+          </div>
+          <div class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-canvas to-transparent" />
+        </div>
+      </NuxtLink>
+    </div>
 
-    <Teleport to="body">
-      <div v-if="showCreate" class="fixed inset-0 z-50 grid place-items-center bg-ink/40 px-4" @click.self="showCreate = false">
-        <UiCard class="w-full max-w-md">
-          <h2 class="text-h3 mb-md">Новая секция</h2>
-          <form class="grid gap-3" @submit.prevent="create">
-            <UiInput v-model="newName" label="Название" required />
-            <UiInput v-model="newDesc" label="Описание (опц.)" />
-            <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
-            <div class="flex justify-end gap-2 pt-2">
-              <UiButton variant="ghost" type="button" @click="showCreate = false">Отмена</UiButton>
-              <UiButton type="submit">Создать</UiButton>
-            </div>
-          </form>
-        </UiCard>
-      </div>
-    </Teleport>
+    <UiCard v-else>
+      <p class="py-md text-body text-steel">Пока нет секций. Создайте первую — она будет доступна для вставки в любую инструкцию.</p>
+    </UiCard>
   </div>
 </template>

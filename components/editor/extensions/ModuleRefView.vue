@@ -1,101 +1,162 @@
 <script setup lang="ts">
+// Editor view of a module reference. Renders the actual module's public
+// component inline (so the user sees what their visitors will see),
+// framed with a dotted outline. Kebab menu in the corner picks a
+// different module or removes the block.
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
+import { onClickOutside } from '@vueuse/core'
+import { getModuleByCode } from '~~/modules-sdk/registry'
 
 const props = defineProps(nodeViewProps)
-
 const configId = computed(() => (props.node.attrs.tenantModuleConfigId as string | null) ?? null)
-const modules = ref<any[]>([])
-const showPicker = ref(false)
-const loading = ref(false)
+const override = computed(() => (props.node.attrs.configOverride as Record<string, unknown>) ?? {})
 
+interface TenantModuleRow {
+  id: string
+  code: string
+  name: string
+  description: string | null
+  allowedByPlan: boolean
+  tenantConfig: { id: string; enabled: boolean; config: Record<string, unknown> } | null
+}
+
+const modules = useState<TenantModuleRow[] | null>('mo:editor-modules', () => null)
+const loading = ref(false)
 const api = useApi()
 
-async function load() {
+async function ensureLoaded() {
+  if (modules.value !== null || loading.value) return
   loading.value = true
   try {
-    const { modules: list } = await api<{ modules: any[] }>('/api/modules')
+    const { modules: list } = await api<{ modules: TenantModuleRow[] }>('/api/modules')
     modules.value = list
   } finally { loading.value = false }
 }
 
-const current = computed(() => modules.value.find((m) => m.tenantConfig?.id === configId.value))
-const enabledModules = computed(() => modules.value.filter((m) => m.tenantConfig?.enabled && m.allowedByPlan))
+const current = computed(() => configId.value
+  ? modules.value?.find((m) => m.tenantConfig?.id === configId.value) ?? null
+  : null)
+const enabledModules = computed(
+  () => modules.value?.filter((m) => m.tenantConfig?.enabled && m.allowedByPlan) ?? []
+)
 
-function pick(id: string) {
-  props.updateAttributes({ tenantModuleConfigId: id })
-  showPicker.value = false
+const previewComponent = shallowRef<any>(null)
+const previewError = ref<string | null>(null)
+watch(current, async (m) => {
+  previewComponent.value = null
+  previewError.value = null
+  if (!m) return
+  const def = getModuleByCode(m.code)
+  if (!def) { previewError.value = `Модуль "${m.code}" не зарегистрирован`; return }
+  try {
+    const mod = await def.PublicComponent()
+    previewComponent.value = mod.default
+  } catch (e) {
+    previewError.value = (e as Error).message
+  }
+}, { immediate: true })
+
+const mergedConfig = computed(() => ({
+  ...(current.value?.tenantConfig?.config ?? {}),
+  ...override.value
+}))
+
+// Menu
+const menuOpen = ref(false)
+const menuRef = ref<HTMLElement | null>(null)
+onClickOutside(menuRef, () => { menuOpen.value = false })
+
+function pick(tenantConfigId: string) {
+  props.updateAttributes({ tenantModuleConfigId: tenantConfigId })
+  menuOpen.value = false
 }
-function unset() { props.updateAttributes({ tenantModuleConfigId: null }) }
+function deleteBlock() {
+  menuOpen.value = false
+  const pos = typeof props.getPos === 'function' ? props.getPos() : null
+  if (pos == null) return
+  props.editor.chain().focus().deleteRange({ from: pos, to: pos + props.node.nodeSize }).run()
+}
 
-onMounted(load)
+onMounted(ensureLoaded)
 </script>
 
 <template>
-  <NodeViewWrapper class="my-3 not-prose" data-type="module-ref">
-    <div
-      class="rounded-md border border-dashed border-primary/40 bg-tint-mint/40 p-md transition-colors"
-      contenteditable="false"
-    >
-      <div class="flex items-start justify-between gap-md">
-        <div class="min-w-0 flex-1">
-          <p class="text-caption-bold uppercase tracking-wide text-brand-green">
-            🧩 Модуль
-          </p>
-          <p v-if="current" class="mt-1 text-h5 text-ink truncate">{{ current.name }}</p>
-          <p v-else-if="configId" class="mt-1 text-body-sm text-error">Модуль не найден / выключен</p>
-          <p v-else class="mt-1 text-body-sm text-steel">Не выбран</p>
-          <p v-if="current?.description" class="mt-1 text-caption text-steel">{{ current.description }}</p>
-        </div>
-        <div class="flex shrink-0 gap-1">
-          <button
-            type="button"
-            class="rounded-sm border border-hairline-strong px-2 py-1 text-caption hover:bg-canvas"
-            @click="showPicker = true"
-          >
-            {{ configId ? 'Сменить' : 'Выбрать' }}
-          </button>
-          <button
-            v-if="configId"
-            type="button"
-            class="rounded-sm border border-hairline-strong px-2 py-1 text-caption text-error hover:bg-canvas"
-            @click="unset"
-          >
-            Очистить
-          </button>
-        </div>
-      </div>
-    </div>
+  <NodeViewWrapper class="relative my-3 not-prose" data-type="module-ref">
+    <div ref="menuRef" class="absolute right-0 -top-3 z-10" contenteditable="false">
+        <button
+          type="button"
+          class="grid h-7 w-7 place-items-center rounded-sm border border-hairline bg-canvas/95 text-steel hover:text-ink"
+          title="Параметры модуля"
+          @click.stop="menuOpen = !menuOpen"
+        >
+          <Icon name="lucide:ellipsis-vertical" class="h-4 w-4" />
+        </button>
 
-    <Teleport to="body">
-      <div
-        v-if="showPicker"
-        class="fixed inset-0 z-50 grid place-items-center bg-ink/40 px-4"
-        @click.self="showPicker = false"
-      >
-        <div class="w-full max-w-md rounded-lg border border-hairline bg-canvas p-md shadow-modal">
-          <h3 class="text-h4 mb-md">Выберите модуль</h3>
-          <p v-if="loading" class="text-body-sm text-steel">Загрузка…</p>
-          <p v-else-if="!enabledModules.length" class="text-body-sm text-steel">
-            Нет включённых модулей. Включите в
-            <NuxtLink to="/dashboard/modules" class="text-link hover:underline">Дашборд → Модули</NuxtLink>.
+        <div
+          v-if="menuOpen"
+          class="absolute right-0 top-full mt-1 w-72 overflow-hidden rounded-md border border-hairline bg-canvas shadow-modal"
+        >
+          <p class="px-3 pt-2 text-caption text-steel uppercase tracking-wide">Модуль</p>
+          <p v-if="loading" class="px-3 py-2 text-body-sm text-steel">Загрузка…</p>
+          <p v-else-if="!enabledModules.length" class="px-3 py-2 text-body-sm text-steel">
+            Нет включённых модулей.
+            <NuxtLink to="/dashboard/modules" class="text-link hover:underline" @click="menuOpen = false">
+              Включить
+            </NuxtLink>
           </p>
-          <ul v-else class="max-h-[60vh] overflow-y-auto divide-y divide-hairline-soft">
-            <li v-for="m in enabledModules" :key="m.tenantConfig.id">
+          <ul v-else class="max-h-[40vh] overflow-y-auto py-1">
+            <li v-for="m in enabledModules" :key="m.tenantConfig!.id">
               <button
                 type="button"
-                class="w-full px-2 py-3 text-left hover:bg-surface rounded-sm"
-                @click="pick(m.tenantConfig.id)"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-surface"
+                @click="pick(m.tenantConfig!.id)"
               >
-                <p class="text-body-md text-ink">{{ m.name }}</p>
-                <p v-if="m.description" class="text-caption text-steel">{{ m.description }}</p>
+                <Icon
+                  :name="m.tenantConfig!.id === configId ? 'lucide:check' : 'lucide:puzzle'"
+                  :class="['h-4 w-4 shrink-0', m.tenantConfig!.id === configId ? 'text-primary' : 'text-steel']"
+                />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-body-sm" :class="m.tenantConfig!.id === configId ? 'text-ink font-medium' : 'text-charcoal'">
+                    {{ m.name }}
+                  </span>
+                  <span v-if="m.description" class="block truncate text-caption text-steel">{{ m.description }}</span>
+                </span>
               </button>
             </li>
           </ul>
-          <div class="mt-md flex justify-end">
-            <button class="text-body-sm text-steel hover:text-ink" @click="showPicker = false">Закрыть</button>
-          </div>
+          <hr class="border-hairline">
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-error hover:bg-surface"
+            @click="deleteBlock"
+          >
+            <Icon name="lucide:trash-2" class="h-4 w-4" />
+            Удалить блок
+          </button>
         </div>
       </div>
-    </Teleport>
+
+    <div contenteditable="false">
+      <div v-if="!configId" class="flex items-center gap-2 py-md text-body-sm text-stone">
+        <Icon name="lucide:puzzle" class="h-4 w-4" />
+        Модуль не выбран — откройте меню справа
+      </div>
+      <div v-else-if="!current" class="py-md text-body-sm text-error">
+        <span v-if="loading">Загрузка…</span>
+        <span v-else>Модуль не найден или выключен.</span>
+      </div>
+      <div v-else-if="previewError" class="py-md text-body-sm text-error">{{ previewError }}</div>
+      <div v-else class="pointer-events-none">
+        <ClientOnly>
+          <component
+            :is="previewComponent"
+            v-if="previewComponent"
+            :instruction-id="''"
+            :config="mergedConfig"
+            :viewer-session-id="'editor-preview'"
+          />
+        </ClientOnly>
+      </div>
+    </div>
   </NodeViewWrapper>
 </template>

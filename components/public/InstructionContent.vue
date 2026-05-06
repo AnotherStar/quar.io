@@ -8,6 +8,7 @@ import Link from '@tiptap/extension-link'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Youtube from '@tiptap/extension-youtube'
+import TextAlign from '@tiptap/extension-text-align'
 import { BlockId } from '~/components/editor/extensions/BlockId'
 import { SafetyBlock } from '~/components/editor/extensions/SafetyBlock'
 import { SectionRefPublic } from '~/components/editor/extensions/SectionRefPublic'
@@ -27,6 +28,7 @@ const editor = useEditor({
     TaskList,
     TaskItem.configure({ nested: true }),
     Youtube.configure({ controls: true, nocookie: true, width: 720, height: 405 }),
+    TextAlign.configure({ types: ['heading', 'paragraph'], alignments: ['left', 'center', 'right', 'justify'] }),
     SafetyBlock,
     SectionRefPublic,
     ModuleRefPublic,

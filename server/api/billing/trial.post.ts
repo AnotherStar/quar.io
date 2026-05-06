@@ -3,7 +3,7 @@
 // During trial, plan features apply but maxInstructions is capped at the free
 // tier limit (handled in effectiveFeatures), so nothing has to be hidden when
 // the trial ends.
-import { requireTenant } from '~~/server/utils/tenant'
+import { requireTenant, invalidateTenantMembershipCache } from '~~/server/utils/tenant'
 import { prisma } from '~~/server/utils/prisma'
 import { z } from 'zod'
 
@@ -53,6 +53,10 @@ export default defineEventHandler(async (event) => {
     },
     include: { plan: true }
   })
+
+  // Plan/features just changed — drop cached memberships for this tenant so
+  // requireTenant() returns fresh subscription on next request.
+  invalidateTenantMembershipCache(tenant.id)
 
   return {
     subscription: {

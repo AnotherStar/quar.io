@@ -25,14 +25,46 @@
 }
 
 /* Multi-column layout used inside TipTap docs (Columns/Column extensions).
- * Lives in global.css so both editor preview and public render share it. */
+ * Lives in global.css so both editor preview and public render share it.
+ * grid-template-columns is set inline by renderHTML / NodeView from the
+ * columnWidths attribute (or repeat(N, 1fr) fallback). */
 .mo-columns {
   display: grid;
-  grid-template-columns: repeat(var(--mo-cols, 2), minmax(0, 1fr));
   gap: 20px;
   margin: 0.75em 0;
+  position: relative;
 }
 .mo-column { min-width: 0; }
 @media (max-width: 640px) {
-  .mo-columns { grid-template-columns: 1fr; }
+  .mo-columns { grid-template-columns: 1fr !important; }
+  .mo-column-resizer { display: none !important; }
+}
+
+/* Draggable divider between columns. 8px hit area, 2px line on hover. */
+.mo-column-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 2;
+  border: 0;
+  padding: 0;
+}
+.mo-column-resizer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: transparent;
+  border-radius: 1px;
+  transition: background 0.12s;
+}
+.mo-column-resizer:hover::before,
+.mo-column-resizer:active::before {
+  background: var(--color-primary);
 }

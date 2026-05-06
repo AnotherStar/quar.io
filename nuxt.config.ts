@@ -2,7 +2,12 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', '@vueuse/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@vueuse/nuxt', '@nuxt/icon'],
+  icon: {
+    // Lucide is the default icon collection — minimal line icons, Notion-style.
+    // Use as <Icon name="lucide:bold" /> anywhere.
+    serverBundle: { collections: ['lucide'] }
+  },
   // Disable path-prefixing so components/editor/InstructionEditor.vue is
   // available as <InstructionEditor>, not <EditorInstructionEditor>.
   components: [{ path: '~/components', pathPrefix: false }],

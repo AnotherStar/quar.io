@@ -1,113 +1,124 @@
 <script setup lang="ts">
+// Editor view of a section reference. Renders the actual section content
+// inline (read-only), framed with a subtle dotted outline so the user can
+// see what's a section vs. native blocks. A kebab menu in the corner lets
+// the user pick a different section or remove the block.
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
+import { onClickOutside } from '@vueuse/core'
 
 const props = defineProps(nodeViewProps)
-
 const sectionId = computed(() => (props.node.attrs.sectionId as string | null) ?? null)
-const sections = ref<Array<{ id: string; name: string; description: string | null }>>([])
-const current = ref<{ id: string; name: string; description: string | null } | null>(null)
-const loading = ref(false)
-const showPicker = ref(false)
 
+interface SectionRow { id: string; name: string; description: string | null; content: any }
+
+// Per-page cache so multiple SectionRef nodes share one fetch
+const sections = useState<SectionRow[] | null>('mo:editor-sections', () => null)
+const loading = ref(false)
 const api = useApi()
 
-async function loadList() {
+async function ensureLoaded() {
+  if (sections.value !== null || loading.value) return
   loading.value = true
   try {
-    const { sections: list } = await api<{ sections: any[] }>('/api/sections')
+    const { sections: list } = await api<{ sections: SectionRow[] }>('/api/sections')
     sections.value = list
   } finally { loading.value = false }
 }
 
-async function loadCurrent() {
-  if (!sectionId.value) { current.value = null; return }
-  const cached = sections.value.find((s) => s.id === sectionId.value)
-  if (cached) { current.value = cached; return }
-  try {
-    const { section } = await api<{ section: any }>(`/api/sections/${sectionId.value}`)
-    current.value = { id: section.id, name: section.name, description: section.description }
-  } catch { current.value = null }
-}
+const current = computed(() => sectionId.value
+  ? sections.value?.find((s) => s.id === sectionId.value) ?? null
+  : null)
+
+// Menu
+const menuOpen = ref(false)
+const menuRef = ref<HTMLElement | null>(null)
+onClickOutside(menuRef, () => { menuOpen.value = false })
 
 function pick(id: string) {
   props.updateAttributes({ sectionId: id })
-  showPicker.value = false
+  menuOpen.value = false
 }
 
-function unset() {
-  props.updateAttributes({ sectionId: null })
+function deleteBlock() {
+  menuOpen.value = false
+  const pos = typeof props.getPos === 'function' ? props.getPos() : null
+  if (pos == null) return
+  props.editor.chain().focus().deleteRange({ from: pos, to: pos + props.node.nodeSize }).run()
 }
 
-watch(sectionId, loadCurrent, { immediate: true })
-onMounted(loadList)
+onMounted(ensureLoaded)
 </script>
 
 <template>
-  <NodeViewWrapper class="my-3 not-prose" data-type="section-ref">
-    <div
-      class="rounded-md border border-dashed border-primary/40 bg-tint-lavender/40 p-md transition-colors"
-      contenteditable="false"
-    >
-      <div class="flex items-start justify-between gap-md">
-        <div class="min-w-0 flex-1">
-          <p class="text-caption-bold uppercase tracking-wide text-[var(--color-brand-purple-800)]">
-            📎 Секция
-          </p>
-          <p v-if="current" class="mt-1 text-h5 text-ink truncate">{{ current.name }}</p>
-          <p v-else-if="sectionId" class="mt-1 text-body-sm text-error">Секция не найдена</p>
-          <p v-else class="mt-1 text-body-sm text-steel">Не выбрана</p>
-          <p v-if="current?.description" class="mt-1 text-caption text-steel">{{ current.description }}</p>
-        </div>
-        <div class="flex shrink-0 gap-1">
-          <button
-            type="button"
-            class="rounded-sm border border-hairline-strong px-2 py-1 text-caption hover:bg-canvas"
-            @click="showPicker = true"
-          >
-            {{ sectionId ? 'Сменить' : 'Выбрать' }}
-          </button>
-          <button
-            v-if="sectionId"
-            type="button"
-            class="rounded-sm border border-hairline-strong px-2 py-1 text-caption text-error hover:bg-canvas"
-            @click="unset"
-          >
-            Очистить
-          </button>
-        </div>
-      </div>
-    </div>
+  <NodeViewWrapper class="relative my-3 not-prose" data-type="section-ref">
+    <!-- Kebab menu sits ABOVE the block (negative top) so it doesn't push
+         content. The dashed indicator is an outline → no layout impact, the
+         block renders identically to the public preview. -->
+    <div ref="menuRef" class="absolute right-0 -top-3 z-10" contenteditable="false">
+        <button
+          type="button"
+          class="grid h-7 w-7 place-items-center rounded-sm border border-hairline bg-canvas/95 text-steel hover:text-ink"
+          title="Параметры секции"
+          @click.stop="menuOpen = !menuOpen"
+        >
+          <Icon name="lucide:ellipsis-vertical" class="h-4 w-4" />
+        </button>
 
-    <Teleport to="body">
-      <div
-        v-if="showPicker"
-        class="fixed inset-0 z-50 grid place-items-center bg-ink/40 px-4"
-        @click.self="showPicker = false"
-      >
-        <div class="w-full max-w-md rounded-lg border border-hairline bg-canvas p-md shadow-modal">
-          <h3 class="text-h4 mb-md">Выберите секцию</h3>
-          <p v-if="loading" class="text-body-sm text-steel">Загрузка…</p>
-          <p v-else-if="!sections.length" class="text-body-sm text-steel">
-            Пока нет секций. Создайте в
-            <NuxtLink to="/dashboard/sections" class="text-link hover:underline">Дашборд → Секции</NuxtLink>.
+        <div
+          v-if="menuOpen"
+          class="absolute right-0 top-full mt-1 w-64 overflow-hidden rounded-md border border-hairline bg-canvas shadow-modal"
+        >
+          <p class="px-3 pt-2 text-caption text-steel uppercase tracking-wide">Секция</p>
+          <p v-if="loading" class="px-3 py-2 text-body-sm text-steel">Загрузка…</p>
+          <p v-else-if="!sections?.length" class="px-3 py-2 text-body-sm text-steel">
+            Нет секций.
+            <NuxtLink to="/dashboard/sections" class="text-link hover:underline" @click="menuOpen = false">
+              Создать
+            </NuxtLink>
           </p>
-          <ul v-else class="max-h-[60vh] overflow-y-auto divide-y divide-hairline-soft">
+          <ul v-else class="max-h-[40vh] overflow-y-auto py-1">
             <li v-for="s in sections" :key="s.id">
               <button
                 type="button"
-                class="w-full px-2 py-3 text-left hover:bg-surface rounded-sm"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-surface"
                 @click="pick(s.id)"
               >
-                <p class="text-body-md text-ink">{{ s.name }}</p>
-                <p v-if="s.description" class="text-caption text-steel">{{ s.description }}</p>
+                <Icon
+                  :name="s.id === sectionId ? 'lucide:check' : 'lucide:blocks'"
+                  :class="['h-4 w-4 shrink-0', s.id === sectionId ? 'text-primary' : 'text-steel']"
+                />
+                <span class="min-w-0 flex-1 truncate text-body-sm" :class="s.id === sectionId ? 'text-ink font-medium' : 'text-charcoal'">
+                  {{ s.name }}
+                </span>
               </button>
             </li>
           </ul>
-          <div class="mt-md flex justify-end">
-            <button class="text-body-sm text-steel hover:text-ink" @click="showPicker = false">Закрыть</button>
-          </div>
+          <hr class="border-hairline">
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-error hover:bg-surface"
+            @click="deleteBlock"
+          >
+            <Icon name="lucide:trash-2" class="h-4 w-4" />
+            Удалить блок
+          </button>
         </div>
       </div>
-    </Teleport>
+
+    <div contenteditable="false">
+      <div v-if="!sectionId" class="flex items-center gap-2 py-md text-body-sm text-stone">
+        <Icon name="lucide:blocks" class="h-4 w-4" />
+        Секция не выбрана — откройте меню справа
+      </div>
+      <div v-else-if="!current" class="py-md text-body-sm text-error">
+        <span v-if="loading">Загрузка содержимого…</span>
+        <span v-else>Секция не найдена или удалена.</span>
+      </div>
+      <div v-else class="pointer-events-none">
+        <ClientOnly>
+          <InstructionContent :content="current.content" />
+        </ClientOnly>
+      </div>
+    </div>
   </NodeViewWrapper>
 </template>

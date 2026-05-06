@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const sections = await prisma.section.findMany({
     where: { tenantId: tenant.id },
     orderBy: { updatedAt: 'desc' },
-    select: { id: true, name: true, description: true, updatedAt: true }
+    select: { id: true, name: true, description: true, content: true, updatedAt: true }
   })
   return { sections }
 })

@@ -9,7 +9,9 @@ import { publishSchema } from '~~/shared/schemas/instruction'
 export default defineEventHandler(async (event) => {
   const { tenant, user, role } = await requireTenant(event, { minRole: 'EDITOR' })
   const id = getRouterParam(event, 'id')!
-  const body = await readValidatedBody(event, publishSchema.parse)
+  // Body is optional — accept missing/empty body as no changelog.
+  const rawBody = await readBody(event).catch(() => ({}))
+  const body = publishSchema.parse(rawBody ?? {})
 
   const instruction = await prisma.instruction.findFirst({
     where: { id, tenantId: tenant.id },

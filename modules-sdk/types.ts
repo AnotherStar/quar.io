@@ -41,10 +41,22 @@ export interface ModuleRenderProps {
   viewerSessionId: string
 }
 
+export interface DashboardNavItem {
+  /** Link target inside /dashboard */
+  to: string
+  /** Sidebar label */
+  label: string
+  /** Lucide icon name, e.g. "lucide:shield-check" */
+  icon: string
+}
+
 export interface ModuleDefinition {
   manifest: ModuleManifestDef
   /** Public renderer component — receives ModuleRenderProps via $props */
   PublicComponent: () => Promise<{ default: Component }>
   /** Optional admin config component */
   AdminComponent?: () => Promise<{ default: Component }>
+  /** Optional sidebar entry shown when this module is enabled for the tenant.
+   *  Lets a module add its own data view (e.g. warranty registrations list). */
+  dashboardNavItem?: DashboardNavItem
 }

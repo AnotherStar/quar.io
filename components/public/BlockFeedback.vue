@@ -23,9 +23,22 @@ function nearestBlock(target: HTMLElement | null): HTMLElement | null {
   return n
 }
 
+function isEmptyBlock(block: HTMLElement): boolean {
+  if (block.textContent && block.textContent.trim().length > 0) return false
+  // Treat blocks with media/embeds as non-empty even without text
+  if (block.querySelector('img, video, iframe, audio, svg, [data-type="youtube"]')) return false
+  return true
+}
+
 function onPointerOver(e: PointerEvent) {
   const block = nearestBlock(e.target as HTMLElement)
   if (!block || hoverTarget === block) return
+  if (isEmptyBlock(block)) {
+    hoverTarget = null
+    activeBlockId.value = null
+    popoverPos.value = null
+    return
+  }
   hoverTarget = block
   activeBlockId.value = block.dataset.blockId!
   const rect = block.getBoundingClientRect()

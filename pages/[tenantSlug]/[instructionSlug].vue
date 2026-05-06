@@ -54,6 +54,7 @@ const sidebarSlots = computed(() => {
   const mod = (data.value?.modules ?? []).filter((m) => m.slot === 'sidebar').sort((a, b) => a.position - b.position)
   return { sections: sec, modules: mod }
 })
+const hasSidebar = computed(() => sidebarSlots.value.sections.length > 0 || sidebarSlots.value.modules.length > 0)
 </script>
 
 <template>
@@ -68,10 +69,12 @@ const sidebarSlots = computed(() => {
       </div>
     </header>
 
-    <main class="container-page py-section grid grid-cols-1 gap-section md:grid-cols-[1fr_280px]">
-      <article id="instruction-root" class="prose-mo">
-        <h1 class="text-h1 text-ink mb-4">{{ data!.instruction.title }}</h1>
-        <p v-if="data!.instruction.description" class="text-subtitle text-slate mb-8">{{ data!.instruction.description }}</p>
+    <main
+      class="container-page py-section grid grid-cols-1 gap-section"
+      :class="hasSidebar ? 'md:grid-cols-[1fr_280px]' : ''"
+    >
+      <article id="instruction-root" class="prose-mo" :class="hasSidebar ? '' : 'mx-auto w-full max-w-[760px]'">
+        <h1 class="text-h1 text-ink mb-8">{{ data!.instruction.title }}</h1>
 
         <template v-for="s in beforeSlots.sections" :key="s.id">
           <SectionRenderer :name="s.name" :content="s.content as object" />
