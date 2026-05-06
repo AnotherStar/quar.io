@@ -11,11 +11,15 @@ export default defineEventHandler(async (event) => {
 
   const features = effectiveFeatures(tenant)
   if (features.maxInstructions !== -1) {
-    const count = await prisma.instruction.count({ where: { tenantId: tenant.id } })
-    if (count >= features.maxInstructions) {
+    // Archived instructions don't count against the limit — that's how users
+    // free up slots without losing their data.
+    const activeCount = await prisma.instruction.count({
+      where: { tenantId: tenant.id, status: { not: 'ARCHIVED' } }
+    })
+    if (activeCount >= features.maxInstructions) {
       throw createError({
         statusCode: 402,
-        statusMessage: `Достигнут лимит инструкций (${features.maxInstructions}). Обновите тариф.`
+        statusMessage: `Достигнут лимит активных инструкций (${features.maxInstructions}). Архивируйте старые или обновите тариф.`
       })
     }
   }

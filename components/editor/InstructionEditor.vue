@@ -19,7 +19,10 @@ const props = defineProps<{
   modelValue: TiptapDoc | object
   placeholder?: string
 }>()
-const emit = defineEmits<{ 'update:modelValue': [value: object] }>()
+const emit = defineEmits<{
+  'update:modelValue': [value: object]
+  'ready': [editor: any]
+}>()
 
 const editor = useEditor({
   content: props.modelValue,
@@ -45,6 +48,11 @@ const editor = useEditor({
   },
   onUpdate({ editor }) {
     emit('update:modelValue', editor.getJSON())
+  },
+  onCreate({ editor }) {
+    // Emit the live Editor instance to the parent. More reliable than
+    // template refs through <ClientOnly> wrappers.
+    emit('ready', editor)
   }
 })
 
@@ -59,7 +67,10 @@ watch(
 
 onBeforeUnmount(() => editor.value?.destroy())
 
-defineExpose({ editor })
+defineExpose({
+  editor,
+  getEditor: () => editor.value
+})
 </script>
 
 <template>
