@@ -6,7 +6,7 @@ import { customAlphabet } from 'nanoid'
 
 const newId = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 10)
 
-const TYPES = ['paragraph', 'heading', 'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock', 'image', 'safetyBlock', 'youtube']
+const TYPES = ['paragraph', 'heading', 'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock', 'image', 'safetyBlock', 'youtube', 'sectionRef', 'moduleRef']
 
 export const BlockId = Extension.create({
   name: 'blockId',

@@ -13,6 +13,16 @@ if (error.value || !data.value) throw createError({ statusCode: 404, statusMessa
 
 const sessionId = useViewerSession()
 
+// Make resolved section/module refs available to the read-only NodeViews
+// inside <InstructionContent>. inject('publicRefs') reads this.
+// Plain object — payload is fixed for the lifetime of this page.
+provide('publicRefs', {
+  sections: data.value!.refs.sections,
+  modules: data.value!.refs.modules,
+  instructionId: data.value!.instruction.id,
+  viewerSessionId: sessionId.value
+})
+
 useHead({
   title: () => `${data.value!.instruction.title} — ${data.value!.tenant.name}`,
   meta: [{ name: 'description', content: () => data.value!.instruction.description ?? '' }],

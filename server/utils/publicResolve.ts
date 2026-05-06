@@ -3,6 +3,19 @@
 // with plan-aware filtering of sections and modules.
 import { prisma } from './prisma'
 import { effectiveFeatures, planAllowsModule } from './plan'
+import type { TiptapDoc, TiptapNode } from '~~/shared/types/instruction'
+
+export interface ResolvedSectionRef {
+  sectionId: string
+  name: string
+  content: unknown
+}
+export interface ResolvedModuleRef {
+  tenantModuleConfigId: string
+  code: string
+  name: string
+  config: Record<string, unknown>
+}
 
 export interface PublicRenderPayload {
   instruction: {
@@ -25,6 +38,7 @@ export interface PublicRenderPayload {
       fontFamily: string | null
     } | null
   }
+  // slot-attached (legacy / "always show before/after")
   sections: Array<{ id: string; name: string; slot: string; position: number; content: unknown }>
   modules: Array<{
     attachmentId: string
@@ -34,6 +48,11 @@ export interface PublicRenderPayload {
     position: number
     config: Record<string, unknown>
   }>
+  // refs embedded inside the TipTap doc — keyed by id for O(1) lookup at render time
+  refs: {
+    sections: Record<string, ResolvedSectionRef>
+    modules: Record<string, ResolvedModuleRef>
+  }
   planActive: boolean
 }
 
@@ -43,6 +62,25 @@ export async function loadPublicByPath(tenantSlug: string, instructionSlug: stri
 
 export async function loadPublicByShortId(shortId: string) {
   return loadPublic({ shortId })
+}
+
+// Walk the TipTap doc collecting (sectionRef, moduleRef) ids embedded as nodes.
+function collectRefs(doc: unknown): { sectionIds: Set<string>; configIds: Set<string> } {
+  const sectionIds = new Set<string>()
+  const configIds = new Set<string>()
+  const walk = (n: TiptapNode | undefined) => {
+    if (!n) return
+    if (n.type === 'sectionRef') {
+      const id = (n.attrs as any)?.sectionId
+      if (typeof id === 'string') sectionIds.add(id)
+    } else if (n.type === 'moduleRef') {
+      const id = (n.attrs as any)?.tenantModuleConfigId
+      if (typeof id === 'string') configIds.add(id)
+    }
+    n.content?.forEach(walk)
+  }
+  ;(doc as TiptapDoc | undefined)?.content?.forEach(walk)
+  return { sectionIds, configIds }
 }
 
 async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string; shortId?: string }): Promise<PublicRenderPayload | null> {
@@ -69,7 +107,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
   const features = effectiveFeatures(instruction.tenant)
   const planActive = !!instruction.tenant.subscription && instruction.tenant.subscription.status === 'active'
 
-  // Sections: only render if plan allows custom sections
+  // Sections from slots (legacy attachment system)
   const sections = features.customSections
     ? instruction.sectionAttachments.map((a) => ({
         id: a.section.id,
@@ -80,7 +118,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
       }))
     : []
 
-  // Modules: only render if attached, enabled, and module is allowed by plan
+  // Modules from slots
   const modules = instruction.moduleAttachments
     .filter((a) => a.tenantModuleConfig.enabled && planAllowsModule(features, a.tenantModuleConfig.module.code))
     .map((a) => ({
@@ -89,14 +127,41 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
       name: a.tenantModuleConfig.module.name,
       slot: a.slot,
       position: a.position,
-      // merged config: tenant defaults < per-instruction override
       config: {
         ...(a.tenantModuleConfig.config as Record<string, unknown>),
         ...(a.configOverride as Record<string, unknown>)
       }
     }))
 
-  // Branding only when plan active
+  // Inline refs embedded in the TipTap doc — same plan-gating applies
+  const { sectionIds, configIds } = collectRefs(instruction.publishedVersion.content)
+  const refSections: Record<string, ResolvedSectionRef> = {}
+  const refModules: Record<string, ResolvedModuleRef> = {}
+
+  if (features.customSections && sectionIds.size) {
+    const rows = await prisma.section.findMany({
+      where: { id: { in: [...sectionIds] }, tenantId: instruction.tenant.id }
+    })
+    for (const r of rows) {
+      refSections[r.id] = { sectionId: r.id, name: r.name, content: r.content }
+    }
+  }
+  if (configIds.size) {
+    const rows = await prisma.tenantModuleConfig.findMany({
+      where: { id: { in: [...configIds] }, tenantId: instruction.tenant.id, enabled: true },
+      include: { module: true }
+    })
+    for (const r of rows) {
+      if (!planAllowsModule(features, r.module.code)) continue
+      refModules[r.id] = {
+        tenantModuleConfigId: r.id,
+        code: r.module.code,
+        name: r.module.name,
+        config: r.config as Record<string, unknown>
+      }
+    }
+  }
+
   const branding =
     planActive && (instruction.tenant.brandingPrimaryColor || instruction.tenant.brandingLogoUrl || instruction.tenant.brandingFontFamily)
       ? {
@@ -125,6 +190,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
     },
     sections,
     modules,
+    refs: { sections: refSections, modules: refModules },
     planActive
   }
 }

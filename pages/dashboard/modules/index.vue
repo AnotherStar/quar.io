@@ -29,7 +29,7 @@ async function toggle(code: string, enabled: boolean, config: object) {
             </div>
           </div>
         </div>
-        <div class="mt-md">
+        <div class="mt-md flex items-center gap-2">
           <UiButton
             size="sm"
             :variant="m.tenantConfig?.enabled ? 'secondary' : 'primary'"
@@ -37,6 +37,14 @@ async function toggle(code: string, enabled: boolean, config: object) {
             @click="toggle(m.code, !m.tenantConfig?.enabled, m.tenantConfig?.config ?? {})"
           >
             {{ m.tenantConfig?.enabled ? 'Выключить' : 'Включить' }}
+          </UiButton>
+          <UiButton
+            v-if="m.code === 'warranty-registration' && m.tenantConfig?.enabled"
+            size="sm"
+            variant="ghost"
+            to="/dashboard/modules/warranty"
+          >
+            Регистрации →
           </UiButton>
         </div>
       </UiCard>

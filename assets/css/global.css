@@ -23,3 +23,16 @@
     @apply mx-auto w-full max-w-[1280px] px-4 md:px-8;
   }
 }
+
+/* Multi-column layout used inside TipTap docs (Columns/Column extensions).
+ * Lives in global.css so both editor preview and public render share it. */
+.mo-columns {
+  display: grid;
+  grid-template-columns: repeat(var(--mo-cols, 2), minmax(0, 1fr));
+  gap: 20px;
+  margin: 0.75em 0;
+}
+.mo-column { min-width: 0; }
+@media (max-width: 640px) {
+  .mo-columns { grid-template-columns: 1fr; }
+}

@@ -2,13 +2,16 @@
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Youtube from '@tiptap/extension-youtube'
 import { BlockId } from './extensions/BlockId'
 import { SafetyBlock } from './extensions/SafetyBlock'
+import { SectionRef } from './extensions/SectionRef'
+import { ModuleRef } from './extensions/ModuleRef'
+import { ResizableImage } from './extensions/ResizableImage'
+import { Columns, Column } from './extensions/Columns'
 import SlashMenu from './SlashMenu.vue'
 import type { TiptapDoc } from '~~/shared/types/instruction'
 
@@ -23,12 +26,16 @@ const editor = useEditor({
   extensions: [
     StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
     Placeholder.configure({ placeholder: props.placeholder ?? 'Введите «/» для команд...' }),
-    Image,
+    ResizableImage,
     Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-link underline' } }),
     TaskList,
     TaskItem.configure({ nested: true }),
     Youtube.configure({ controls: true, nocookie: true, width: 720, height: 405 }),
     SafetyBlock,
+    SectionRef,
+    ModuleRef,
+    Columns,
+    Column,
     BlockId
   ],
   editorProps: {
@@ -88,4 +95,25 @@ defineExpose({ editor })
 .tiptap ul[data-type='taskList'] li { @apply flex items-start gap-2; }
 .tiptap ul[data-type='taskList'] li > label { @apply mt-1; }
 .tiptap iframe { @apply rounded-md max-w-full; }
+
+.tiptap .mo-columns,
+.mo-columns {
+  display: grid;
+  grid-template-columns: repeat(var(--mo-cols, 2), minmax(0, 1fr));
+  gap: 16px;
+  margin: 0.75em 0;
+}
+.tiptap .mo-column,
+.mo-column { min-width: 0; }
+/* Editor: visualize column boundaries subtly */
+.tiptap .mo-column {
+  border-radius: 6px;
+  padding: 6px 8px;
+  outline: 1px dashed var(--color-hairline);
+  outline-offset: -2px;
+}
+@media (max-width: 640px) {
+  .tiptap .mo-columns,
+  .mo-columns { grid-template-columns: 1fr; }
+}
 </style>

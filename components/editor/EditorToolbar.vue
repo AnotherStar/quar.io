@@ -96,6 +96,11 @@ function btnClass(active: boolean) {
 
     <span class="mx-1 h-5 w-px bg-hairline" />
 
+    <button type="button" :class="btnClass(false)" title="Вставить секцию" @click="editor.chain().focus().insertSectionRef().run()">📎</button>
+    <button type="button" :class="btnClass(false)" title="Вставить модуль" @click="editor.chain().focus().insertModuleRef().run()">🧩</button>
+
+    <span class="mx-1 h-5 w-px bg-hairline" />
+
     <button type="button" :class="btnClass(false)" title="Отменить (⌘Z)" @click="editor.chain().focus().undo().run()">↶</button>
     <button type="button" :class="btnClass(false)" title="Повторить" @click="editor.chain().focus().redo().run()">↷</button>
 
