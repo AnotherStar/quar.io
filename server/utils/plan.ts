@@ -12,7 +12,7 @@ export interface PlanFeatures {
 }
 
 export const FREE_FEATURES: PlanFeatures = {
-  maxInstructions: 3,
+  maxInstructions: 5,
   customSections: false,
   modules: [],
   customDomain: false,
@@ -28,8 +28,8 @@ export const FREE_FEATURES: PlanFeatures = {
 //
 // Trial: status='trialing' grants the paid plan's features but caps
 // `maxInstructions` to the FREE limit. Reason: when trial ends, the tenant
-// drops to free; if more than 3 instructions had been created, they would
-// have to be hidden. Capping during trial prevents that footgun entirely.
+// drops to free; if more than the free limit of instructions had been created,
+// they would have to be hidden. Capping during trial prevents that footgun entirely.
 export function effectiveFeatures(
   tenant: Tenant & { subscription: (Subscription & { plan: Plan }) | null }
 ): PlanFeatures {

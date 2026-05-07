@@ -83,19 +83,10 @@ const fullPublicUrl = computed(() => {
   return `${cfg.appUrl}${publicUrl.value}`
 })
 
-// Share popover
+// Share popover. Copy/QR live inside UiCopyableUrl — no helpers needed here.
 const shareOpen = ref(false)
 const shareRef = ref<HTMLElement | null>(null)
-const copied = ref(false)
 onClickOutside(shareRef, () => { shareOpen.value = false })
-
-async function copyPublicLink() {
-  try {
-    await navigator.clipboard.writeText(fullPublicUrl.value)
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 1500)
-  } catch {}
-}
 
 // ---- AI streaming generation ("Заполнить из файла") ---------------------
 // editorInstance is set when InstructionEditor emits @ready — that's more
@@ -296,18 +287,8 @@ async function runStream(file: File) {
               :error="slugError ?? undefined"
             />
 
-            <!-- Public link with copy button -->
-            <div class="mt-sm flex items-center gap-2 rounded-md border border-hairline bg-surface px-sm py-2">
-              <span class="flex-1 truncate text-body-sm text-charcoal">{{ fullPublicUrl }}</span>
-              <button
-                type="button"
-                class="inline-flex items-center justify-center rounded-sm p-1.5 text-charcoal hover:bg-canvas"
-                :title="copied ? 'Скопировано' : 'Копировать'"
-                @click="copyPublicLink"
-              >
-                <Icon :name="copied ? 'lucide:check' : 'lucide:copy'" class="h-4 w-4" />
-              </button>
-            </div>
+            <!-- Public link: copy + QR download. Self-contained, see UiCopyableUrl. -->
+            <UiCopyableUrl class="mt-sm" :url="fullPublicUrl" :qr-filename="`${currentTenant?.slug}-${slug}`" />
 
             <hr class="my-md border-hairline">
 

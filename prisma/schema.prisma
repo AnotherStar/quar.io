@@ -199,6 +199,7 @@ model Instruction {
   viewEvents        ViewEvent[]
   blockFeedback     BlockFeedback[]
   warrantyRegistrations WarrantyRegistration[]
+  feedbackSubmissions   FeedbackSubmission[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status])
@@ -416,6 +417,23 @@ model WarrantyRegistration {
 
   @@index([instructionId])
   @@index([customerEmail])
+}
+
+// Sample module data: Feedback submissions (FAQ contact form).
+model FeedbackSubmission {
+  id            String   @id @default(cuid())
+  instructionId String
+  instruction   Instruction @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  fio           String?
+  phone         String?
+  email         String?
+  telegram      String?
+  message       String?
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+
+  @@index([instructionId])
+  @@index([createdAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

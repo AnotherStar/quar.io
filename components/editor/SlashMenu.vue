@@ -33,6 +33,7 @@ const COMMANDS: Cmd[] = [
   { id: 'safety-danger', title: 'Блок: Опасно', hint: 'Критическая опасность', icon: 'lucide:octagon-x', run: (e) => e.chain().focus().deleteRange(currentRange.value!).setSafetyBlock('danger').run() },
   { id: 'section-ref', title: 'Секция', hint: 'Вставить переиспользуемую секцию', icon: 'lucide:blocks', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertSectionRef().run() },
   { id: 'module-ref', title: 'Модуль', hint: 'Вставить модуль (гарантия, чат...)', icon: 'lucide:puzzle', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertModuleRef().run() },
+  { id: 'table', title: 'Таблица', hint: 'Таблица 3×3 с шапкой', icon: 'lucide:table', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
   { id: 'image', title: 'Изображение', hint: 'Загрузить картинку', icon: 'lucide:image', run: () => triggerImageUpload() },
   { id: 'youtube', title: 'YouTube', hint: 'Встроить видео', icon: 'lucide:youtube', run: (e) => {
     const url = prompt('Ссылка на YouTube:')

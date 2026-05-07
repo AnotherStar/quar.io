@@ -54,8 +54,13 @@ export interface ModuleDefinition {
   manifest: ModuleManifestDef
   /** Public renderer component — receives ModuleRenderProps via $props */
   PublicComponent: () => Promise<{ default: Component }>
-  /** Optional admin config component */
+  /** Optional tenant-wide admin config component (rendered on /dashboard/modules) */
   AdminComponent?: () => Promise<{ default: Component }>
+  /** Optional per-instance config component opened from the editor's
+   *  "Настроить" button inside the module-ref dropdown. Receives
+   *  `modelValue: Record<string, unknown>` (the current `configOverride`)
+   *  and emits `update:modelValue` to persist edits onto the node. */
+  EditorConfigComponent?: () => Promise<{ default: Component }>
   /** Optional sidebar entry shown when this module is enabled for the tenant.
    *  Lets a module add its own data view (e.g. warranty registrations list). */
   dashboardNavItem?: DashboardNavItem

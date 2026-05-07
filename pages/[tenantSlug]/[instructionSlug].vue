@@ -55,6 +55,12 @@ const sidebarSlots = computed(() => {
   return { sections: sec, modules: mod }
 })
 const hasSidebar = computed(() => sidebarSlots.value.sections.length > 0 || sidebarSlots.value.modules.length > 0)
+
+// Anchor scroll-tracking. Walks h1/h2/h3 inside the main content wrapper,
+// gives each a slug-id, and keeps location.hash synced as the reader scrolls.
+// Only the main instruction content participates — sections / modules in
+// before/after slots are excluded by scoping to .js-instruction-content.
+useHeadingAnchors('.js-instruction-content')
 </script>
 
 <template>
@@ -88,12 +94,18 @@ const hasSidebar = computed(() => sidebarSlots.value.sections.length > 0 || side
           />
         </template>
 
-        <ClientOnly>
-          <InstructionContent :content="data!.instruction.content as object" />
-          <template #fallback>
-            <div class="min-h-[400px] animate-pulse rounded-md bg-surface" />
-          </template>
-        </ClientOnly>
+        <!-- Wrapper class is the sole hook for useHeadingAnchors so that
+             only the MAIN instruction content participates in URL-hash
+             tracking — section/module headings rendered in slots are
+             intentionally outside this scope. -->
+        <div class="js-instruction-content">
+          <ClientOnly>
+            <InstructionContent :content="data!.instruction.content as object" />
+            <template #fallback>
+              <div class="min-h-[400px] animate-pulse rounded-md bg-surface" />
+            </template>
+          </ClientOnly>
+        </div>
 
         <template v-for="s in afterSlots.sections" :key="s.id">
           <SectionRenderer :name="s.name" :content="s.content as object" />
@@ -156,12 +168,31 @@ const hasSidebar = computed(() => sidebarSlots.value.sections.length > 0 || side
 .prose-mo h2 { @apply text-h2 mt-12 mb-3; }
 .prose-mo h3 { @apply text-h3 mt-10 mb-3; }
 .prose-mo p  { @apply text-body text-charcoal leading-relaxed mb-4; }
-.prose-mo ul { @apply list-disc pl-6 mb-4; }
-.prose-mo ol { @apply list-decimal pl-6 mb-4; }
+/* Apply bullets only to "regular" lists. Excluding [data-type='taskList']
+ * keeps checklists clean (their rules live in global.css), and the
+ * `[data-module] *` exclusion keeps any UL inside an attached module
+ * (FAQ, feedback, etc.) free from prose-mo bullets. */
+.prose-mo ul:not([data-type='taskList']) { @apply list-disc pl-6 mb-4; }
+.prose-mo ol:not([data-type='taskList']) { @apply list-decimal pl-6 mb-4; }
+.prose-mo [data-module] ul,
+.prose-mo [data-module] ol { @apply list-none pl-0 mb-0; }
 .prose-mo blockquote { @apply border-l-4 border-hairline-strong pl-4 italic text-charcoal my-4; }
 .prose-mo img { @apply rounded-md max-w-full my-4; }
 .prose-mo iframe { @apply rounded-md max-w-full my-4; }
 .prose-mo code { @apply rounded-sm bg-tint-gray px-1 py-0.5 text-body-sm; }
 .prose-mo pre { @apply rounded-md bg-tint-gray p-md my-4 overflow-x-auto; }
 .prose-mo a { @apply text-link underline; }
+
+/* Anchor-scroll padding so a heading lands a hair below the top edge instead
+ * of glued to it — easier to read and leaves room for any future sticky bar. */
+.prose-mo h1[id],
+.prose-mo h2[id],
+.prose-mo h3[id] {
+  scroll-margin-top: 16px;
+}
+
+/* Smooth scroll for in-page hash navigation. Setting it on html (not on a
+ * specific container) covers both initial-hash arrivals and any future
+ * NuxtLink-with-hash clicks. */
+html { scroll-behavior: smooth; }
 </style>

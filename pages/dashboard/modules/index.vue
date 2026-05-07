@@ -46,6 +46,14 @@ async function toggle(code: string, enabled: boolean, config: object) {
           >
             Регистрации →
           </UiButton>
+          <UiButton
+            v-if="m.code === 'feedback' && m.allowedByPlan"
+            size="sm"
+            variant="ghost"
+            to="/dashboard/modules/feedback"
+          >
+            Настроить →
+          </UiButton>
         </div>
       </UiCard>
     </div>

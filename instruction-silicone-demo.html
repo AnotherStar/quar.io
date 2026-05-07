@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Инструкция · EpoxyMaster платиновый силикон · ManualOnline demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #eef0f4;
+    color: #1a1a1a;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .phone-frame {
+    max-width: 420px;
+    margin: 0 auto;
+    background: #fff;
+    min-height: 100vh;
+    box-shadow: 0 0 40px rgba(0,0,0,0.08);
+    position: relative;
+    padding-bottom: 90px;
+  }
+  .demo-banner {
+    background: linear-gradient(90deg, #0d9488, #2563eb);
+    color: #fff;
+    text-align: center;
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .header {
+    position: sticky; top: 0;
+    background: #fff;
+    border-bottom: 1px solid #ececec;
+    padding: 12px 16px 10px;
+    z-index: 10;
+  }
+  .header-top {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .product-thumb {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ccfbf1, #e0f2fe);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 10px; color: #0f766e; font-weight: 700;
+    line-height: 1.1;
+    flex-shrink: 0;
+  }
+  .product-info { flex: 1; min-width: 0; }
+  .product-title {
+    font-size: 13px; font-weight: 600;
+    line-height: 1.3; color: #1a1a1a;
+  }
+  .product-meta {
+    font-size: 11px; color: #8a8f9c; margin-top: 2px;
+  }
+  .search { position: relative; }
+  .search input {
+    width: 100%;
+    padding: 9px 12px 9px 34px;
+    border: 1px solid #e0e2e8;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f8f9fb;
+    outline: none;
+    font-family: inherit;
+  }
+  .search input:focus { border-color: #0d9488; background: #fff; }
+  .search-icon {
+    position: absolute; left: 11px; top: 50%;
+    transform: translateY(-50%); color: #9aa0ad;
+  }
+  .progress-wrap {
+    padding: 11px 16px 8px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .progress-info {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: #6b7280; margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 4px; background: #eef0f4;
+    border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0d9488, #14b8a6);
+    width: 0%; transition: width 0.3s;
+  }
+  .steps-nav {
+    background: #fff;
+    padding: 10px 16px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .steps-nav::-webkit-scrollbar { display: none; }
+  .step-pill {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-right: 6px;
+    border-radius: 16px;
+    font-size: 12px;
+    background: #f0f2f6;
+    color: #4b5563;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .step-pill.active {
+    background: #0d9488; color: #fff; font-weight: 500;
+  }
+  .step-pill.done {
+    background: #ccfbf1; color: #0f766e;
+  }
+  .content { padding: 22px 16px 24px; }
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .step-num {
+    font-size: 11px; font-weight: 700;
+    color: #0d9488; text-transform: uppercase;
+    letter-spacing: 0.7px; margin-bottom: 6px;
+  }
+  .step-title {
+    font-size: 22px; font-weight: 700;
+    color: #111; margin-bottom: 4px; line-height: 1.25;
+  }
+  .step-subtitle {
+    color: #6b7280; font-size: 14px; margin-bottom: 18px;
+  }
+  .visual {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(135deg, #ecfeff, #f0fdfa);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: #94a3b8; font-size: 12px;
+    border: 1px dashed #99f6e4;
+    text-align: center;
+    padding: 12px;
+  }
+  .visual-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    color: #5eead4; margin-bottom: 4px;
+  }
+  .step-body { font-size: 15px; color: #2a2e35; }
+  .step-body p { margin-bottom: 12px; }
+  .step-body ol, .step-body ul { margin: 0 0 14px 20px; }
+  .step-body li { margin-bottom: 6px; }
+  .step-body strong { color: #111; }
+  .alert {
+    border-left: 3px solid;
+    padding: 12px 14px;
+    margin: 14px 0;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .alert-warning { border-color: #f59e0b; background: #fffaf0; color: #78350f; }
+  .alert-danger  { border-color: #ef4444; background: #fef2f2; color: #7f1d1d; }
+  .alert-info    { border-color: #0d9488; background: #f0fdfa; color: #115e59; }
+  .alert-tip     { border-color: #16a34a; background: #f0fdf4; color: #14532d; }
+  .alert-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 4px; display: block;
+  }
+  .feedback {
+    border-top: 1px solid #ececec;
+    border-bottom: 1px solid #ececec;
+    padding: 16px 0;
+    margin: 26px 0 12px;
+    text-align: center;
+  }
+  .feedback-q { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+  .feedback-buttons {
+    display: flex; gap: 8px;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .fb-btn {
+    background: #fff;
+    border: 1px solid #d6d9e0;
+    color: #4b5563;
+    padding: 7px 14px;
+    border-radius: 18px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .fb-btn:hover { border-color: #0d9488; color: #0d9488; }
+  .fb-btn.active-good { background: #ccfbf1; border-color: #0d9488; color: #115e59; }
+  .fb-btn.active-bad  { background: #fef2f2; border-color: #ef4444; color: #7f1d1d; }
+  .fb-btn.active-info { background: #f0fdfa; border-color: #0d9488; color: #115e59; }
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 420px; margin: 0 auto;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    padding: 10px 16px 14px;
+    display: flex; gap: 8px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.04);
+    z-index: 20;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .nav-prev { background: #f3f4f6; color: #4b5563; }
+  .nav-next { background: #0d9488; color: #fff; flex: 2; }
+  .nav-prev:disabled { opacity: 0.4; cursor: not-allowed; }
+  .nav-next:hover { background: #0f766e; }
+  .faq-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .faq-q {
+    padding: 12px 14px;
+    background: #fafbfc;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .faq-q-icon {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .faq-a {
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #374151;
+    border-top: 1px solid #e5e7eb;
+    display: none;
+  }
+  .faq-item.open .faq-a { display: block; }
+  .faq-item.open .faq-q { background: #f0fdfa; }
+  .faq-item.open .faq-q-icon { transform: rotate(45deg); background: #0d9488; color: #fff; }
+  .spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .spec-table td {
+    padding: 9px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .spec-table td:first-child { color: #6b7280; }
+  .spec-table td:last-child { font-weight: 500; text-align: right; }
+  .checklist { list-style: none; padding: 0; margin: 14px 0; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-mark {
+    width: 18px; height: 18px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .check-mark.checked { background: #0d9488; border-color: #0d9488; }
+  .check-mark.checked::after {
+    content: ""; position: absolute;
+    left: 4px; top: 1px;
+    width: 4px; height: 9px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .checklist li.done { color: #9ca3af; text-decoration: line-through; }
+  .help-block {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 18px 0 6px;
+    font-size: 13px;
+    text-align: center;
+    color: #475569;
+  }
+  .help-block a {
+    color: #0d9488; text-decoration: none; font-weight: 500;
+  }
+  .ratio-card {
+    background: linear-gradient(135deg, #f0fdfa, #ecfeff);
+    border: 1px solid #99f6e4;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 14px 0;
+    text-align: center;
+  }
+  .ratio-big {
+    font-size: 38px; font-weight: 800;
+    color: #0f766e; letter-spacing: 2px;
+    line-height: 1;
+  }
+  .ratio-label {
+    font-size: 11px; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.7px;
+    margin-top: 6px;
+  }
+  .ratio-detail {
+    font-size: 13px; color: #475569;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid #99f6e4;
+  }
+  .time-block { display: flex; gap: 8px; margin: 14px 0; }
+  .time-card {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .time-val { font-size: 17px; font-weight: 700; color: #111; }
+  .time-label {
+    font-size: 10px; color: #6b7280;
+    margin-top: 3px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .quick-link {
+    display: block;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    margin: 10px 0;
+    cursor: pointer;
+  }
+  .quick-link strong { color: #7c2d12; }
+  .toast {
+    position: fixed;
+    bottom: 90px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1f2937;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* Inhibitor table */
+  .inhibitor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 14px 0;
+  }
+  .inh-card {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .inh-title {
+    font-weight: 700;
+    color: #7f1d1d;
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+  .inh-desc {
+    color: #991b1b;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+</style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="demo-banner">Демо ManualOnline · мобильная QR-инструкция вместо PDF и вкладыша</div>
+
+    <div class="header">
+      <div class="header-top">
+        <div class="product-thumb">Pt<br>Si</div>
+        <div class="product-info">
+          <div class="product-title">EpoxyMaster — жидкий силикон на платине для форм</div>
+          <div class="product-meta">2 компонента · пропорция 1:1 · артикул 24386259</div>
+        </div>
+      </div>
+      <div class="search">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-input" placeholder="Найти ответ: «не застывает», «липкий», «пластилин»…" oninput="searchSteps(this.value)">
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span id="step-counter">Шаг 1 из 10</span>
+        <span>Чтение: ~7 мин</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="steps-nav" id="steps-nav"></div>
+
+    <div class="content">
+
+      <!-- STEP 1 -->
+      <div class="step active" data-step="1">
+        <div class="step-num">Шаг 1 · Знакомство</div>
+        <h1 class="step-title">Что у вас в руках</h1>
+        <div class="step-subtitle">Двухкомпонентный силикон на платиновом катализаторе для изготовления форм.</div>
+
+        <div class="visual">
+          <div>
+            <div class="visual-label">Иллюстрация</div>
+            <div>две бутылки A и B + мерные стаканчики + мастер-модель</div>
+          </div>
+        </div>
+
+        <table class="spec-table">
+          <tr><td>Тип катализатора</td><td>платина (RTV-2)</td></tr>
+          <tr><td>Пропорция</td><td>1 : 1 по весу</td></tr>
+          <tr><td>Цвет</td><td>прозрачный / молочный</td></tr>
+          <tr><td>Время жизни смеси</td><td>25–35 минут</td></tr>
+          <tr><td>Полное отверждение</td><td>4–6 часов при 23 °C</td></tr>
+          <tr><td>Твердость по Шору</td><td>~25 А</td></tr>
+          <tr><td>Усадка</td><td>менее 0.1%</td></tr>
+        </table>
+
+        <div class="alert alert-info">
+          <span class="alert-label">Главное отличие от других силиконов</span>
+          Платиновый силикон — <strong>пищевой и кожно-безопасный</strong> после отверждения, не дает усадку, точно повторяет форму. Но у него есть критическая особенность: <strong>его легко «отравить» (ингибировать)</strong>, и тогда он не застынет вообще. Об этом — на шаге 2.
+        </div>
+
+        <a class="quick-link" onclick="goToStep(10); return false;">
+          Уже залили и есть проблема? <strong>Перейти к разделу проблем →</strong>
+        </a>
+      </div>
+
+      <!-- STEP 2 — INHIBITION (the killer step) -->
+      <div class="step" data-step="2">
+        <div class="step-num">Шаг 2 · Самое важное про этот силикон</div>
+        <h1 class="step-title">Ингибирование: что губит платиновый силикон</h1>
+        <div class="step-subtitle">90% жалоб «не застыл» — отсюда. Прочтите этот шаг до начала работы.</div>
+
+        <div class="alert alert-danger">
+          <span class="alert-label">Ингибирование — это</span>
+          Контакт с определенными веществами <strong>отравляет платиновый катализатор</strong>. Силикон тогда либо не застывает совсем, либо остается липким на стороне, которая касалась «отравителя». Это не брак — это химия.
+        </div>
+
+        <p style="font-size:13px;color:#475569;margin-bottom:6px;font-weight:600;">Эти материалы НЕЛЬЗЯ использовать рядом с платиновым силиконом:</p>
+
+        <div class="inhibitor-grid">
+          <div class="inh-card">
+            <div class="inh-title">Латекс</div>
+            <div class="inh-desc">перчатки, презервативы — только нитрил</div>
+          </div>
+          <div class="inh-card">
+            <div class="inh-title">Сера</div>
+            <div class="inh-desc">обычный пластилин, серная резина</div>
+          </div>
+          <div class="inh-card">
+            <div class="inh-title">Олово</div>
+            <div class="inh-desc">оловянные силиконы (касательно — не зальете оба сразу)</div>
+          </div>
+          <div class="inh-card">
+            <div class="inh-title">Свежая эпоксидка</div>
+            <div class="inh-desc">не залитая до конца смола, амины</div>
+          </div>
+          <div class="inh-card">
+            <div class="inh-title">Полиэстер</div>
+            <div class="inh-desc">недополимеризованные смолы</div>
+          </div>
+          <div class="inh-card">
+            <div class="inh-title">Некоторые краски</div>
+            <div class="inh-desc">особенно акрил с серосодержащими пигментами</div>
+          </div>
+        </div>
+
+        <div class="alert alert-tip">
+          <span class="alert-label">Безопасные мастер-модели</span>
+          Полимерная глина (запеченная), 3D-печать (PLA, PETG, ABS), дерево с акриловым лаком, металл, стекло, гипс с лаком, воск, MDF с покрытием. Если сомневаетесь — <strong>сделайте тест-пятно</strong>: капля силикона на 1 час, не липнет ли?
+        </div>
+
+        <div class="alert alert-warning">
+          <span class="alert-label">Совет про пластилин</span>
+          Используйте <strong>безсерный (sulfur-free) пластилин</strong> для скульптуры, например Monster Clay, ChavantNSP или аналоги. Обычный детский пластилин — испортит силикон.
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step" data-step="3">
+        <div class="step-num">Шаг 3 · Безопасность и инструменты</div>
+        <h1 class="step-title">Что должно быть на столе</h1>
+        <div class="step-subtitle">Платиновый силикон сам по себе безопасен, но несколько правил все же есть.</div>
+
+        <ul class="checklist">
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span><strong>Нитриловые</strong> перчатки. Не латексные — это критично.</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Электронные весы с точностью 0.1 г</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Чистые пластиковые стаканчики (не из полистирола)</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Деревянная или пластиковая палочка для смешивания</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Опалубка: коробка из ЛЕГО, картона с пленкой, пластика</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Мастер-модель — обезжиренная и проверенная (см. шаг 2)</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Таймер</span></li>
+        </ul>
+
+        <div class="alert alert-info">
+          <span class="alert-label">Хорошая новость</span>
+          В отличие от полиуретана — здесь <strong>нет токсичных паров</strong>. Можно работать в обычной комнате. Перчатки нужны больше для чистоты, чем для защиты.
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step" data-step="4">
+        <div class="step-num">Шаг 4 · Подготовка модели</div>
+        <h1 class="step-title">Готовим мастер-модель</h1>
+        <div class="step-subtitle">Силикон точно повторит каждую неровность — в том числе ту, которую вы не заметили.</div>
+
+        <div class="step-body">
+          <ol>
+            <li>Закрепите модель на дне опалубки (термоклей, двусторонний скотч, пластилин без серы).</li>
+            <li>Постройте опалубку <strong>с зазором 1–1.5 см</strong> от модели со всех сторон.</li>
+            <li>Проверьте все стыки опалубки — иначе силикон вытечет.</li>
+            <li>Если модель пористая (дерево, гипс, MDF) — покройте акриловым лаком за 24 часа до заливки.</li>
+            <li>Обезжирьте модель спиртом и дайте ему полностью испариться (10 минут).</li>
+          </ol>
+        </div>
+
+        <div class="alert alert-warning">
+          <span class="alert-label">Разделитель — почти не нужен</span>
+          Платиновый силикон <strong>сам по себе не липнет</strong> к большинству материалов. Разделитель нужен только если вы заливаете силикон <strong>в силикон</strong> (двухкомпонентная форма) — тогда используйте мыльную воду или специальный спрей.
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step" data-step="5">
+        <div class="step-num">Шаг 5 · Самый важный шаг</div>
+        <h1 class="step-title">Взвешивание компонентов</h1>
+        <div class="step-subtitle">Только по весу. Объем у A и B одинаковый на глаз, но погрешность губит результат.</div>
+
+        <div class="ratio-card">
+          <div class="ratio-big">1 : 1</div>
+          <div class="ratio-label">по весу, не по объему</div>
+          <div class="ratio-detail">Для формы 5×5×3 см обычно нужно ~75 г: 37.5 г A + 37.5 г B</div>
+        </div>
+
+        <div class="step-body">
+          <ol>
+            <li>Поставьте пустой стаканчик на весы и обнулите.</li>
+            <li>Налейте компонент A — например, 50.0 г.</li>
+            <li>Возьмите второй стаканчик, обнулите.</li>
+            <li>Налейте <strong>ровно столько же</strong> компонента B — 50.0 г.</li>
+            <li>Перепроверьте обе цифры до смешивания.</li>
+          </ol>
+        </div>
+
+        <div class="alert alert-tip">
+          <span class="alert-label">Сколько силикона нужно</span>
+          Залейте опалубку с моделью <strong>водой</strong> и измерьте, сколько помещается. Слейте воду, высушите. Это и есть нужное количество силикона. Делите пополам — это ваши A и B.
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step" data-step="6">
+        <div class="step-num">Шаг 6 · Смешивание</div>
+        <h1 class="step-title">Соединяем A и B</h1>
+        <div class="step-subtitle">У вас есть 25–30 минут — намного больше, чем у пластика. Не торопитесь.</div>
+
+        <div class="time-block">
+          <div class="time-card"><div class="time-val">25–35 мин</div><div class="time-label">время жизни</div></div>
+          <div class="time-card"><div class="time-val">2–3 мин</div><div class="time-label">смешивание</div></div>
+          <div class="time-card"><div class="time-val">15–20 мин</div><div class="time-label">на заливку</div></div>
+        </div>
+
+        <div class="step-body">
+          <ol>
+            <li>Вылейте B в стаканчик с A.</li>
+            <li>Размешивайте <strong>медленно</strong> 2–3 минуты.</li>
+            <li>Тщательно соскребайте со стенок и дна — там часто остается непромешанный компонент.</li>
+            <li>Перелейте в другой чистый стакан и размешайте еще 30 секунд (это снижает риск непромешанных зон).</li>
+            <li>Смесь должна стать однородной. Прозрачные «жилки» = плохо размешано.</li>
+          </ol>
+        </div>
+
+        <div class="alert alert-warning">
+          <span class="alert-label">Не взбивайте</span>
+          Быстрое размешивание = много пузырей. Силикон вязкий, пузыри потом не выйдут сами. Размешивайте <strong>как мед</strong> — медленно и равномерно.
+        </div>
+      </div>
+
+      <!-- STEP 7 -->
+      <div class="step" data-step="7">
+        <div class="step-num">Шаг 7 · Дегазация (опционально, но желательно)</div>
+        <h1 class="step-title">Убираем пузыри из смеси</h1>
+        <div class="step-subtitle">Если у вас есть вакуумная камера — сейчас лучшее время.</div>
+
+        <div class="step-body">
+          <p><strong>С вакуумной камерой:</strong> поместите стакан со смесью в камеру, откачайте до 0.1 атм, держите 2–3 минуты. Смесь сначала «закипит» — это нормально, выходят пузыри. Когда «кипение» прекратится — выключайте.</p>
+          <p><strong>Без камеры:</strong> используйте «технику высокой струи» при заливке (см. следующий шаг) — это уберет большинство пузырей.</p>
+        </div>
+
+        <div class="alert alert-tip">
+          <span class="alert-label">Бюджетный лайфхак</span>
+          Если камеры нет — поместите стаканчик в пакет, откачайте воздух обычным насосом для матрасов с обратным клапаном. Это не вакуум, но часть пузырей уйдет.
+        </div>
+
+        <div class="alert alert-info">
+          <span class="alert-label">Не критично для простых форм</span>
+          Если у вас плоская модель без глубоких поднутрений — можно обойтись без дегазации. Пузыри будут только на поверхности силикона (нерабочая сторона) и не повлияют на форму.
+        </div>
+      </div>
+
+      <!-- STEP 8 -->
+      <div class="step" data-step="8">
+        <div class="step-num">Шаг 8 · Заливка</div>
+        <h1 class="step-title">Заливаем на модель</h1>
+        <div class="step-subtitle">Тонкой струей с высоты 20–30 см — это «техника высокой струи».</div>
+
+        <div class="step-body">
+          <ol>
+            <li>Лейте силикон <strong>в один угол опалубки</strong>, не на саму модель.</li>
+            <li>Пусть силикон растекается по дну сам и поднимается вверх — так он вытесняет воздух из впадин модели.</li>
+            <li>Лейте <strong>тонкой струей с высоты 20–30 см</strong> — длинная струя вытягивается и пузыри лопаются по дороге.</li>
+            <li>Заполните опалубку до уровня на 0.5–1 см выше самой высокой точки модели.</li>
+            <li>Слегка постучите опалубкой о стол, чтобы остатки пузырей всплыли.</li>
+          </ol>
+        </div>
+
+        <div class="alert alert-tip">
+          <span class="alert-label">Кисточка для деталей</span>
+          Перед основной заливкой <strong>кистью пройдитесь</strong> по сложным местам модели тонким слоем силикона — это гарантированно загонит силикон во все углубления и предотвратит пузыри в рельефе.
+        </div>
+      </div>
+
+      <!-- STEP 9 -->
+      <div class="step" data-step="9">
+        <div class="step-num">Шаг 9 · Отверждение и извлечение</div>
+        <h1 class="step-title">Достаем готовую форму</h1>
+        <div class="step-subtitle">Силикон полимеризуется при комнатной температуре. Не нагревайте.</div>
+
+        <div class="time-block">
+          <div class="time-card"><div class="time-val">2 ч</div><div class="time-label">желирование</div></div>
+          <div class="time-card"><div class="time-val">6 ч</div><div class="time-label">основной набор</div></div>
+          <div class="time-card"><div class="time-val">24 ч</div><div class="time-label">полная стабильность</div></div>
+        </div>
+
+        <div class="step-body">
+          <p>Накройте опалубку коробкой от пыли. Оставьте при комнатной температуре (20–25 °C). <strong>Не двигайте, не наклоняйте</strong> в первые 2 часа.</p>
+          <p>Через 6 часов силикон полностью полимеризован. Можно разобрать опалубку и аккуратно достать мастер-модель.</p>
+          <p>Если форма имеет поднутрения — сделайте <strong>надрез ножом по линии разъема</strong>, выньте модель и замаскируйте надрез вручную (силикон срастается обратно при использовании).</p>
+        </div>
+
+        <div class="alert alert-warning">
+          <span class="alert-label">Если в комнате холодно</span>
+          При температуре ниже 18 °C время отверждения растет в 1.5–2 раза. Не используйте фен — нагрев выше 60 °C может вызвать деформацию формы.
+        </div>
+
+        <div class="alert alert-info">
+          <span class="alert-label">Использование готовой формы</span>
+          Платиновый силикон выдерживает 50+ заливок полиуретаном или эпоксидкой. Перед каждой заливкой можно использовать разделитель (или не использовать — силикон не липнет). Хранить в сухом месте без пыли.
+        </div>
+      </div>
+
+      <!-- STEP 10 -->
+      <div class="step" data-step="10">
+        <div class="step-num">Шаг 10 · Если что-то пошло не так</div>
+        <h1 class="step-title">Частые проблемы</h1>
+        <div class="step-subtitle">Прежде чем оставить отзыв «брак» — посмотрите этот список.</div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Силикон не застыл вообще или местами липкий</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">99% случаев — <strong>ингибирование</strong> (см. шаг 2). Силикон коснулся серы (пластилин), латекса, олова, свежей эпоксидки или серосодержащей краски на модели. Спасти такую форму нельзя — придется переделать. На следующий раз: проверяйте материал модели и опалубки, делайте тест-пятно. Реже причина — нарушенные пропорции (отмеряли по объему).</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>В форме много пузырей</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Слишком быстрое смешивание или заливка толстой струей. На следующий раз: размешивайте медленно 2–3 минуты, лейте тонкой струей с высоты 20–30 см, пройдитесь кистью по сложным местам модели до основной заливки. Если есть вакуумная камера — дегазируйте смесь.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Силикон вытек из опалубки</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Не герметизировали стыки опалубки. На следующий раз: используйте термоклей по всем швам с внешней стороны, проверяйте до заливки, наливая немного воды.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Форма рвется при извлечении модели</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Тонкие стенки или сложные поднутрения. Делайте стенки формы не тоньше 1 см. Для сложных моделей — двухчастная форма с разъемом.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Получившаяся отливка прилипает к форме</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Это нормально для первых 1–2 заливок: на новой форме всегда есть микропоры. Используйте разделитель (восковой или силиконовый аэрозоль). После 2–3 заливок проблема обычно уходит.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Можно ли использовать форму для пищи</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Платиновый силикон в принципе пищевой и термостойкий до ~200 °C. Но для пищевого применения нужна сертификация — у конкретного товара уточните у продавца. Для домашних свечей, мыла, шоколада, льда — подходит.</div>
+        </div>
+
+        <div class="help-block">
+          Не нашли ответ?<br>
+          <a href="#" onclick="askSupport(); return false;">Написать в поддержку селлера →</a>
+        </div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="feedback">
+        <div class="feedback-q">Этот шаг был понятным?</div>
+        <div class="feedback-buttons">
+          <button class="fb-btn" onclick="feedback(this, 'good')">Полезно</button>
+          <button class="fb-btn" onclick="feedback(this, 'bad')">Непонятно</button>
+          <button class="fb-btn" onclick="feedback(this, 'bad')">Ошибка в инструкции</button>
+          <button class="fb-btn" onclick="feedback(this, 'info')">Комментарий</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn nav-prev" onclick="prevStep()" id="prev-btn">← Назад</button>
+      <button class="nav-btn nav-next" onclick="nextStep()" id="next-btn">Дальше →</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const steps = document.querySelectorAll('.step');
+  const totalSteps = steps.length;
+  let current = 1;
+
+  const pillsContainer = document.getElementById('steps-nav');
+  const stepNames = ['О товаре','Ингибирование','Инструменты','Модель','Пропорции','Смешивание','Дегазация','Заливка','Отверждение','Проблемы'];
+  for (let i = 1; i <= totalSteps; i++) {
+    const pill = document.createElement('span');
+    pill.className = 'step-pill' + (i === 1 ? ' active' : '');
+    pill.textContent = i + '. ' + stepNames[i-1];
+    pill.dataset.step = i;
+    pill.onclick = () => goToStep(i);
+    pillsContainer.appendChild(pill);
+  }
+
+  function updateUI() {
+    steps.forEach(s => s.classList.remove('active'));
+    document.querySelector('.step[data-step="' + current + '"]').classList.add('active');
+
+    document.querySelectorAll('.step-pill').forEach(p => {
+      p.classList.remove('active', 'done');
+      const n = parseInt(p.dataset.step);
+      if (n === current) p.classList.add('active');
+      else if (n < current) p.classList.add('done');
+    });
+
+    document.getElementById('step-counter').textContent = 'Шаг ' + current + ' из ' + totalSteps;
+    document.getElementById('progress-fill').style.width = ((current / totalSteps) * 100) + '%';
+    document.getElementById('prev-btn').disabled = (current === 1);
+    document.getElementById('next-btn').textContent = (current === totalSteps) ? 'Завершить ✓' : 'Дальше →';
+
+    const activePill = document.querySelector('.step-pill[data-step="' + current + '"]');
+    if (activePill) activePill.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'});
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function goToStep(n) { current = n; updateUI(); }
+  function nextStep() {
+    if (current < totalSteps) { current++; updateUI(); }
+    else { showToast('Готово. Спасибо, что прочитали инструкцию до конца.'); }
+  }
+  function prevStep() { if (current > 1) { current--; updateUI(); } }
+
+  function toggleFaq(el) { el.classList.toggle('open'); }
+  function toggleCheck(el) {
+    el.classList.toggle('checked');
+    el.parentElement.classList.toggle('done', el.classList.contains('checked'));
+  }
+  function feedback(btn, type) {
+    btn.parentElement.querySelectorAll('.fb-btn').forEach(b => {
+      b.classList.remove('active-good','active-bad','active-info');
+    });
+    if (type === 'good') btn.classList.add('active-good');
+    else if (type === 'bad') btn.classList.add('active-bad');
+    else btn.classList.add('active-info');
+    if (type === 'info') {
+      const text = prompt('Что улучшить в этом шаге?');
+      if (text) showToast('Спасибо, передадим селлеру.');
+    } else {
+      showToast(type === 'good' ? 'Спасибо за оценку.' : 'Учли, передадим селлеру для правки.');
+    }
+  }
+  function askSupport() {
+    showToast('В реальной инструкции — кнопка чата с селлером и автоссылка на текущий шаг.');
+  }
+  function searchSteps(q) {
+    if (!q || !q.trim()) return;
+    const lc = q.toLowerCase();
+    if (lc.includes('липк') || lc.includes('не застыл') || lc.includes('не застыв') || lc.includes('пластилин') || lc.includes('латекс') || lc.includes('сер')) goToStep(2);
+    else if (lc.includes('пузыр')) goToStep(7);
+    else if (lc.includes('пропорц') || lc.includes('вес') || lc.includes('1:1')) goToStep(5);
+    else if (lc.includes('опалубк') || lc.includes('вытек')) goToStep(4);
+    else if (lc.includes('заливк')) goToStep(8);
+    else if (lc.includes('отвержд') || lc.includes('извлеч') || lc.includes('форм')) goToStep(9);
+    else if (lc.includes('пищев')) goToStep(10);
+    else if (lc.includes('инструмент') || lc.includes('перчатк')) goToStep(3);
+  }
+  let toastT;
+  function showToast(text) {
+    const t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>

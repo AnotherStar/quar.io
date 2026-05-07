@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Инструкция · ProPlast 200 г · ManualOnline demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #eef0f4;
+    color: #1a1a1a;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 0;
+  }
+  .phone-frame {
+    max-width: 420px;
+    margin: 0 auto;
+    background: #fff;
+    min-height: 100vh;
+    box-shadow: 0 0 40px rgba(0,0,0,0.08);
+    position: relative;
+    padding-bottom: 90px;
+  }
+  .demo-banner {
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    color: #fff;
+    text-align: center;
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .header {
+    position: sticky; top: 0;
+    background: #fff;
+    border-bottom: 1px solid #ececec;
+    padding: 12px 16px 10px;
+    z-index: 10;
+  }
+  .header-top {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .product-thumb {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #e8eef9, #f5f7fb);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 10px; color: #4a5b7a; font-weight: 700;
+    line-height: 1.1;
+    flex-shrink: 0;
+  }
+  .product-info { flex: 1; min-width: 0; }
+  .product-title {
+    font-size: 13px; font-weight: 600;
+    line-height: 1.3; color: #1a1a1a;
+  }
+  .product-meta {
+    font-size: 11px; color: #8a8f9c; margin-top: 2px;
+  }
+  .search { position: relative; }
+  .search input {
+    width: 100%;
+    padding: 9px 12px 9px 34px;
+    border: 1px solid #e0e2e8;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f8f9fb;
+    outline: none;
+    font-family: inherit;
+  }
+  .search input:focus { border-color: #2563eb; background: #fff; }
+  .search-icon {
+    position: absolute; left: 11px; top: 50%;
+    transform: translateY(-50%); color: #9aa0ad;
+  }
+  .progress-wrap {
+    padding: 11px 16px 8px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .progress-info {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: #6b7280; margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 4px; background: #eef0f4;
+    border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    width: 0%; transition: width 0.3s;
+  }
+  .steps-nav {
+    background: #fff;
+    padding: 10px 16px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .steps-nav::-webkit-scrollbar { display: none; }
+  .step-pill {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-right: 6px;
+    border-radius: 16px;
+    font-size: 12px;
+    background: #f0f2f6;
+    color: #4b5563;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .step-pill.active {
+    background: #2563eb; color: #fff; font-weight: 500;
+  }
+  .step-pill.done {
+    background: #e8f5ee; color: #1f7a3f;
+  }
+  .content { padding: 22px 16px 24px; }
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .step-num {
+    font-size: 11px; font-weight: 700;
+    color: #2563eb; text-transform: uppercase;
+    letter-spacing: 0.7px; margin-bottom: 6px;
+  }
+  .step-title {
+    font-size: 22px; font-weight: 700;
+    color: #111; margin-bottom: 4px; line-height: 1.25;
+  }
+  .step-subtitle {
+    color: #6b7280; font-size: 14px; margin-bottom: 18px;
+  }
+  .visual {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(135deg, #eef2f7, #f7f8fb);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: #94a3b8; font-size: 12px;
+    border: 1px dashed #d8dee8;
+    text-align: center;
+    padding: 12px;
+  }
+  .visual-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    color: #b6bdca; margin-bottom: 4px;
+  }
+  .step-body { font-size: 15px; color: #2a2e35; }
+  .step-body p { margin-bottom: 12px; }
+  .step-body ol, .step-body ul { margin: 0 0 14px 20px; }
+  .step-body li { margin-bottom: 6px; }
+  .step-body strong { color: #111; }
+  .alert {
+    border-left: 3px solid;
+    padding: 12px 14px;
+    margin: 14px 0;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .alert-warning { border-color: #f59e0b; background: #fffaf0; color: #78350f; }
+  .alert-danger  { border-color: #ef4444; background: #fef2f2; color: #7f1d1d; }
+  .alert-info    { border-color: #2563eb; background: #eff6ff; color: #1e3a8a; }
+  .alert-tip     { border-color: #16a34a; background: #f0fdf4; color: #14532d; }
+  .alert-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 4px; display: block;
+  }
+  .feedback {
+    border-top: 1px solid #ececec;
+    border-bottom: 1px solid #ececec;
+    padding: 16px 0;
+    margin: 26px 0 12px;
+    text-align: center;
+  }
+  .feedback-q { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+  .feedback-buttons {
+    display: flex; gap: 8px;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .fb-btn {
+    background: #fff;
+    border: 1px solid #d6d9e0;
+    color: #4b5563;
+    padding: 7px 14px;
+    border-radius: 18px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .fb-btn:hover { border-color: #2563eb; color: #2563eb; }
+  .fb-btn.active-good { background: #e8f5ee; border-color: #16a34a; color: #14532d; }
+  .fb-btn.active-bad  { background: #fef2f2; border-color: #ef4444; color: #7f1d1d; }
+  .fb-btn.active-info { background: #eff6ff; border-color: #2563eb; color: #1e3a8a; }
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 420px; margin: 0 auto;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    padding: 10px 16px 14px;
+    display: flex; gap: 8px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.04);
+    z-index: 20;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .nav-prev { background: #f3f4f6; color: #4b5563; }
+  .nav-next { background: #2563eb; color: #fff; flex: 2; }
+  .nav-prev:disabled { opacity: 0.4; cursor: not-allowed; }
+  .nav-next:hover { background: #1d4ed8; }
+  .faq-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .faq-q {
+    padding: 12px 14px;
+    background: #fafbfc;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .faq-q-icon {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .faq-a {
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #374151;
+    border-top: 1px solid #e5e7eb;
+    display: none;
+  }
+  .faq-item.open .faq-a { display: block; }
+  .faq-item.open .faq-q { background: #f0f4fa; }
+  .faq-item.open .faq-q-icon { transform: rotate(45deg); background: #2563eb; color: #fff; }
+  .spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .spec-table td {
+    padding: 9px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .spec-table td:first-child { color: #6b7280; }
+  .spec-table td:last-child { font-weight: 500; text-align: right; }
+  .checklist { list-style: none; padding: 0; margin: 14px 0; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-mark {
+    width: 18px; height: 18px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .check-mark.checked { background: #16a34a; border-color: #16a34a; }
+  .check-mark.checked::after {
+    content: ""; position: absolute;
+    left: 4px; top: 1px;
+    width: 4px; height: 9px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .checklist li.done { color: #9ca3af; text-decoration: line-through; }
+  .help-block {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 18px 0 6px;
+    font-size: 13px;
+    text-align: center;
+    color: #475569;
+  }
+  .help-block a {
+    color: #2563eb; text-decoration: none; font-weight: 500;
+  }
+  .ratio-card {
+    background: linear-gradient(135deg, #f8fafc, #eff6ff);
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 14px 0;
+    text-align: center;
+  }
+  .ratio-big {
+    font-size: 38px; font-weight: 800;
+    color: #1d4ed8; letter-spacing: 2px;
+    line-height: 1;
+  }
+  .ratio-label {
+    font-size: 11px; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.7px;
+    margin-top: 6px;
+  }
+  .ratio-detail {
+    font-size: 13px; color: #475569;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid #dbeafe;
+  }
+  .time-block { display: flex; gap: 8px; margin: 14px 0; }
+  .time-card {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .time-val { font-size: 17px; font-weight: 700; color: #111; }
+  .time-label {
+    font-size: 10px; color: #6b7280;
+    margin-top: 3px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .quick-link {
+    display: block;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    margin: 10px 0;
+  }
+  .quick-link strong { color: #7c2d12; }
+  .toast {
+    position: fixed;
+    bottom: 90px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1f2937;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="demo-banner">Демо ManualOnline · мобильная QR-инструкция · вместо PDF</div>
+
+    <div class="header">
+      <div class="header-top">
+        <div class="product-thumb">Pro<br>Plast<br>200г</div>
+        <div class="product-info">
+          <div class="product-title">ЭпохуMaster ProPlast — белый литьевой пластик</div>
+          <div class="product-meta">200 г · 2 компонента · артикул 24386251</div>
+        </div>
+      </div>
+      <div class="search">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-input" placeholder="Найти ответ: «не застыл», «пузыри», «пропорции»…" oninput="searchSteps(this.value)">
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span id="step-counter">Шаг 1 из 9</span>
+        <span>Чтение: ~6 мин</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="steps-nav" id="steps-nav"></div>
+
+    <div class="content">
+
+      <!-- STEP 1 -->
+      <div class="step active" data-step="1">
+        <div class="step-num">Шаг 1 · Знакомство</div>
+        <h1 class="step-title">Что у вас в руках</h1>
+        <div class="step-subtitle">Двухкомпонентный полиуретановый пластик для отливки в силиконовые формы.</div>
+
+        <div class="visual">
+          <div>
+            <div class="visual-label">Иллюстрация</div>
+            <div>две бутылки: компонент A и компонент B + мерные стаканчики</div>
+          </div>
+        </div>
+
+        <table class="spec-table">
+          <tr><td>Объем набора</td><td>200 г (100 г A + 100 г B)</td></tr>
+          <tr><td>Пропорция</td><td>1 : 1 по весу</td></tr>
+          <tr><td>Цвет</td><td>матовый белый</td></tr>
+          <tr><td>Время жизни смеси</td><td>2–3 минуты</td></tr>
+          <tr><td>Извлечение из формы</td><td>~30 минут</td></tr>
+          <tr><td>Полное отверждение</td><td>24 часа</td></tr>
+        </table>
+
+        <div class="alert alert-info">
+          <span class="alert-label">Важно знать заранее</span>
+          Это <strong>не эпоксидная смола</strong>. Технология похожа, но пропорции и время — другие. Если у вас был опыт с эпоксидкой — не переносите его сюда автоматически.
+        </div>
+
+        <a class="quick-link" onclick="goToStep(9); return false;">
+          Уже что-то пошло не так? <strong>Перейти к разделу проблем →</strong>
+        </a>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step" data-step="2">
+        <div class="step-num">Шаг 2 · Безопасность</div>
+        <h1 class="step-title">Прежде чем открыть бутылки</h1>
+        <div class="step-subtitle">30 секунд, которые сохранят руки, мебель и форму.</div>
+
+        <div class="alert alert-danger">
+          <span class="alert-label">Внимание</span>
+          Работайте <strong>только в проветриваемом помещении</strong>. Пары изоцианатов раздражают дыхательные пути. Не работайте рядом с детьми и животными.
+        </div>
+
+        <ul class="checklist">
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span><strong>Нитриловые</strong> перчатки (латексные не подходят — материал их разъедает)</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Респиратор или открытое окно</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Защитные очки при заливке тонкой струей</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Стол застелен пленкой или газетой</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Под рукой бумажные салфетки</span></li>
+        </ul>
+
+        <div class="alert alert-warning">
+          <span class="alert-label">Если попало на кожу</span>
+          Сразу протрите салфеткой и промойте теплой водой с мылом. <strong>Не используйте растворители</strong> — они только загонят материал глубже в кожу.
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step" data-step="3">
+        <div class="step-num">Шаг 3 · Подготовка</div>
+        <h1 class="step-title">Что должно быть на столе</h1>
+        <div class="step-subtitle">Соберите всё заранее. После смешивания у вас 2–3 минуты — не время искать палочку.</div>
+
+        <ul class="checklist">
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span><strong>Электронные весы</strong> с точностью 0.1 г (кухонные подойдут)</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Два чистых пластиковых стаканчика — НЕ из полистирола (расплавится)</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Деревянная палочка или одноразовая ложка для смешивания</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Силиконовая форма — сухая и обезжиренная</span></li>
+          <li><span class="check-mark" onclick="toggleCheck(this)"></span><span>Таймер (телефон подойдет)</span></li>
+        </ul>
+
+        <div class="alert alert-tip">
+          <span class="alert-label">Совет</span>
+          Температура в комнате должна быть <strong>18–25 °C</strong>. На холоде пластик густеет и плохо заливается, на жаре твердеет за 60 секунд и не успевает заполнить форму.
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step" data-step="4">
+        <div class="step-num">Шаг 4 · Самый важный шаг</div>
+        <h1 class="step-title">Взвешивание компонентов</h1>
+        <div class="step-subtitle">Это шаг, на котором обычно всё ломается. Не отмеряйте «на глаз».</div>
+
+        <div class="ratio-card">
+          <div class="ratio-big">1 : 1</div>
+          <div class="ratio-label">по весу, не по объему</div>
+          <div class="ratio-detail">10 г компонента A + 10 г компонента B = 20 г готовой смеси</div>
+        </div>
+
+        <div class="step-body">
+          <ol>
+            <li>Поставьте пустой стаканчик на весы и обнулите (тара).</li>
+            <li>Налейте нужное количество компонента A — допустим, 10.0 г.</li>
+            <li>Возьмите второй стаканчик, обнулите весы заново.</li>
+            <li>Налейте <strong>ровно столько же</strong> компонента B — 10.0 г.</li>
+            <li>Перепроверьте обе цифры до того, как смешаете.</li>
+          </ol>
+        </div>
+
+        <div class="alert alert-danger">
+          <span class="alert-label">Самая частая ошибка</span>
+          Объем A и B на глаз кажется одинаковым, но <strong>плотность у них разная</strong>. Если налить «по объему» — пропорция будет неверной, и пластик не застынет или останется липким.
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step" data-step="5">
+        <div class="step-num">Шаг 5 · Смешивание</div>
+        <h1 class="step-title">Соединяем A и B</h1>
+        <div class="step-subtitle">С этого момента включается таймер. Все следующие действия — за 2–3 минуты.</div>
+
+        <div class="time-block">
+          <div class="time-card"><div class="time-val">2–3 мин</div><div class="time-label">время жизни</div></div>
+          <div class="time-card"><div class="time-val">30 сек</div><div class="time-label">смешивание</div></div>
+          <div class="time-card"><div class="time-val">60 сек</div><div class="time-label">на заливку</div></div>
+        </div>
+
+        <div class="step-body">
+          <ol>
+            <li>Вылейте компонент B в стаканчик с компонентом A.</li>
+            <li>Запустите таймер.</li>
+            <li>Размешивайте <strong>медленно, но тщательно</strong> 30 секунд: вдоль стенок, по дну, в центре.</li>
+            <li>Соскребайте пластик со стенок — там часто остаются «непромешанные» зоны, которые потом не застынут.</li>
+            <li>Когда смесь стала однородной, без прозрачных разводов — переходите к заливке.</li>
+          </ol>
+        </div>
+
+        <div class="alert alert-warning">
+          <span class="alert-label">Не делайте так</span>
+          Не размешивайте слишком быстро и не взбивайте. Это нагнетает воздух — и в готовой детали будут пузыри, которые невозможно убрать.
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step" data-step="6">
+        <div class="step-num">Шаг 6 · Заливка</div>
+        <h1 class="step-title">Заливаем в форму</h1>
+        <div class="step-subtitle">Тонкой струей с высоты 5–10 см — это уменьшает количество пузырей.</div>
+
+        <div class="step-body">
+          <ol>
+            <li>Поставьте форму на ровную горизонтальную поверхность.</li>
+            <li>Лейте смесь <strong>в одну точку</strong> — пусть растекается сама.</li>
+            <li>Заполняйте форму <strong>с запасом 1–2 мм</strong> — пластик чуть проседает при отверждении.</li>
+            <li>Если в форме остались пузыри — проколите их зубочисткой в первые 60 секунд.</li>
+            <li>Слегка постучите формой о стол, чтобы пузыри поднялись.</li>
+          </ol>
+        </div>
+
+        <div class="alert alert-tip">
+          <span class="alert-label">Лайфхак</span>
+          Перед заливкой подышите феном на форму 10 секунд. Тёплая форма выпускает пузыри быстрее, чем холодная.
+        </div>
+      </div>
+
+      <!-- STEP 7 -->
+      <div class="step" data-step="7">
+        <div class="step-num">Шаг 7 · Ожидание</div>
+        <h1 class="step-title">Отверждение</h1>
+        <div class="step-subtitle">Самое сложное здесь — не трогать. Серьезно.</div>
+
+        <div class="time-block">
+          <div class="time-card"><div class="time-val">10 мин</div><div class="time-label">схватится</div></div>
+          <div class="time-card"><div class="time-val">30 мин</div><div class="time-label">можно достать</div></div>
+          <div class="time-card"><div class="time-val">24 ч</div><div class="time-label">полная прочность</div></div>
+        </div>
+
+        <div class="step-body">
+          <p>Накройте форму коробкой или ведром, чтобы на поверхность не садилась пыль. Через 30 минут деталь можно аккуратно извлечь — но она еще мягкая, обращайтесь как со свежим хлебом.</p>
+          <p><strong>Окончательная прочность набирается за 24 часа</strong>. До этого не сверлите, не пилите, не нагружайте.</p>
+        </div>
+
+        <div class="alert alert-warning">
+          <span class="alert-label">Если в комнате очень холодно</span>
+          При температуре ниже 18 °C время отверждения вырастает в 1.5–2 раза. Если деталь через 30 минут еще липкая — оставьте на ночь, не выбрасывайте.
+        </div>
+      </div>
+
+      <!-- STEP 8 -->
+      <div class="step" data-step="8">
+        <div class="step-num">Шаг 8 · Финиш</div>
+        <h1 class="step-title">Извлечение и обработка</h1>
+        <div class="step-subtitle">Что делать с готовой деталью.</div>
+
+        <div class="step-body">
+          <p><strong>Извлечение из формы.</strong> Аккуратно отогните силикон от края детали по периметру, потом подцепите снизу. Если не выходит — подождите ещё 15–20 минут.</p>
+          <p><strong>Облой и швы.</strong> Уберите ножом или мелкой шкуркой (зерно 400–600). Пластик хорошо шлифуется и режется.</p>
+          <p><strong>Покраска.</strong> Возможна через 24 часа. Подходят акрил, нитро-краски, аэрозоли. Перед покраской обезжирьте поверхность спиртом.</p>
+          <p><strong>Склейка.</strong> Цианакрилат («секунда»), эпоксидный клей или сам ProPlast в роли клея.</p>
+        </div>
+
+        <div class="alert alert-info">
+          <span class="alert-label">Хранение остатков</span>
+          Закройте бутылки сразу после использования и положите силикагель в коробку. Открытые компоненты живут 6 месяцев, потом начинают терять свойства.
+        </div>
+      </div>
+
+      <!-- STEP 9 -->
+      <div class="step" data-step="9">
+        <div class="step-num">Шаг 9 · Если что-то пошло не так</div>
+        <h1 class="step-title">Частые проблемы</h1>
+        <div class="step-subtitle">Прежде чем оставить отзыв «брак» — посмотрите этот список.</div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Деталь не застыла за 30 минут</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Чаще всего: нарушены пропорции (отмеряли по объему вместо веса) или плохо размешано. Реже — низкая температура. Подождите 24 часа: на холоде материал может застыть позже. Если через сутки всё ещё липкая — пропорции были неверными.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>В детали много пузырей</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Слишком быстрое смешивание или слишком толстая струя при заливке. В следующий раз: размешивайте медленнее, лейте тонко с высоты 5–10 см, постучите формой о стол. В готовой детали пузыри уже не убрать.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Поверхность липкая через сутки</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Точно нарушены пропорции, либо в форме была вода или жирный налет от смазки. На следующий раз отмеряйте только по весу и протрите форму спиртом перед заливкой.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Деталь хрупкая, ломается</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Скорее всего, нагрузили раньше 24 часов. Также бывает при сильном переборе одного компонента. Готовый ProPlast — твердый, но не «броневой»: для тонких деталей (менее 2 мм) он хрупкий по своей природе.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Деталь пожелтела</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Это нормально для белого полиуретана: на солнце он со временем желтеет. Если деталь декоративная — храните в темноте или покройте акриловым лаком с УФ-фильтром.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span>Сильный запах при работе</span><span class="faq-q-icon">+</span></div>
+          <div class="faq-a">Это нормально, но опасно работать в закрытом помещении. Обязательно проветривайте. После полного отверждения запах уходит за 24–48 часов.</div>
+        </div>
+
+        <div class="help-block">
+          Не нашли ответ?<br>
+          <a href="#" onclick="askSupport(); return false;">Написать в поддержку селлера →</a>
+        </div>
+      </div>
+
+      <!-- Feedback (виден на каждом шаге) -->
+      <div class="feedback">
+        <div class="feedback-q">Этот шаг был понятным?</div>
+        <div class="feedback-buttons">
+          <button class="fb-btn" onclick="feedback(this, 'good')">Полезно</button>
+          <button class="fb-btn" onclick="feedback(this, 'bad')">Непонятно</button>
+          <button class="fb-btn" onclick="feedback(this, 'bad')">Ошибка в инструкции</button>
+          <button class="fb-btn" onclick="feedback(this, 'info')">Комментарий</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn nav-prev" onclick="prevStep()" id="prev-btn">← Назад</button>
+      <button class="nav-btn nav-next" onclick="nextStep()" id="next-btn">Дальше →</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const steps = document.querySelectorAll('.step');
+  const totalSteps = steps.length;
+  let current = 1;
+
+  const pillsContainer = document.getElementById('steps-nav');
+  const stepNames = ['О товаре','Безопасность','Подготовка','Пропорции','Смешивание','Заливка','Отверждение','Финиш','Проблемы'];
+  for (let i = 1; i <= totalSteps; i++) {
+    const pill = document.createElement('span');
+    pill.className = 'step-pill' + (i === 1 ? ' active' : '');
+    pill.textContent = i + '. ' + stepNames[i-1];
+    pill.dataset.step = i;
+    pill.onclick = () => goToStep(i);
+    pillsContainer.appendChild(pill);
+  }
+
+  function updateUI() {
+    steps.forEach(s => s.classList.remove('active'));
+    document.querySelector('.step[data-step="' + current + '"]').classList.add('active');
+
+    document.querySelectorAll('.step-pill').forEach(p => {
+      p.classList.remove('active', 'done');
+      const n = parseInt(p.dataset.step);
+      if (n === current) p.classList.add('active');
+      else if (n < current) p.classList.add('done');
+    });
+
+    document.getElementById('step-counter').textContent = 'Шаг ' + current + ' из ' + totalSteps;
+    document.getElementById('progress-fill').style.width = ((current / totalSteps) * 100) + '%';
+    document.getElementById('prev-btn').disabled = (current === 1);
+    document.getElementById('next-btn').textContent = (current === totalSteps) ? 'Завершить ✓' : 'Дальше →';
+
+    const activePill = document.querySelector('.step-pill[data-step="' + current + '"]');
+    if (activePill) activePill.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'});
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function goToStep(n) { current = n; updateUI(); }
+  function nextStep() {
+    if (current < totalSteps) { current++; updateUI(); }
+    else { showToast('Готово. Спасибо, что прочитали инструкцию до конца.'); }
+  }
+  function prevStep() { if (current > 1) { current--; updateUI(); } }
+
+  function toggleFaq(el) { el.classList.toggle('open'); }
+  function toggleCheck(el) {
+    el.classList.toggle('checked');
+    el.parentElement.classList.toggle('done', el.classList.contains('checked'));
+  }
+  function feedback(btn, type) {
+    btn.parentElement.querySelectorAll('.fb-btn').forEach(b => {
+      b.classList.remove('active-good','active-bad','active-info');
+    });
+    if (type === 'good') btn.classList.add('active-good');
+    else if (type === 'bad') btn.classList.add('active-bad');
+    else btn.classList.add('active-info');
+    if (type === 'info') {
+      const text = prompt('Что улучшить в этом шаге?');
+      if (text) showToast('Спасибо, передадим селлеру.');
+    } else {
+      showToast(type === 'good' ? 'Спасибо за оценку.' : 'Учли, передадим селлеру для правки.');
+    }
+  }
+  function askSupport() {
+    showToast('В реальной инструкции — кнопка чата с селлером и автоссылка на текущий шаг.');
+  }
+  function searchSteps(q) {
+    if (!q || !q.trim()) return;
+    const lc = q.toLowerCase();
+    if (lc.includes('пузыр')) goToStep(9);
+    else if (lc.includes('застыл') || lc.includes('липк')) goToStep(9);
+    else if (lc.includes('пропорц') || lc.includes('вес') || lc.includes('1:1')) goToStep(4);
+    else if (lc.includes('безопас') || lc.includes('перчатк') || lc.includes('запах')) goToStep(2);
+    else if (lc.includes('заливк')) goToStep(6);
+    else if (lc.includes('отвержд') || lc.includes('сох') || lc.includes('време')) goToStep(7);
+    else if (lc.includes('покрас') || lc.includes('склей')) goToStep(8);
+    else if (lc.includes('форм')) goToStep(3);
+  }
+  let toastT;
+  function showToast(text) {
+    const t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>

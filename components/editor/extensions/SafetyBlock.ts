@@ -26,6 +26,13 @@ export const SafetyBlock = Node.create({
         default: 'warning' as SafetySeverity,
         parseHTML: (el) => (el.getAttribute('data-severity') as SafetySeverity) ?? 'warning',
         renderHTML: (attrs) => ({ 'data-severity': attrs.severity })
+      },
+      // Custom heading override. null = use the default label for the
+      // current severity ("Информация" / "Внимание" / "Опасно").
+      label: {
+        default: null as string | null,
+        parseHTML: (el) => el.getAttribute('data-label') || null,
+        renderHTML: (attrs) => (attrs.label ? { 'data-label': attrs.label } : {})
       }
     }
   },

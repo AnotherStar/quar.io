@@ -7,6 +7,10 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Youtube from '@tiptap/extension-youtube'
 import TextAlign from '@tiptap/extension-text-align'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableHeader from '@tiptap/extension-table-header'
+import TableCell from '@tiptap/extension-table-cell'
 import { BlockId } from './extensions/BlockId'
 import { SafetyBlock } from './extensions/SafetyBlock'
 import { SectionRef } from './extensions/SectionRef'
@@ -55,6 +59,10 @@ const editor = useEditor({
     ...(props.disableSectionRefs ? [] : [SectionRef, ModuleRef]),
     Columns,
     Column,
+    Table.configure({ resizable: true, HTMLAttributes: { class: 'mo-table' } }),
+    TableRow,
+    TableHeader,
+    TableCell,
     BlockDragHandle,
     BlockId
   ],
@@ -143,9 +151,8 @@ defineExpose({
 @keyframes mo-gapcursor-blink {
   to { opacity: 0; }
 }
-.tiptap ul[data-type='taskList'] { @apply list-none pl-0; }
-.tiptap ul[data-type='taskList'] li { @apply flex items-start gap-2; }
-.tiptap ul[data-type='taskList'] li > label { @apply mt-1; }
+/* Task-list styles live in global.css — the editor and public renderer
+ * share the same DOM and need identical look. */
 .tiptap iframe { @apply rounded-md max-w-full; }
 
 /* Block drag-handle (Notion-style). Mounted on <body> with position: fixed

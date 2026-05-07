@@ -5,8 +5,10 @@ import type { ModuleDefinition } from './types'
 
 import warranty from '~~/instruction-modules/warranty-registration'
 import chat from '~~/instruction-modules/chat-consultant'
+import faq from '~~/instruction-modules/faq'
+import feedback from '~~/instruction-modules/feedback'
 
-export const moduleRegistry: ModuleDefinition[] = [warranty, chat]
+export const moduleRegistry: ModuleDefinition[] = [warranty, chat, faq, feedback]
 
 export function getModuleByCode(code: string): ModuleDefinition | undefined {
   return moduleRegistry.find((m) => m.manifest.code === code)

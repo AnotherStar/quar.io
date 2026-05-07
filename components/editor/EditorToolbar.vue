@@ -8,6 +8,18 @@ const props = defineProps<{
 
 const showHeadings = ref(false)
 const showSafety = ref(false)
+const showTable = ref(false)
+
+function closeMenus() {
+  showHeadings.value = false
+  showSafety.value = false
+  showTable.value = false
+}
+
+function insertTable() {
+  props.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+  showTable.value = false
+}
 
 function uploadImage() {
   const input = document.createElement('input')
@@ -104,6 +116,51 @@ function btnClass(active: boolean) {
 
     <button type="button" :class="btnClass(false)" title="Загрузить картинку" @click="uploadImage"><Icon name="lucide:image" class="h-4 w-4" /></button>
     <button type="button" :class="btnClass(false)" title="YouTube" @click="uploadVideo"><Icon name="lucide:youtube" class="h-4 w-4" /></button>
+
+    <!-- Table -->
+    <div class="relative">
+      <button type="button" :class="btnClass(isActive('table'))" title="Таблица" @click="showTable = !showTable; showHeadings = false; showSafety = false">
+        <Icon name="lucide:table" class="h-4 w-4" />
+        <Icon name="lucide:chevron-down" class="h-3 w-3" />
+      </button>
+      <div v-if="showTable" class="absolute left-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-md border border-hairline bg-canvas py-1 shadow-modal">
+        <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="insertTable">
+          <Icon name="lucide:table" class="h-4 w-4 text-steel" /> Вставить таблицу 3×3
+        </button>
+        <template v-if="isActive('table')">
+          <div class="my-1 h-px bg-hairline" />
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().addRowBefore().run(); closeMenus()">
+            <Icon name="lucide:arrow-up" class="h-4 w-4 text-steel" /> Строка выше
+          </button>
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().addRowAfter().run(); closeMenus()">
+            <Icon name="lucide:arrow-down" class="h-4 w-4 text-steel" /> Строка ниже
+          </button>
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().deleteRow().run(); closeMenus()">
+            <Icon name="lucide:trash-2" class="h-4 w-4 text-error" /> Удалить строку
+          </button>
+          <div class="my-1 h-px bg-hairline" />
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().addColumnBefore().run(); closeMenus()">
+            <Icon name="lucide:arrow-left" class="h-4 w-4 text-steel" /> Столбец слева
+          </button>
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().addColumnAfter().run(); closeMenus()">
+            <Icon name="lucide:arrow-right" class="h-4 w-4 text-steel" /> Столбец справа
+          </button>
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().deleteColumn().run(); closeMenus()">
+            <Icon name="lucide:trash-2" class="h-4 w-4 text-error" /> Удалить столбец
+          </button>
+          <div class="my-1 h-px bg-hairline" />
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().toggleHeaderRow().run(); closeMenus()">
+            <Icon name="lucide:heading" class="h-4 w-4 text-steel" /> Шапка строки
+          </button>
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().mergeOrSplit().run(); closeMenus()">
+            <Icon name="lucide:merge" class="h-4 w-4 text-steel" /> Объединить / разделить
+          </button>
+          <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface" @click="editor.chain().focus().deleteTable().run(); closeMenus()">
+            <Icon name="lucide:trash-2" class="h-4 w-4 text-error" /> Удалить таблицу
+          </button>
+        </template>
+      </div>
+    </div>
 
     <!-- Safety blocks -->
     <div class="relative">

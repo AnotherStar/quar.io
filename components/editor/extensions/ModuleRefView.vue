@@ -42,9 +42,13 @@ const enabledModules = computed(
 
 const previewComponent = shallowRef<any>(null)
 const previewError = ref<string | null>(null)
+// Per-instance config component (e.g. FAQ Q&A editor). Loaded lazily; absence
+// is what hides the "Настроить" button — there's no flag to flip.
+const editorConfigComponent = shallowRef<any>(null)
 watch(current, async (m) => {
   previewComponent.value = null
   previewError.value = null
+  editorConfigComponent.value = null
   if (!m) return
   const def = getModuleByCode(m.code)
   if (!def) { previewError.value = `Модуль "${m.code}" не зарегистрирован`; return }
@@ -53,6 +57,15 @@ watch(current, async (m) => {
     previewComponent.value = mod.default
   } catch (e) {
     previewError.value = (e as Error).message
+  }
+  if (def.EditorConfigComponent) {
+    try {
+      const cfg = await def.EditorConfigComponent()
+      editorConfigComponent.value = cfg.default
+    } catch (e) {
+      // Soft-fail — base block still works without per-instance config.
+      console.warn('[module-ref] failed to load editor config component:', e)
+    }
   }
 }, { immediate: true })
 
@@ -75,6 +88,27 @@ function deleteBlock() {
   const pos = typeof props.getPos === 'function' ? props.getPos() : null
   if (pos == null) return
   props.editor.chain().focus().deleteRange({ from: pos, to: pos + props.node.nodeSize }).run()
+}
+
+// Per-instance config modal. Local draft is committed to node attrs only when
+// the user clicks "Сохранить" — Cancel/Esc discards. Keeps undo history clean.
+const configModalOpen = ref(false)
+const configDraft = ref<Record<string, unknown>>({})
+
+function openConfig() {
+  configDraft.value = JSON.parse(JSON.stringify(override.value || {}))
+  configModalOpen.value = true
+  menuOpen.value = false
+}
+function saveConfig() {
+  props.updateAttributes({ configOverride: configDraft.value })
+  configModalOpen.value = false
+}
+function cancelConfig() {
+  configModalOpen.value = false
+}
+function onConfigKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') cancelConfig()
 }
 
 onMounted(ensureLoaded)
@@ -124,6 +158,16 @@ onMounted(ensureLoaded)
               </button>
             </li>
           </ul>
+          <hr v-if="current && editorConfigComponent" class="border-hairline">
+          <button
+            v-if="current && editorConfigComponent"
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-ink hover:bg-surface"
+            @click="openConfig"
+          >
+            <Icon name="lucide:settings-2" class="h-4 w-4 text-steel" />
+            Настроить
+          </button>
           <hr class="border-hairline">
           <button
             type="button"
@@ -158,5 +202,47 @@ onMounted(ensureLoaded)
         </ClientOnly>
       </div>
     </div>
+
+    <!-- Per-instance config modal. Rendered as a Teleport so it sits above
+         the editor and never inherits its `not-prose` / `pointer-events-none`
+         wrappers. -->
+    <Teleport v-if="configModalOpen" to="body">
+      <div
+        class="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-ink/40 p-md backdrop-blur-sm"
+        contenteditable="false"
+        @click.self="cancelConfig"
+        @keydown="onConfigKey"
+      >
+        <div class="my-xl w-full max-w-[640px] rounded-lg border border-hairline bg-canvas shadow-modal">
+          <header class="flex items-center justify-between gap-md border-b border-hairline px-xl py-md">
+            <div class="min-w-0">
+              <h3 class="truncate text-h4 text-ink">Настройка модуля</h3>
+              <p v-if="current" class="mt-0.5 truncate text-body-sm text-steel">{{ current.name }}</p>
+            </div>
+            <button
+              type="button"
+              class="grid h-8 w-8 place-items-center rounded-sm text-steel hover:bg-surface"
+              title="Закрыть"
+              @click="cancelConfig"
+            >
+              <Icon name="lucide:x" class="h-4 w-4" />
+            </button>
+          </header>
+          <div class="px-xl py-md">
+            <ClientOnly>
+              <component
+                :is="editorConfigComponent"
+                v-if="editorConfigComponent"
+                v-model="configDraft"
+              />
+            </ClientOnly>
+          </div>
+          <footer class="flex items-center justify-end gap-2 border-t border-hairline px-xl py-md">
+            <UiButton variant="ghost" @click="cancelConfig">Отмена</UiButton>
+            <UiButton variant="primary" @click="saveConfig">Сохранить</UiButton>
+          </footer>
+        </div>
+      </div>
+    </Teleport>
   </NodeViewWrapper>
 </template>

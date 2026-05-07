@@ -11,9 +11,9 @@ async function main() {
       priceMonthly: 0,
       priceYearly: 0,
       features: {
-        maxInstructions: 3,
+        maxInstructions: 5,
         customSections: false,
-        modules: [],
+        modules: ['faq', 'feedback'],
         customDomain: false,
         analyticsRetentionDays: 30,
         teamMembers: 1,
@@ -28,7 +28,7 @@ async function main() {
       features: {
         maxInstructions: 50,
         customSections: true,
-        modules: ['warranty-registration'],
+        modules: ['warranty-registration', 'faq', 'feedback'],
         customDomain: false,
         analyticsRetentionDays: 365,
         teamMembers: 3,
@@ -43,7 +43,7 @@ async function main() {
       features: {
         maxInstructions: -1,
         customSections: true,
-        modules: ['warranty-registration', 'chat-consultant'],
+        modules: ['warranty-registration', 'chat-consultant', 'faq', 'feedback'],
         customDomain: true,
         analyticsRetentionDays: -1,
         teamMembers: 25,
@@ -89,6 +89,54 @@ async function main() {
         properties: {
           provider: { type: 'string', enum: ['intercom', 'crisp', 'custom'], default: 'crisp' },
           siteId: { type: 'string' }
+        }
+      }
+    },
+    {
+      code: 'faq',
+      name: 'Вопрос — Ответ (FAQ)',
+      description: 'Аккордеон с часто задаваемыми вопросами и ответами на странице инструкции. Настраивается прямо в редакторе.',
+      version: '1.0.0',
+      requiresPlan: 'free',
+      configSchema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', default: 'Часто задаваемые вопросы' },
+          expandedByDefault: { type: 'boolean', default: false },
+          items: {
+            type: 'array',
+            maxItems: 10,
+            default: [],
+            items: {
+              type: 'object',
+              properties: {
+                question: { type: 'string' },
+                answer: { type: 'string' }
+              },
+              required: ['question', 'answer']
+            }
+          }
+        }
+      }
+    },
+    {
+      code: 'feedback',
+      name: 'Обратная связь',
+      description: 'Форма обратной связи (ФИО, телефон, email, telegram, сообщение). Настраивается в разделе «Модули».',
+      version: '1.0.0',
+      requiresPlan: 'free',
+      configSchema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', default: 'Свяжитесь с нами' },
+          description: { type: 'string', default: 'Оставьте сообщение — мы ответим в течение рабочего дня.' },
+          recipientEmail: { type: 'string', format: 'email' },
+          requireFio: { type: 'boolean', default: true },
+          requirePhone: { type: 'boolean', default: false },
+          requireEmail: { type: 'boolean', default: true },
+          requireTelegram: { type: 'boolean', default: false },
+          requireMessage: { type: 'boolean', default: true },
+          successMessage: { type: 'string', default: 'Спасибо! Ваше сообщение получено.' }
         }
       }
     }
