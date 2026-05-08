@@ -46,6 +46,28 @@ export async function uploadObject(key: string, body: Buffer, contentType: strin
   return `/uploads/${key}`
 }
 
+// Server-side equivalent of the browser direct-upload flow: create a
+// presigned PUT URL, then upload with fetch instead of AWS SDK PutObject.
+// Useful for generated assets where there is no browser File object, and for
+// S3-compatible servers that behave better with plain PUT requests.
+export async function uploadObjectViaPresignedPut(key: string, body: Buffer, contentType: string) {
+  const presigned = await presignUpload(key, contentType)
+  if (!presigned) {
+    return uploadObject(key, body, contentType)
+  }
+
+  const response = await fetch(presigned.uploadUrl, {
+    method: 'PUT',
+    headers: presigned.headers,
+    body: new Uint8Array(body)
+  })
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(`S3 presigned PUT ${response.status}: ${text.slice(0, 200)}`)
+  }
+  return presigned.publicUrl
+}
+
 // For S3 driver: pre-signed PUT URL so the browser uploads directly to S3
 // (skips proxying through this Node.js process — faster, and avoids the
 // double-VPN-hop issue when developing under a VPN).

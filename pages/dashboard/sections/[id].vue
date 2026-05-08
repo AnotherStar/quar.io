@@ -6,15 +6,19 @@ const route = useRoute()
 const routeId = route.params.id as string
 const isNew = routeId === 'new'
 const api = useApi()
+const { currentTenant } = useAuthState()
 
 // For an existing section: fetch from API.
 // For "/new": skip the fetch and start with an empty section in memory.
 // On the first autosave we POST to create it, then swap the URL to the
 // real id so refresh / share-links work.
 const { data } = await useAsyncData(
-  `section-${routeId}`,
+  computed(() => `section-${currentTenant.value?.id ?? 'none'}-${routeId}`),
   () => isNew ? Promise.resolve({ section: null }) : api<{ section: any }>(`/api/sections/${routeId}`),
-  { default: () => ({ section: null }) }
+  {
+    default: () => ({ section: null }),
+    watch: [() => currentTenant.value?.id]
+  }
 )
 
 if (!isNew && !data.value?.section) {

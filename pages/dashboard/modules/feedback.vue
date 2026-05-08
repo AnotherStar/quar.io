@@ -39,13 +39,24 @@ const DEFAULTS: FeedbackConfig = {
 }
 
 const api = useApi()
+const { currentTenant } = useAuthState()
+const feedbackModuleKey = computed(() => `feedback-module-${currentTenant.value?.id ?? 'none'}`)
+const feedbackSubmissionsKey = computed(() => `feedback-submissions-${currentTenant.value?.id ?? 'none'}`)
 const { data: modulesData, refresh: refreshModules } = await useAsyncData(
-  'feedback-module',
-  () => api<{ modules: ModuleRow[] }>('/api/modules')
+  feedbackModuleKey,
+  () => api<{ modules: ModuleRow[] }>('/api/modules'),
+  {
+    default: () => ({ modules: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
 )
 const { data: subsData, refresh: refreshSubs } = await useAsyncData(
-  'feedback-submissions',
-  () => api<{ items: any[] }>('/api/modules/feedback/submissions').catch(() => ({ items: [] }))
+  feedbackSubmissionsKey,
+  () => api<{ items: any[] }>('/api/modules/feedback/submissions').catch(() => ({ items: [] })),
+  {
+    default: () => ({ items: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
 )
 
 const module_ = computed(() => modulesData.value?.modules.find((m) => m.code === 'feedback') ?? null)

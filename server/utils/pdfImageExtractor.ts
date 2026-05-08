@@ -19,10 +19,23 @@ export interface ExtractedImage {
   hash: string
 }
 
+export interface PdfImageExtractionProgress {
+  page: number
+  pages: number
+  found: number
+  skippedSmall: number
+  deduplicated: number
+  maxImages: number
+  done?: boolean
+}
+
 const MIN_DIMENSION = 120          // skip tiny decorations
 const MAX_IMAGES = 30              // safety cap
 
-export async function extractImagesFromPdf(buf: Buffer): Promise<ExtractedImage[]> {
+export async function extractImagesFromPdf(
+  buf: Buffer,
+  options: { onProgress?: (progress: PdfImageExtractionProgress) => void } = {}
+): Promise<ExtractedImage[]> {
   const data = new Uint8Array(buf)
   const doc = await pdfjs.getDocument({
     data,
@@ -33,6 +46,22 @@ export async function extractImagesFromPdf(buf: Buffer): Promise<ExtractedImage[
 
   const seenHashes = new Set<string>()
   const images: ExtractedImage[] = []
+  let skippedSmall = 0
+  let deduplicated = 0
+
+  const emitProgress = (page: number, done = false) => {
+    options.onProgress?.({
+      page,
+      pages: doc.numPages,
+      found: images.length,
+      skippedSmall,
+      deduplicated,
+      maxImages: MAX_IMAGES,
+      done
+    })
+  }
+
+  emitProgress(0)
 
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
     if (images.length >= MAX_IMAGES) break
@@ -43,6 +72,7 @@ export async function extractImagesFromPdf(buf: Buffer): Promise<ExtractedImage[
       opList = await page.getOperatorList()
     } catch {
       page.cleanup()
+      emitProgress(pageNum)
       continue
     }
 
@@ -74,13 +104,19 @@ export async function extractImagesFromPdf(buf: Buffer): Promise<ExtractedImage[
         continue
       }
       if (!img || !img.data || !img.width || !img.height) continue
-      if (img.width < MIN_DIMENSION || img.height < MIN_DIMENSION) continue
+      if (img.width < MIN_DIMENSION || img.height < MIN_DIMENSION) {
+        skippedSmall++
+        continue
+      }
 
       const png = encodeToPng(img)
       if (!png) continue
 
       const hash = createHash('sha1').update(png).digest('hex')
-      if (seenHashes.has(hash)) continue
+      if (seenHashes.has(hash)) {
+        deduplicated++
+        continue
+      }
       seenHashes.add(hash)
 
       images.push({ page: pageNum, buffer: png, width: img.width, height: img.height, hash })
@@ -88,8 +124,10 @@ export async function extractImagesFromPdf(buf: Buffer): Promise<ExtractedImage[
     }
 
     page.cleanup()
+    emitProgress(pageNum)
   }
 
+  emitProgress(doc.numPages, true)
   await doc.cleanup()
   await doc.destroy()
   return images

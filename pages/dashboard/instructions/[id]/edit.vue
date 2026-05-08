@@ -8,21 +8,22 @@ const route = useRoute()
 const id = route.params.id as string
 const api = useApi()
 const { currentTenant, currentRole } = useAuthState()
+const instructionKey = computed(() => `instruction-${currentTenant.value?.id ?? 'none'}-${id}`)
 
-const { data, refresh } = await useAsyncData(`instruction-${id}`, () => api<{ instruction: any }>(`/api/instructions/${id}`))
+const { data, refresh, pending, error } = await useAsyncData(
+  instructionKey,
+  () => api<{ instruction: any }>(`/api/instructions/${id}`),
+  {
+    default: () => ({ instruction: null }),
+    watch: [() => currentTenant.value?.id]
+  }
+)
 
-// Snapshot of the initial fetch — kept around so the page survives transient
-// data.value=null states (HMR, refetches, slow navigations) without throwing.
-const initial = data.value?.instruction
-if (!initial) {
-  throw createError({ statusCode: 404, statusMessage: 'Инструкция не найдена', fatal: true })
-}
-const instr = computed(() => data.value?.instruction ?? initial)
-
-const title = ref(initial.title)
-const slug = ref(initial.slug)
-const description = ref(initial.description ?? '')
-const draft = ref<object>(initial.draftContent ?? EMPTY_DOC)
+const instr = computed(() => data.value?.instruction ?? null)
+const title = ref('')
+const slug = ref('')
+const description = ref('')
+const draft = ref<object>(EMPTY_DOC)
 const saving = ref(false)
 const lastSavedAt = ref<Date | null>(null)
 const slugError = ref<string | null>(null)
@@ -30,9 +31,29 @@ const publishing = ref(false)
 
 let saveTimer: any = null
 let suppressAutosave = false
+let hydratedInstructionId: string | null = null
+let originalSlug = ''
+
+function hydrateInstruction(next: any) {
+  if (!next || hydratedInstructionId === next.id) return
+  suppressAutosave = true
+  hydratedInstructionId = next.id
+  originalSlug = next.slug
+  title.value = next.title
+  slug.value = next.slug
+  description.value = next.description ?? ''
+  draft.value = next.draftContent ?? EMPTY_DOC
+  nextTick(() => {
+    suppressAutosave = false
+  })
+}
+
+hydrateInstruction(instr.value)
+watch(instr, hydrateInstruction)
 
 function scheduleSave() {
   if (suppressAutosave) return
+  if (!instr.value) return
   clearTimeout(saveTimer)
   saveTimer = setTimeout(async () => {
     saving.value = true; slugError.value = null
@@ -40,7 +61,7 @@ function scheduleSave() {
       // Only send slug if changed and looks valid — invalid slugs are rejected
       // server-side and we don't want to spam the user with errors mid-typing.
       const cleanSlug = slug.value.trim()
-      const slugChanged = cleanSlug !== initial.slug
+      const slugChanged = cleanSlug !== originalSlug
       const slugValid = /^[a-z0-9-]+$/.test(cleanSlug) && cleanSlug.length >= 1
       const body: any = {
         title: title.value,
@@ -50,7 +71,7 @@ function scheduleSave() {
       if (slugChanged && slugValid) body.slug = cleanSlug
       await api(`/api/instructions/${id}`, { method: 'PATCH', body })
       lastSavedAt.value = new Date()
-      if (slugChanged && slugValid) initial.slug = cleanSlug
+      if (slugChanged && slugValid) originalSlug = cleanSlug
     } catch (e: any) {
       const msg = e?.data?.statusMessage ?? 'Ошибка сохранения'
       if (msg.toLowerCase().includes('slug')) slugError.value = msg
@@ -77,7 +98,7 @@ async function unarchive() {
   await refresh()
 }
 
-const publicUrl = computed(() => `/${currentTenant.value?.slug}/${instr.value.slug}`)
+const publicUrl = computed(() => `/${currentTenant.value?.slug ?? ''}/${instr.value?.slug ?? slug.value}`)
 const fullPublicUrl = computed(() => {
   const cfg = useRuntimeConfig().public
   return `${cfg.appUrl}${publicUrl.value}`
@@ -99,19 +120,31 @@ function onEditorReady(ed: any) {
 
 const isStreaming = ref(false)
 const streamError = ref<string | null>(null)
+const generationStatus = ref('')
+const generationUsage = ref<any | null>(null)
+const generationImages = ref({ extracted: 0, uploaded: 0 })
+
+const generationUsageText = computed(() => {
+  const u = generationUsage.value
+  if (!u) return ''
+  const cost = typeof u.estimatedCostUsd === 'number'
+    ? ` · ≈ $${u.estimatedCostUsd.toFixed(u.estimatedCostUsd < 0.01 ? 4 : 3)}`
+    : ''
+  return `${formatNumber(u.totalTokens)} токенов${cost}`
+})
 
 function aiBlockToTipTapNode(b: AiBlock): any {
   switch (b.type) {
     case 'heading':
-      return { type: 'heading', attrs: { level: b.level }, content: [{ type: 'text', text: b.text }] }
+      return { type: 'heading', attrs: { level: b.level }, content: textToTipTapContent(b.text, b.links) }
     case 'paragraph':
-      return { type: 'paragraph', content: b.text ? [{ type: 'text', text: b.text }] : [] }
+      return { type: 'paragraph', content: textToTipTapContent(b.text, b.links) }
     case 'bullet_list':
       return {
         type: 'bulletList',
         content: b.items.map((it) => ({
           type: 'listItem',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: it }] }]
+          content: [{ type: 'paragraph', content: textToTipTapContent(it, b.links) }]
         }))
       }
     case 'numbered_list':
@@ -119,16 +152,120 @@ function aiBlockToTipTapNode(b: AiBlock): any {
         type: 'orderedList',
         content: b.items.map((it) => ({
           type: 'listItem',
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: it }] }]
+          content: [{ type: 'paragraph', content: textToTipTapContent(it, b.links) }]
         }))
       }
+    case 'task_list':
+      return {
+        type: 'taskList',
+        content: b.taskItems.map((it) => ({
+          type: 'taskItem',
+          attrs: { checked: it.checked },
+          content: [{ type: 'paragraph', content: textToTipTapContent(it.text, b.links) }]
+        }))
+      }
+    case 'quote':
+      return { type: 'blockquote', content: [{ type: 'paragraph', content: textToTipTapContent(b.text, b.links) }] }
+    case 'code_block':
+      return { type: 'codeBlock', attrs: b.codeLanguage ? { language: b.codeLanguage } : {}, content: b.text ? [{ type: 'text', text: b.text }] : [] }
+    case 'table':
+      return tableBlockToTipTapNode(b.rows, b.hasHeaderRow)
     case 'safety':
-      return { type: 'safetyBlock', attrs: { severity: b.severity }, content: [{ type: 'text', text: b.text }] }
+      return { type: 'safetyBlock', attrs: { severity: b.severity }, content: textToTipTapContent(b.text, b.links) }
     case 'image':
       return { type: 'image', attrs: { src: b.url, alt: b.description || '' } }
     case 'image_placeholder':
       return { type: 'safetyBlock', attrs: { severity: 'info' }, content: [{ type: 'text', text: `📷 ${b.description}` }] }
+    case 'youtube':
+      return { type: 'youtube', attrs: { src: b.url } }
   }
+}
+
+function tableBlockToTipTapNode(rows: string[][], hasHeaderRow: boolean): any {
+  const width = Math.max(1, ...rows.map((row) => row.length))
+  const normalizedRows = rows.length ? rows : [['']]
+
+  return {
+    type: 'table',
+    content: normalizedRows.map((row, rowIndex) => ({
+      type: 'tableRow',
+      content: Array.from({ length: width }, (_, colIndex) => ({
+        type: hasHeaderRow && rowIndex === 0 ? 'tableHeader' : 'tableCell',
+        content: [
+          {
+            type: 'paragraph',
+            content: row[colIndex] ? [{ type: 'text', text: row[colIndex] }] : []
+          }
+        ]
+      }))
+    }))
+  }
+}
+
+function textToTipTapContent(text: string, links: Array<{ text: string; url: string }> = []): any[] {
+  if (!text) return []
+
+  const ranges = collectLinkRanges(text, links)
+  const content: any[] = []
+  let cursor = 0
+
+  for (const range of ranges) {
+    if (range.start > cursor) {
+      content.push({ type: 'text', text: text.slice(cursor, range.start) })
+    }
+    content.push({
+      type: 'text',
+      text: text.slice(range.start, range.end),
+      marks: [{ type: 'link', attrs: { href: range.url } }]
+    })
+    cursor = range.end
+  }
+
+  if (cursor < text.length) {
+    content.push({ type: 'text', text: text.slice(cursor) })
+  }
+
+  return content
+}
+
+function collectLinkRanges(text: string, links: Array<{ text: string; url: string }>) {
+  const ranges: Array<{ start: number; end: number; url: string }> = []
+
+  for (const link of links) {
+    const label = link.text.trim()
+    const url = normalizeHref(link.url)
+    if (!label || !url) continue
+
+    const start = text.indexOf(label)
+    if (start < 0) continue
+    ranges.push({ start, end: start + label.length, url })
+  }
+
+  const urlRe = /\bhttps?:\/\/[^\s<>"')]+/gi
+  for (const match of text.matchAll(urlRe)) {
+    const rawUrl = match[0]
+    const start = match.index ?? 0
+    const end = start + rawUrl.length
+    if (ranges.some((range) => overlaps(start, end, range.start, range.end))) continue
+    ranges.push({ start, end, url: rawUrl })
+  }
+
+  return ranges
+    .sort((a, b) => a.start - b.start)
+    .filter((range, index, sorted) => index === 0 || range.start >= sorted[index - 1].end)
+}
+
+function normalizeHref(url: string) {
+  const value = url.trim()
+  if (!value) return ''
+  if (/^(https?:|mailto:)/i.test(value)) return value
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return `mailto:${value}`
+  if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return `https://${value}`
+  return value
+}
+
+function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number) {
+  return aStart < bEnd && bStart < aEnd
 }
 
 // Native <input type="file"> + <label> approach — most reliable across
@@ -167,6 +304,9 @@ async function runStream(file: File) {
   console.log('[gen] editor instance:', ed)
   if (!ed) { console.warn('[gen] no editor instance — aborting'); return }
   streamError.value = null
+  generationStatus.value = 'Готовлю файл к чтению'
+  generationUsage.value = null
+  generationImages.value = { extracted: 0, uploaded: 0 }
   isStreaming.value = true
   suppressAutosave = true
   // Wipe editor — blocks will appear as they stream
@@ -175,31 +315,157 @@ async function runStream(file: File) {
   // Buffer streamed blocks and rebuild the whole doc on each new block.
   // Avoids the "nested-into-previous-list" bug from insertContent at cursor.
   const streamedNodes: any[] = []
+  const browserUploadedImages: any[] = []
+  let firstDonePayload: any = null
+  let finalDonePayload: any = null
+
+  const generationHandlers = {
+    onMeta: (m: any) => {
+      console.log('[gen] meta', m)
+      if (m.title) title.value = m.title
+      if (m.description !== undefined) description.value = m.description
+    },
+    onBlock: (b: AiBlock) => {
+      console.log('[gen] block', b)
+      streamedNodes.push(aiBlockToTipTapNode(b))
+      ed.commands.setContent({ type: 'doc', content: streamedNodes }, false)
+      generationStatus.value = `Пишу инструкцию: ${streamedNodes.length} блоков`
+    },
+    onProgress: (payload: any) => {
+      console.log('[gen] progress', payload)
+      updateGenerationStatus(payload)
+    },
+    onUsage: (payload: any) => {
+      console.log('[gen] usage', payload)
+      generationUsage.value = payload
+      generationStatus.value = `Посчитано: ${formatNumber(payload.totalTokens)} токенов`
+    },
+    onError: (msg: string) => { console.error('[gen] error', msg); streamError.value = msg; generationStatus.value = 'Ошибка генерации' }
+  }
+
   try {
     console.log('[gen] POSTing to /api/instructions/' + id + '/generate-stream')
     await streamInstructionFromFile(id, file, {
-      onMeta: (m) => { console.log('[gen] meta', m); if (m.title) title.value = m.title; if (m.description !== undefined) description.value = m.description },
-      onBlock: (b) => {
-        console.log('[gen] block', b)
-        streamedNodes.push(aiBlockToTipTapNode(b))
-        ed.commands.setContent({ type: 'doc', content: streamedNodes }, false)
+      ...generationHandlers,
+      onExtractedImage: async (payload) => {
+        console.log('[gen] extracted image for browser upload', {
+          index: payload.index,
+          page: payload.page,
+          width: payload.width,
+          height: payload.height,
+          hash: payload.hash,
+          sizeBytes: payload.sizeBytes
+        })
+        generationStatus.value = `Загружаю изображение ${payload.index}`
+        const file = await fileFromDataUrl(payload.dataUrl, payload.filename, payload.mimeType)
+        const uploaded = await uploadFile(file)
+        browserUploadedImages.push({ ...payload, dataUrl: undefined, url: uploaded.url, assetId: uploaded.assetId })
+        generationImages.value.uploaded = browserUploadedImages.length
+        generationStatus.value = `Загружено изображений: ${browserUploadedImages.length}`
+        console.log('[gen] browser image uploaded', {
+          index: payload.index,
+          page: payload.page,
+          url: uploaded.url,
+          assetId: uploaded.assetId
+        })
       },
-      onError: (msg) => { console.error('[gen] error', msg); streamError.value = msg },
-      onDone: () => { console.log('[gen] done') }
+      onDone: (payload) => {
+        firstDonePayload = payload
+        console.log('[gen] done', { ...payload, browserUploadedImages })
+      }
     })
+
+    if (firstDonePayload?.browserUploadRequired && browserUploadedImages.length) {
+      const imageLibrary = browserUploadedImages.map((img) => ({
+        index: img.index,
+        url: img.url,
+        page: img.page,
+        width: img.width,
+        height: img.height,
+        hash: img.hash
+      }))
+      console.log('[gen] starting AI stream with browser-uploaded images', {
+        count: imageLibrary.length,
+        images: imageLibrary
+      })
+      generationStatus.value = `Запускаю ИИ с изображениями: ${imageLibrary.length}`
+      await streamInstructionFromFile(
+        id,
+        file,
+        {
+          ...generationHandlers,
+          onDone: (payload) => {
+            finalDonePayload = payload
+            console.log('[gen] done with AI', { ...payload, browserUploadedImages })
+          }
+        },
+        undefined,
+        { imageLibrary }
+      )
+    } else {
+      finalDonePayload = firstDonePayload
+    }
+
     // Editor content matches what server already persisted; refresh from DB so
     // we have a consistent view (versions, etc).
     await refresh()
     draft.value = ed.getJSON()
+    console.log('[gen] final payload', finalDonePayload)
+    if (generationUsage.value) {
+      generationStatus.value = 'Генерация завершена'
+    }
   } finally {
     isStreaming.value = false
     suppressAutosave = false
   }
 }
+
+function updateGenerationStatus(payload: any) {
+  switch (payload?.stage) {
+    case 'extracting-images':
+      generationStatus.value = 'Извлекаю изображения из PDF'
+      break
+    case 'extracting-images-progress':
+      generationImages.value.extracted = payload.found ?? generationImages.value.extracted
+      generationStatus.value = payload.page
+        ? `Извлекаю изображения: страница ${payload.page} из ${payload.pages}, найдено ${payload.found ?? 0}`
+        : `Извлекаю изображения: найдено страниц ${payload.pages ?? '...'}`
+      break
+    case 'images-extracted':
+      generationImages.value.extracted = payload.count ?? 0
+      generationStatus.value = `Найдено изображений: ${payload.count ?? 0}`
+      break
+    case 'image-library-provided':
+      generationStatus.value = `Передаю ИИ изображения: ${payload.count ?? 0}`
+      break
+    case 'images-extract-failed':
+      generationStatus.value = 'Не удалось извлечь изображения'
+      break
+    default:
+      if (!generationUsage.value) generationStatus.value = 'ИИ читает файл и пишет инструкцию'
+  }
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('ru-RU').format(value || 0)
+}
+
+async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: string): Promise<File> {
+  const blob = await fetch(dataUrl).then((res) => res.blob())
+  return new File([blob], filename, { type: mimeType || blob.type || 'application/octet-stream' })
+}
 </script>
 
 <template>
   <div class="space-y-xl">
+    <UiCard v-if="(pending || !currentTenant) && !instr">
+      <p class="py-md text-body text-steel">Загружаю инструкцию…</p>
+    </UiCard>
+    <UiAlert v-else-if="error && !instr" kind="error" title="Не удалось загрузить инструкцию">
+      Проверьте подключение и обновите страницу.
+    </UiAlert>
+
+    <template v-else-if="instr">
     <div class="flex items-center justify-between gap-md">
       <div class="min-w-0 flex-1">
         <input
@@ -210,7 +476,7 @@ async function runStream(file: File) {
       </div>
       <div class="flex items-center gap-2">
         <span class="text-caption text-steel">
-          <span v-if="isStreaming">ИИ генерирует…</span>
+          <span v-if="isStreaming">{{ generationStatus || 'ИИ генерирует…' }}</span>
           <span v-else-if="saving">Сохранение…</span>
           <span v-else-if="lastSavedAt">Сохранено {{ lastSavedAt.toLocaleTimeString() }}</span>
         </span>
@@ -317,10 +583,16 @@ async function runStream(file: File) {
       <button class="ml-2 underline" @click="unarchive">Восстановить</button>
     </UiAlert>
 
-    <div v-if="isStreaming || streamError" class="flex items-center gap-2">
+    <div v-if="isStreaming || streamError || generationUsage" class="flex items-center gap-2">
       <span v-if="isStreaming" class="flex items-center gap-2 text-caption-bold text-primary">
         <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-primary" />
-        ИИ читает файл и пишет инструкцию…
+        {{ generationStatus || 'ИИ читает файл и пишет инструкцию…' }}
+      </span>
+      <span v-if="generationUsageText" class="text-caption text-steel">
+        {{ generationUsageText }}
+      </span>
+      <span v-else-if="generationImages.extracted" class="text-caption text-steel">
+        Изображения: {{ generationImages.uploaded }}/{{ generationImages.extracted }}
       </span>
     </div>
     <UiAlert v-if="streamError" kind="error">{{ streamError }}</UiAlert>
@@ -337,5 +609,6 @@ async function runStream(file: File) {
         </template>
       </ClientOnly>
     </UiCard>
+    </template>
   </div>
 </template>

@@ -29,8 +29,7 @@ export default defineNuxtConfig({
       publicUrl: process.env.S3_PUBLIC_URL || ''
     },
     openai: {
-      apiKey: process.env.OPENAI_API_KEY || '',
-      model: process.env.OPENAI_MODEL || 'gpt-5-mini'
+      apiKey: process.env.OPENAI_API_KEY || ''
     },
     public: {
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:4200'

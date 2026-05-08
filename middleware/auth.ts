@@ -1,6 +1,6 @@
 export default defineNuxtRouteMiddleware(async () => {
-  const { user, refresh } = useAuthState()
-  if (!user.value) await refresh()
+  const { user, clientTenantRestored, refresh } = useAuthState()
+  if (!user.value || (import.meta.client && !clientTenantRestored.value)) await refresh()
   if (!user.value) {
     return navigateTo('/auth/login')
   }

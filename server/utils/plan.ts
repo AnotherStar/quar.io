@@ -1,4 +1,4 @@
-import type { Plan, Subscription, Tenant } from '@prisma/client'
+import type { Plan, Subscription, Tenant, User } from '@prisma/client'
 
 // Shape of `Plan.features` JSON. Kept in sync with prisma/seed.ts.
 export interface PlanFeatures {
@@ -20,6 +20,9 @@ export const FREE_FEATURES: PlanFeatures = {
   teamMembers: 1,
   approvalWorkflow: false
 }
+
+const TEST_ACCOUNT_INSTRUCTION_LIMIT = 100
+const TEST_ACCOUNT_EMAILS = new Set(['design@spartak.ru'])
 
 // Resolve effective features for a tenant.
 // Key principle: if subscription is not active, fall back to FREE features —
@@ -52,6 +55,19 @@ export function effectiveFeatures(
     }
   }
   return planFeatures
+}
+
+export function effectiveFeaturesForUser(
+  tenant: Tenant & { subscription: (Subscription & { plan: Plan }) | null },
+  user: Pick<User, 'email'>
+): PlanFeatures {
+  const features = effectiveFeatures(tenant)
+  if (!TEST_ACCOUNT_EMAILS.has(user.email.toLowerCase())) return features
+
+  return {
+    ...features,
+    maxInstructions: TEST_ACCOUNT_INSTRUCTION_LIMIT
+  }
 }
 
 export function trialState(

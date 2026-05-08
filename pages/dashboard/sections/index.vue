@@ -2,8 +2,16 @@
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const api = useApi()
-const { data } = await useAsyncData('sections', () => api<{ sections: any[] }>('/api/sections'))
 const { currentTenant } = useAuthState()
+const sectionsKey = computed(() => `sections-${currentTenant.value?.id ?? 'none'}`)
+const { data, pending } = await useAsyncData(
+  sectionsKey,
+  () => api<{ sections: any[] }>('/api/sections'),
+  {
+    default: () => ({ sections: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
+)
 const isPaid = computed(() => currentTenant.value?.plan && currentTenant.value.plan !== 'free')
 
 function isEmpty(content: any): boolean {
@@ -34,7 +42,11 @@ function isEmpty(content: any): boolean {
       <NuxtLink to="/dashboard/billing" class="underline">Сменить тариф</NuxtLink>
     </UiAlert>
 
-    <div v-if="data?.sections.length" class="space-y-md">
+    <UiCard v-if="pending && !data?.sections.length">
+      <p class="py-md text-body text-steel">Загружаю секции…</p>
+    </UiCard>
+
+    <div v-else-if="data?.sections.length" class="space-y-md">
       <NuxtLink
         v-for="s in data.sections"
         :key="s.id"

@@ -4,7 +4,14 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const api = useApi()
 const { currentTenant, refresh: refreshAuth } = useAuthState()
 
-const { data, refresh } = await useAsyncData('billing-state', () => api<any>('/api/billing/state'))
+const billingKey = computed(() => `billing-state-${currentTenant.value?.id ?? 'none'}`)
+const { data, refresh } = await useAsyncData(
+  billingKey,
+  () => api<any>('/api/billing/state'),
+  {
+    watch: [() => currentTenant.value?.id]
+  }
+)
 
 const activating = ref(false)
 const error = ref<string | null>(null)

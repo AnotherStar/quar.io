@@ -6,15 +6,30 @@ import type { AiBlock } from '~~/server/utils/aiInstructionGenerator'
 export interface StreamHandlers {
   onMeta?: (meta: Partial<{ title: string; slug: string; description: string; language: string }>) => void
   onBlock?: (block: AiBlock) => void
-  onDone?: () => void
+  onProgress?: (payload: any) => void
+  onExtractedImage?: (payload: any) => void | Promise<void>
+  onUsage?: (payload: any) => void
+  onDone?: (payload: any) => void
   onError?: (msg: string) => void
+}
+
+export interface StreamOptions {
+  imageLibrary?: Array<{
+    index: number
+    url: string
+    page: number
+    width: number
+    height: number
+    hash?: string
+  }>
 }
 
 export async function streamInstructionFromFile(
   instructionId: string,
   file: File,
   handlers: StreamHandlers,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: StreamOptions
 ) {
   const headers: Record<string, string> = {}
   // Preserve x-tenant-id like useApi does
@@ -23,6 +38,9 @@ export async function streamInstructionFromFile(
 
   const fd = new FormData()
   fd.append('file', file)
+  if (options?.imageLibrary?.length) {
+    fd.append('imageLibrary', JSON.stringify(options.imageLibrary))
+  }
 
   const res = await fetch(`/api/instructions/${instructionId}/generate-stream`, {
     method: 'POST',
@@ -47,14 +65,14 @@ export async function streamInstructionFromFile(
     while ((sep = buffer.indexOf('\n\n')) >= 0) {
       const raw = buffer.slice(0, sep)
       buffer = buffer.slice(sep + 2)
-      handleEvent(raw, handlers)
+      await handleEvent(raw, handlers)
     }
   }
   // Flush trailing
-  if (buffer.trim()) handleEvent(buffer, handlers)
+  if (buffer.trim()) await handleEvent(buffer, handlers)
 }
 
-function handleEvent(raw: string, h: StreamHandlers) {
+async function handleEvent(raw: string, h: StreamHandlers) {
   const lines = raw.split('\n')
   let event = 'message'
   let data = ''
@@ -65,8 +83,12 @@ function handleEvent(raw: string, h: StreamHandlers) {
   if (!data) return
   let parsed: any
   try { parsed = JSON.parse(data) } catch { return }
+  console.debug('[gen:sse]', event, parsed)
   if (event === 'meta') h.onMeta?.(parsed)
   else if (event === 'block') h.onBlock?.(parsed)
-  else if (event === 'done') h.onDone?.()
+  else if (event === 'progress') h.onProgress?.(parsed)
+  else if (event === 'extracted-image') await h.onExtractedImage?.(parsed)
+  else if (event === 'usage') h.onUsage?.(parsed)
+  else if (event === 'done') h.onDone?.(parsed)
   else if (event === 'error') h.onError?.(parsed.message || 'Ошибка')
 }

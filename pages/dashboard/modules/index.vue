@@ -2,7 +2,16 @@
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const api = useApi()
-const { data, refresh } = await useAsyncData('modules', () => api<{ modules: any[] }>('/api/modules'))
+const { currentTenant } = useAuthState()
+const modulesKey = computed(() => `modules-${currentTenant.value?.id ?? 'none'}`)
+const { data, refresh } = await useAsyncData(
+  modulesKey,
+  () => api<{ modules: any[] }>('/api/modules'),
+  {
+    default: () => ({ modules: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
+)
 
 async function toggle(code: string, enabled: boolean, config: object) {
   await api(`/api/modules/${code}`, { method: 'PUT', body: { enabled, config } })

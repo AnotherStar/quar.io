@@ -5,6 +5,7 @@ const props = defineProps<{ rootSelector?: string }>()
 
 const open = ref(false)
 const query = ref('')
+const searchInput = ref<HTMLInputElement | null>(null)
 const results = ref<Array<{ id: string; preview: string }>>([])
 let index: Array<{ id: string; text: string }> = []
 
@@ -26,6 +27,12 @@ watch(query, (q) => {
     .filter((b) => b.text.toLowerCase().includes(lower))
     .slice(0, 30)
     .map((b) => ({ id: b.id, preview: snippet(b.text, lower) }))
+})
+
+watch(open, async (isOpen) => {
+  if (!isOpen) return
+  await nextTick()
+  searchInput.value?.focus()
 })
 
 function snippet(text: string, term: string) {
@@ -70,6 +77,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
     <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 px-4 pt-[12vh]" @click.self="open = false">
       <div class="w-full max-w-xl rounded-lg border border-hairline bg-canvas p-md shadow-modal">
         <input
+          ref="searchInput"
           v-model="query"
           autofocus
           type="text"

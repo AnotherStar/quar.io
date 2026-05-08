@@ -4,10 +4,19 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const route = useRoute()
 const id = route.params.id as string
 const api = useApi()
+const { currentTenant } = useAuthState()
 
 const [{ data: stats }, { data: feedback }] = await Promise.all([
-  useAsyncData(`analytics-${id}`, () => api<any>(`/api/instructions/${id}/analytics`)),
-  useAsyncData(`feedback-${id}`, () => api<any>(`/api/instructions/${id}/feedback`))
+  useAsyncData(
+    computed(() => `analytics-${currentTenant.value?.id ?? 'none'}-${id}`),
+    () => api<any>(`/api/instructions/${id}/analytics`),
+    { watch: [() => currentTenant.value?.id] }
+  ),
+  useAsyncData(
+    computed(() => `feedback-${currentTenant.value?.id ?? 'none'}-${id}`),
+    () => api<any>(`/api/instructions/${id}/feedback`),
+    { watch: [() => currentTenant.value?.id] }
+  )
 ])
 </script>
 

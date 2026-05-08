@@ -11,16 +11,22 @@ const coreItems = [
   { to: '/dashboard/instructions', label: 'Инструкции', icon: 'lucide:file-text' },
   { to: '/dashboard/sections', label: 'Секции', icon: 'lucide:blocks' },
   { to: '/dashboard/modules', label: 'Модули', icon: 'lucide:puzzle' },
+  // Stub — page exists as a placeholder so the link doesn't 404.
+  { to: '/dashboard/scan-qr', label: 'Пикнуть QR', icon: 'lucide:scan-qr-code' },
   { to: '/dashboard/billing', label: 'Тариф и оплата', icon: 'lucide:credit-card' },
   { to: '/dashboard/settings', label: 'Настройки', icon: 'lucide:settings' }
 ]
 
 // Per-module sidebar entries — appear only when the module is enabled for
 // this tenant. Module declares its dashboardNavItem in modules-sdk/registry.
+const sidebarModulesKey = computed(() => `sidebar-modules-${currentTenant.value?.id ?? 'none'}`)
 const { data: modulesData } = await useAsyncData(
-  'sidebar-modules',
+  sidebarModulesKey,
   () => api<{ modules: any[] }>('/api/modules'),
-  { default: () => ({ modules: [] }) }
+  {
+    default: () => ({ modules: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
 )
 
 const moduleNavItems = computed(() => {

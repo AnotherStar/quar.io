@@ -12,10 +12,15 @@ import { membershipCache } from './cache'
 // API requests don't pay the round-trip to Postgres for this.
 export async function requireTenant(event: H3Event, opts: { minRole?: Role } = {}) {
   const user = await requireUser(event)
+  const headerTenantId = getHeader(event, 'x-tenant-id')
+  const paramTenantId = getRouterParam(event, 'tenantId')
+  const queryTenantId = getQuery(event).tenantId
+  const cookieTenantId = getCookie(event, 'mo_currentTenantId')
   const tenantId =
-    getHeader(event, 'x-tenant-id') ||
-    getRouterParam(event, 'tenantId') ||
-    getQuery(event).tenantId
+    headerTenantId ||
+    paramTenantId ||
+    queryTenantId ||
+    cookieTenantId
 
   if (!tenantId || typeof tenantId !== 'string') {
     throw createError({ statusCode: 400, statusMessage: 'Tenant id required' })

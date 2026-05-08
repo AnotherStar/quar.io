@@ -17,14 +17,19 @@ import {
 } from '~~/server/utils/aiInstructionGenerator'
 import { StreamingBlockExtractor, normalizeBlock } from '~~/server/utils/streamingBlockExtractor'
 import { extractImagesFromPdf } from '~~/server/utils/pdfImageExtractor'
-import { uploadObject } from '~~/server/utils/storage'
 import { generateShortId } from '~~/server/utils/slug'
+import {
+  INSTRUCTION_GENERATION_MODEL,
+  getOpenAIModelInfo,
+  type OpenAIModelId
+} from '~~/shared/openaiModels'
 
 const MAX_BYTES = 25 * 1024 * 1024
 
 export default defineEventHandler(async (event) => {
   const { tenant } = await requireTenant(event, { minRole: 'EDITOR' })
   const id = getRouterParam(event, 'id')!
+  const requestId = generateShortId()
 
   const instr = await prisma.instruction.findFirst({ where: { id, tenantId: tenant.id } })
   if (!instr) throw createError({ statusCode: 404 })
@@ -37,18 +42,25 @@ export default defineEventHandler(async (event) => {
   if (file.data.length > MAX_BYTES) {
     throw createError({ statusCode: 413, statusMessage: 'Файл слишком большой (макс. 25 МБ)' })
   }
-
-  const cfg = useRuntimeConfig()
-  if (!cfg.openai.apiKey) {
-    throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY не настроен' })
-  }
-  const client = new OpenAI({ apiKey: cfg.openai.apiKey })
+  const providedImageLibrary = parseImageLibraryPart(parts?.find((p) => p.name === 'imageLibrary')?.data)
 
   const isImage = (file.type ?? '').startsWith('image/')
   const isPdf = (file.type ?? '') === 'application/pdf' || file.filename.toLowerCase().endsWith('.pdf')
   if (!isImage && !isPdf) {
     throw createError({ statusCode: 400, statusMessage: 'Поддерживаются только PDF и изображения' })
   }
+  console.info('[generate-stream]', {
+    requestId,
+    stage: 'start',
+    instructionId: id,
+    tenantId: tenant.id,
+    filename: file.filename,
+    mimeType: file.type,
+    sizeBytes: file.data.length,
+    isPdf,
+    isImage,
+    providedImages: providedImageLibrary.length
+  })
 
   // SSE response
   setResponseHeaders(event, {
@@ -66,37 +78,95 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── 1. Extract embedded PDF images and upload to S3 ──────────────────────
-  let imageLibrary: Array<{ url: string; page: number; width: number; height: number }> = []
-  if (isPdf) {
+  let imageLibrary: Array<{ index: number; url: string; page: number; width: number; height: number; hash?: string }> = providedImageLibrary
+  let extractedImagesCount = 0
+  let failedImageUploads = 0
+  if (providedImageLibrary.length) {
+    extractedImagesCount = providedImageLibrary.length
+    console.info('[generate-stream]', {
+      requestId,
+      stage: 'image-library-provided',
+      count: imageLibrary.length,
+      images: imageLibrary
+    })
+    sse('progress', { stage: 'image-library-provided', count: imageLibrary.length })
+  } else if (isPdf) {
     sse('progress', { stage: 'extracting-images' })
+    let extracted: Awaited<ReturnType<typeof extractImagesFromPdf>> = []
     try {
-      const extracted = await extractImagesFromPdf(file.data)
-      // Upload in parallel, but bounded
-      const uploads = await Promise.all(
-        extracted.map(async (img) => {
-          const key = `${tenant.id}/ai/${generateShortId()}.png`
-          const url = await uploadObject(key, img.buffer, 'image/png')
-          // Persist to MediaAsset so it shows up in the tenant's library
-          await prisma.mediaAsset.create({
-            data: {
-              tenantId: tenant.id,
-              key,
-              url,
-              mimeType: 'image/png',
-              sizeBytes: img.buffer.length,
-              width: img.width,
-              height: img.height
-            }
-          }).catch(() => {})
-          return { url, page: img.page, width: img.width, height: img.height }
-        })
-      )
-      imageLibrary = uploads
-      sse('progress', { stage: 'images-ready', count: imageLibrary.length })
+      extracted = await extractImagesFromPdf(file.data, {
+        onProgress: (progress) => {
+          console.info('[generate-stream]', {
+            requestId,
+            stage: 'extracting-images-progress',
+            ...progress
+          })
+          sse('progress', { stage: 'extracting-images-progress', ...progress })
+        }
+      })
+      extractedImagesCount = extracted.length
+      console.info('[generate-stream]', {
+        requestId,
+        stage: 'images-extracted',
+        count: extracted.length,
+        images: extracted.map((img, index) => ({
+          index: index + 1,
+          page: img.page,
+          width: img.width,
+          height: img.height,
+          hash: img.hash
+        }))
+      })
+      sse('progress', { stage: 'images-extracted', count: extracted.length })
     } catch (e: any) {
-      // Image extraction failures shouldn't kill the whole flow
-      console.warn('[generate-stream] image extraction failed:', e?.message)
-      sse('progress', { stage: 'images-failed' })
+      console.error('[generate-stream]', {
+        requestId,
+        stage: 'images-extract-failed',
+        message: e?.message || String(e),
+        stack: e?.stack
+      })
+      sse('progress', { stage: 'images-extract-failed', message: e?.message || 'Не удалось извлечь изображения из PDF' })
+    }
+
+    if (extracted.length) {
+      for (const [index, img] of extracted.entries()) {
+        const imageIndex = index + 1
+        console.info('[generate-stream]', {
+          requestId,
+          stage: 'extracted-image-ready-for-browser-upload',
+          index: imageIndex,
+          page: img.page,
+          width: img.width,
+          height: img.height,
+          hash: img.hash,
+          sizeBytes: img.buffer.length
+        })
+        sse('extracted-image', {
+          index: imageIndex,
+          page: img.page,
+          width: img.width,
+          height: img.height,
+          hash: img.hash,
+          filename: `ai-extracted-${imageIndex}.png`,
+          mimeType: 'image/png',
+          sizeBytes: img.buffer.length,
+          dataUrl: `data:image/png;base64,${img.buffer.toString('base64')}`
+        })
+      }
+      console.info('[generate-stream]', {
+        requestId,
+        stage: 'browser-upload-required',
+        extractedImages: extracted.length
+      })
+      sse('done', {
+        browserUploadRequired: true,
+        extractedImages: extracted.length,
+        uploadedImages: 0,
+        failedImageUploads: 0,
+        imageCountInPrompt: 0
+      })
+      res.end()
+      return
     }
   }
 
@@ -105,6 +175,18 @@ export default defineEventHandler(async (event) => {
   const userText = imageLibrary.length
     ? buildUserPromptWithImages(imageLibrary)
     : 'Сгенерируй инструкцию по этому файлу.'
+  console.info('[generate-stream]', {
+    requestId,
+    stage: 'prompt-built',
+    imageCountInPrompt: imageLibrary.length,
+    promptChars: userText.length
+  })
+
+  const cfg = useRuntimeConfig()
+  if (!cfg.openai.apiKey) {
+    throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY не настроен' })
+  }
+  const client = new OpenAI({ apiKey: cfg.openai.apiKey })
 
   const userContent: any[] = [{ type: 'input_text', text: userText }]
   if (isImage) {
@@ -116,10 +198,14 @@ export default defineEventHandler(async (event) => {
   const extractor = new StreamingBlockExtractor()
   const collectedBlocks: AiBlock[] = []
   const meta: Partial<AiInstruction> = {}
+  let returnedImageBlocks = 0
+  let acceptedImageBlocks = 0
+  let droppedImageBlocks = 0
+  let usage: ReturnType<typeof normalizeResponseUsage> | null = null
 
   try {
     const stream = await client.responses.create({
-      model: cfg.openai.model,
+      model: INSTRUCTION_GENERATION_MODEL,
       input: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userContent }
@@ -132,6 +218,13 @@ export default defineEventHandler(async (event) => {
 
     for await (const chunk of stream as any) {
       const t = chunk?.type as string | undefined
+      if (t === 'response.completed') {
+        usage = normalizeResponseUsage(chunk.response?.usage, INSTRUCTION_GENERATION_MODEL)
+        if (usage) {
+          console.info('[generate-stream]', { requestId, stage: 'usage', usage })
+          sse('usage', usage)
+        }
+      }
       const delta: string | undefined = t === 'response.output_text.delta' ? chunk.delta : undefined
       if (!delta) continue
 
@@ -146,9 +239,37 @@ export default defineEventHandler(async (event) => {
         // Drop image blocks pointing at URLs that aren't in the library —
         // protects against the model hallucinating URLs
         if (norm.type === 'image' && imageLibrary.length && !imageLibrary.some((i) => i.url === norm.url)) {
+          returnedImageBlocks++
+          droppedImageBlocks++
+          console.warn('[generate-stream]', {
+            requestId,
+            stage: 'image-block-dropped',
+            reason: 'url-not-in-library',
+            url: norm.url,
+            description: norm.description
+          })
           continue
         }
+        if (norm.type === 'image') {
+          returnedImageBlocks++
+          acceptedImageBlocks++
+          const match = imageLibrary.find((i) => i.url === norm.url)
+          console.info('[generate-stream]', {
+            requestId,
+            stage: 'image-block-accepted',
+            imageIndex: match?.index,
+            page: match?.page,
+            url: norm.url,
+            description: norm.description
+          })
+        }
         collectedBlocks.push(norm)
+        console.info('[generate-stream]', {
+          requestId,
+          stage: 'block',
+          blockIndex: collectedBlocks.length,
+          type: norm.type
+        })
         sse('block', norm)
       }
     }
@@ -181,21 +302,131 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    sse('done', { blocksCount: collectedBlocks.length, imagesUsed: imageLibrary.length })
+    const summary = {
+      blocksCount: collectedBlocks.length,
+      structureStats: summarizeBlocks(collectedBlocks),
+      extractedImages: extractedImagesCount,
+      uploadedImages: imageLibrary.length,
+      failedImageUploads,
+      returnedImageBlocks,
+      acceptedImageBlocks,
+      droppedImageBlocks,
+      usage
+    }
+    console.info('[generate-stream]', { requestId, stage: 'done', ...summary })
+    sse('done', summary)
   } catch (e: any) {
+    console.error('[generate-stream]', {
+      requestId,
+      stage: 'error',
+      message: e?.message || 'Ошибка генерации'
+    })
     sse('error', { message: e?.message || 'Ошибка генерации' })
   } finally {
     res.end()
   }
 })
 
-function buildUserPromptWithImages(library: Array<{ url: string; page: number }>) {
-  const lines = library.map((it) => `- url: ${it.url}  (со страницы ${it.page})`).join('\n')
+function buildUserPromptWithImages(library: Array<{ index: number; url: string; page: number; width: number; height: number }>) {
+  const lines = library
+    .map((it) => `- IMAGE_${it.index}: url=${it.url}  page=${it.page}  size=${it.width}x${it.height}`)
+    .join('\n')
   return `Сгенерируй инструкцию по этому файлу.
 
-В оригинальном PDF на разных страницах есть изображения, которые мы извлекли и положили в S3. Доступные URL и номера страниц:
+В оригинальном PDF есть извлечённые изображения. Мы уже загрузили их в S3. Доступные изображения:
 
 ${lines}
 
-Когда тебе нужно проиллюстрировать шаг или раздел инструкции, вставляй блок типа "image" с url из списка выше (не выдумывай URL!) и кратким description (alt-текст для accessibility). Размещай изображение там, где оно по смыслу подходит к тексту. Если иллюстрация для какого-то шага не нужна — не вставляй image-блок просто чтобы вставить.`
+Правила работы с изображениями:
+- Рассмотри каждое изображение из списка IMAGE_1...IMAGE_N как потенциальную часть исходной инструкции.
+- Если изображение относится к товару, шагу, схеме, комплектации, таблице, предупреждению или результату действия — вставь отдельный блок "image" с точным url из списка.
+- По возможности используй все содержательные изображения из списка. Не ограничивайся первым изображением.
+- Размещай image-блок рядом с ближайшим связанным текстом или сразу после раздела/шага с той же страницы PDF.
+- Для каждого image-блока пиши короткий, конкретный description как alt-текст: что изображено и зачем это нужно пользователю.
+- Не выдумывай URL и не меняй URL даже на один символ.
+- Не используй один и тот же URL дважды, кроме случаев, когда одно и то же изображение явно нужно повторить в разных местах.
+- image_placeholder используй только для иллюстраций, которые упомянуты в тексте, но отсутствуют в списке доступных URL.
+- Если изображение явно декоративное, логотип, фон или не несёт инструктивного смысла — не вставляй его.`
+}
+
+function parseImageLibraryPart(data?: Buffer) {
+  if (!data?.length) return []
+  try {
+    const parsed = JSON.parse(data.toString('utf8'))
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .map((img, index) => ({
+        index: Number(img?.index) || index + 1,
+        url: typeof img?.url === 'string' ? img.url : '',
+        page: Number(img?.page) || 0,
+        width: Number(img?.width) || 0,
+        height: Number(img?.height) || 0,
+        hash: typeof img?.hash === 'string' ? img.hash : undefined
+      }))
+      .filter((img) => img.url)
+  } catch {
+    return []
+  }
+}
+
+function normalizeResponseUsage(raw: any, model: OpenAIModelId) {
+  if (!raw) return null
+  const inputTokens = Number(raw.input_tokens) || 0
+  const outputTokens = Number(raw.output_tokens) || 0
+  const totalTokens = Number(raw.total_tokens) || inputTokens + outputTokens
+  const cachedInputTokens = Number(raw.input_tokens_details?.cached_tokens) || 0
+  const reasoningTokens = Number(raw.output_tokens_details?.reasoning_tokens) || 0
+  const billableInputTokens = Math.max(0, inputTokens - cachedInputTokens)
+  const pricing = getOpenAIModelInfo(model).pricingUsdPer1M
+  const estimatedCostUsd = pricing
+    ? (billableInputTokens * pricing.input + cachedInputTokens * pricing.cachedInput + outputTokens * pricing.output) / 1_000_000
+    : null
+
+  return {
+    model,
+    inputTokens,
+    cachedInputTokens,
+    billableInputTokens,
+    outputTokens,
+    reasoningTokens,
+    totalTokens,
+    estimatedCostUsd,
+    pricing: pricing
+      ? {
+          inputUsdPer1M: pricing.input,
+          cachedInputUsdPer1M: pricing.cachedInput,
+          outputUsdPer1M: pricing.output
+        }
+      : null
+  }
+}
+
+function summarizeBlocks(blocks: AiBlock[]) {
+  const byType: Record<string, number> = {}
+  const headingsByLevel: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 }
+  const safetyBySeverity: Record<'info' | 'warning' | 'danger', number> = {
+    info: 0,
+    warning: 0,
+    danger: 0
+  }
+  let linkCount = 0
+
+  for (const block of blocks) {
+    byType[block.type] = (byType[block.type] || 0) + 1
+    linkCount += block.links?.length || 0
+
+    if (block.type === 'heading') {
+      headingsByLevel[block.level]++
+    }
+    if (block.type === 'safety') {
+      safetyBySeverity[block.severity]++
+    }
+  }
+
+  return {
+    byType,
+    headingsByLevel,
+    safetyBySeverity,
+    linkCount
+  }
 }

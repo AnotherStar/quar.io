@@ -1,6 +1,6 @@
 import { requireTenant } from '~~/server/utils/tenant'
 import { prisma } from '~~/server/utils/prisma'
-import { effectiveFeatures } from '~~/server/utils/plan'
+import { effectiveFeaturesForUser } from '~~/server/utils/plan'
 import { generateShortId } from '~~/server/utils/slug'
 import { instructionCreateSchema } from '~~/shared/schemas/instruction'
 import { EMPTY_DOC } from '~~/shared/types/instruction'
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   const { tenant, user } = await requireTenant(event, { minRole: 'EDITOR' })
   const body = await readValidatedBody(event, instructionCreateSchema.parse)
 
-  const features = effectiveFeatures(tenant)
+  const features = effectiveFeaturesForUser(tenant, user)
   if (features.maxInstructions !== -1) {
     // Archived instructions don't count against the limit — that's how users
     // free up slots without losing their data.

@@ -163,11 +163,11 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
   }
 
   const branding =
-    planActive && (instruction.tenant.brandingPrimaryColor || instruction.tenant.brandingLogoUrl || instruction.tenant.brandingFontFamily)
+    instruction.tenant.brandingLogoUrl || (planActive && (instruction.tenant.brandingPrimaryColor || instruction.tenant.brandingFontFamily))
       ? {
-          primaryColor: instruction.tenant.brandingPrimaryColor,
+          primaryColor: planActive ? instruction.tenant.brandingPrimaryColor : null,
           logoUrl: instruction.tenant.brandingLogoUrl,
-          fontFamily: instruction.tenant.brandingFontFamily
+          fontFamily: planActive ? instruction.tenant.brandingFontFamily : null
         }
       : null
 

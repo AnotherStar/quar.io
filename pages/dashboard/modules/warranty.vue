@@ -2,8 +2,15 @@
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const api = useApi()
-const { data } = await useAsyncData('warranty-regs', () =>
-  api<{ items: any[] }>('/api/modules/warranty/registrations')
+const { currentTenant } = useAuthState()
+const warrantyKey = computed(() => `warranty-regs-${currentTenant.value?.id ?? 'none'}`)
+const { data } = await useAsyncData(
+  warrantyKey,
+  () => api<{ items: any[] }>('/api/modules/warranty/registrations'),
+  {
+    default: () => ({ items: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
 )
 
 function downloadCsv() {

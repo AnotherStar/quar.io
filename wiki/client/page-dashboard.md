@@ -116,7 +116,7 @@ useAsyncData('dashboard-overview', () => api<{ instructions: any[] }>('/api/inst
 Создание новой инструкции выполняется через `POST /api/instructions` с временным slug вида:
 
 ```ts
-untitled-${Math.random().toString(36).slice(2, 8)}
+${Math.random().toString(36).slice(2, 8)}
 ```
 
 После создания выполняется переход на страницу редактирования:
@@ -590,7 +590,7 @@ inReview: status === 'IN_REVIEW'
 При создании новой инструкции клиент генерирует временный slug:
 
 ```ts
-const slug = `untitled-${Math.random().toString(36).slice(2, 8)}`
+const slug = `${Math.random().toString(36).slice(2, 8)}`
 ```
 
 Создаваемая инструкция получает:

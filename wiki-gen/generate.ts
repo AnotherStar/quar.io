@@ -47,8 +47,8 @@ const MAX_FILE_SIZE = 40_000; // символов, обрезаем больши
 const MAX_CONTEXT_SIZE = 120_000; // суммарно на модуль
 const MAX_FILES_PER_MODULE = 30;
 
-const WIKI_OPENAI_MODEL = 'gpt-5.5';
-const WIKI_ANTHROPIC_MODEL = 'claude-opus-4-5';
+const WIKI_GENERATOR_OPENAI_ID = 'gpt-5.5';
+const WIKI_GENERATOR_ANTHROPIC_ID = 'claude-opus-4-5';
 
 type WikiSection = 'server' | 'client' | 'shared' | 'modules' | 'data';
 
@@ -62,9 +62,9 @@ interface ModuleTarget {
 
 function getModel(provider: 'openai' | 'anthropic'): string {
     if (provider === 'openai') {
-        return WIKI_OPENAI_MODEL;
+        return WIKI_GENERATOR_OPENAI_ID;
     }
-    return WIKI_ANTHROPIC_MODEL;
+    return WIKI_GENERATOR_ANTHROPIC_ID;
 }
 
 // ─── Расширения файлов для анализа ───────────────────────────────────────────

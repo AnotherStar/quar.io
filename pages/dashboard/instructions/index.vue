@@ -3,8 +3,16 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 import { onClickOutside } from '@vueuse/core'
 
 const api = useApi()
-const { data, refresh } = await useAsyncData('instructions', () => api<{ instructions: any[] }>('/api/instructions'))
 const { currentTenant } = useAuthState()
+const instructionsKey = computed(() => `instructions-${currentTenant.value?.id ?? 'none'}`)
+const { data, refresh } = await useAsyncData(
+  instructionsKey,
+  () => api<{ instructions: any[] }>('/api/instructions'),
+  {
+    default: () => ({ instructions: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
+)
 
 const tab = ref<'active' | 'archive'>('active')
 const search = ref('')
@@ -33,11 +41,12 @@ const counts = computed(() => {
 })
 
 const creating = ref(false)
+const duplicatingId = ref<string | null>(null)
 const createError = ref<string | null>(null)
 async function createNew() {
   creating.value = true; createError.value = null
   try {
-    const slug = `untitled-${Math.random().toString(36).slice(2, 8)}`
+    const slug = `${Math.random().toString(36).slice(2, 8)}`
     const { instruction } = await api<{ instruction: any }>('/api/instructions', {
       method: 'POST',
       body: { title: 'Без названия', slug, language: 'ru' }
@@ -46,6 +55,21 @@ async function createNew() {
   } catch (e: any) {
     createError.value = e?.data?.statusMessage ?? 'Ошибка'
   } finally { creating.value = false }
+}
+
+async function duplicateInstruction(id: string) {
+  openMenuId.value = null
+  duplicatingId.value = id
+  createError.value = null
+  try {
+    await api(`/api/instructions/${id}/duplicate`, { method: 'POST' })
+    tab.value = 'active'
+    await refresh()
+  } catch (e: any) {
+    createError.value = e?.data?.statusMessage ?? 'Не удалось скопировать инструкцию'
+  } finally {
+    duplicatingId.value = null
+  }
 }
 
 function publicUrlFor(i: any) {
@@ -142,19 +166,17 @@ async function unarchive(id: string) {
         </thead>
         <tbody>
           <tr v-for="i in visible" :key="i.id" class="border-b border-hairline-soft">
-            <!-- Title + slug, click → public preview in new tab -->
+            <!-- Title + slug, click → editor -->
             <td class="py-sm">
-              <a
-                :href="publicUrlFor(i)"
-                target="_blank"
-                rel="noopener"
+              <NuxtLink
+                :to="`/dashboard/instructions/${i.id}/edit`"
                 class="group block"
               >
                 <span class="text-body-md text-ink group-hover:text-primary">{{ i.title }}</span>
                 <span class="block text-caption text-steel group-hover:text-link">
                   /{{ currentTenant?.slug }}/{{ i.slug }}
                 </span>
-              </a>
+              </NuxtLink>
             </td>
             <td class="py-sm align-top">
               <UiBadge :variant="i.status === 'PUBLISHED' ? 'tag-green' : i.status === 'ARCHIVED' ? 'tag-orange' : i.status === 'IN_REVIEW' ? 'tag-orange' : 'tag-purple'">
@@ -194,7 +216,18 @@ async function unarchive(id: string) {
                     <Icon name="lucide:pencil" class="h-4 w-4 text-steel" />
                     Редактировать
                   </NuxtLink>
+                  <button
+                    v-if="i.status === 'DRAFT'"
+                    type="button"
+                    disabled
+                    class="flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-body-sm text-muted"
+                    title="Черновик еще не опубликован"
+                  >
+                    <Icon name="lucide:eye-off" class="h-4 w-4" />
+                    Просмотр
+                  </button>
                   <a
+                    v-else
                     :href="publicUrlFor(i)"
                     target="_blank"
                     rel="noopener"
@@ -212,6 +245,15 @@ async function unarchive(id: string) {
                     <Icon name="lucide:bar-chart-3" class="h-4 w-4 text-steel" />
                     Аналитика
                   </NuxtLink>
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface disabled:opacity-60"
+                    :disabled="duplicatingId === i.id"
+                    @click="duplicateInstruction(i.id)"
+                  >
+                    <Icon name="lucide:copy" class="h-4 w-4 text-steel" />
+                    {{ duplicatingId === i.id ? 'Копирую…' : 'Скопировать' }}
+                  </button>
                   <hr class="border-hairline">
                   <button
                     v-if="i.status !== 'ARCHIVED'"

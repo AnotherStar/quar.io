@@ -2,8 +2,16 @@
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const api = useApi()
-const { data } = await useAsyncData('dashboard-overview', () => api<{ instructions: any[] }>('/api/instructions'))
 const { currentTenant } = useAuthState()
+const overviewKey = computed(() => `dashboard-overview-${currentTenant.value?.id ?? 'none'}`)
+const { data } = await useAsyncData(
+  overviewKey,
+  () => api<{ instructions: any[] }>('/api/instructions'),
+  {
+    default: () => ({ instructions: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
+)
 
 const stats = computed(() => {
   const list = data.value?.instructions ?? []

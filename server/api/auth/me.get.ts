@@ -20,7 +20,8 @@ export default defineEventHandler(async (event) => {
         id: m.tenant.id,
         slug: m.tenant.slug,
         name: m.tenant.name,
-        plan: m.tenant.subscription?.plan.code ?? 'free'
+        plan: m.tenant.subscription?.plan.code ?? 'free',
+        brandingLogoUrl: m.tenant.brandingLogoUrl
       }
     }))
   }

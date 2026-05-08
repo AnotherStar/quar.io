@@ -113,30 +113,81 @@ export class StreamingBlockExtractor {
 // Same normalization as aiInstructionGenerator.normalize but per-block.
 export function normalizeBlock(raw: any): AiBlock | null {
   if (!raw || typeof raw !== 'object') return null
+  const links = normalizeLinks(raw.links)
   switch (raw.type) {
     case 'heading':
-      return { type: 'heading', level: ((raw.level || 2) as 1 | 2 | 3), text: String(raw.text || '') }
+      return { type: 'heading', level: normalizeHeadingLevel(raw.level), text: String(raw.text || ''), links }
     case 'paragraph':
-      return { type: 'paragraph', text: String(raw.text || '') }
+      return { type: 'paragraph', text: String(raw.text || ''), links }
     case 'bullet_list':
-      return { type: 'bullet_list', items: (raw.items || []).filter(Boolean) }
+      return { type: 'bullet_list', items: (raw.items || []).filter(Boolean), links }
     case 'numbered_list':
-      return { type: 'numbered_list', items: (raw.items || []).filter(Boolean) }
+      return { type: 'numbered_list', items: (raw.items || []).filter(Boolean), links }
+    case 'task_list':
+      return {
+        type: 'task_list',
+        taskItems: Array.isArray(raw.taskItems)
+          ? raw.taskItems
+              .map((it: any) => ({ text: String(it?.text || ''), checked: Boolean(it?.checked) }))
+              .filter((it: { text: string }) => it.text)
+          : [],
+        links
+      }
+    case 'quote':
+      return { type: 'quote', text: String(raw.text || ''), links }
+    case 'code_block':
+      return {
+        type: 'code_block',
+        text: String(raw.text || ''),
+        codeLanguage: String(raw.codeLanguage || ''),
+        links
+      }
+    case 'table':
+      return {
+        type: 'table',
+        rows: Array.isArray(raw.rows)
+          ? raw.rows
+              .filter((row: any) => Array.isArray(row))
+              .map((row: any[]) => row.map((cell) => String(cell ?? '')))
+              .filter((row: string[]) => row.some((cell) => cell.trim()))
+          : [],
+        hasHeaderRow: Boolean(raw.hasHeaderRow),
+        links
+      }
     case 'safety':
       return {
         type: 'safety',
         severity: ((raw.severity || 'warning') as 'info' | 'warning' | 'danger'),
-        text: String(raw.text || '')
+        text: String(raw.text || ''),
+        links
       }
     case 'image':
       if (!raw.url) return null
-      return { type: 'image', url: String(raw.url), description: String(raw.description || '') }
+      return { type: 'image', url: String(raw.url), description: String(raw.description || ''), links }
     case 'image_placeholder':
       return {
         type: 'image_placeholder',
-        description: String(raw.description || raw.text || 'Иллюстрация')
+        description: String(raw.description || raw.text || 'Иллюстрация'),
+        links
       }
+    case 'youtube':
+      if (!raw.url) return null
+      return { type: 'youtube', url: String(raw.url), description: String(raw.description || ''), links }
     default:
       return null
   }
+}
+
+function normalizeHeadingLevel(level: unknown): 1 | 2 | 3 {
+  return level === 1 || level === 2 || level === 3 ? level : 2
+}
+
+function normalizeLinks(raw: any) {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((link) => ({
+      text: String(link?.text || '').trim(),
+      url: String(link?.url || '').trim()
+    }))
+    .filter((link) => link.text && link.url)
 }
