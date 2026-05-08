@@ -120,6 +120,9 @@ pnpm db:push           # применить schema → db (без миграци
 pnpm db:migrate        # создать миграцию
 pnpm db:seed           # засеять тарифы + модули
 pnpm db:studio         # Prisma Studio
+pnpm wiki:dry-run      # проверить список wiki-модулей без генерации
+pnpm wiki:generate     # сгенерировать wiki в ./wiki через AI-провайдера
+pnpm wiki:update -- api-instructions server
 pnpm typecheck
 pnpm lint
 ```

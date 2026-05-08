@@ -1,0 +1,22 @@
+{
+  "name": "wiki-gen",
+  "version": "1.0.0",
+  "description": "AI-генератор wiki-документации",
+  "private": true,
+  "scripts": {
+    "generate": "ts-node generate.ts",
+    "generate:server": "ts-node generate.ts --section server",
+    "generate:client": "ts-node generate.ts --section client",
+    "generate:shared": "ts-node generate.ts --section shared",
+    "generate:modules": "ts-node generate.ts --section modules",
+    "generate:data": "ts-node generate.ts --section data",
+    "generate:force": "ts-node generate.ts --force",
+    "dry-run": "ts-node generate.ts --dry-run",
+    "update": "ts-node update-module.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}
