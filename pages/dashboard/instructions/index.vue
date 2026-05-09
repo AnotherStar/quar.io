@@ -28,7 +28,7 @@ const visible = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return baseList.value
   return baseList.value.filter(
-    (i) => i.title.toLowerCase().includes(q) || i.slug.toLowerCase().includes(q)
+    (i) => i.title.toLowerCase().includes(q) || i.slug.toLowerCase().includes(q) || (i.productBarcode ?? '').toLowerCase().includes(q)
   )
 })
 
@@ -175,6 +175,9 @@ async function unarchive(id: string) {
                 <span class="text-body-md text-ink group-hover:text-primary">{{ i.title }}</span>
                 <span class="block text-caption text-steel group-hover:text-link">
                   /{{ currentTenant?.slug }}/{{ i.slug }}
+                </span>
+                <span v-if="i.productBarcode" class="block text-caption text-steel">
+                  ШК {{ i.productBarcode }}
                 </span>
               </NuxtLink>
             </td>

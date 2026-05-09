@@ -23,10 +23,12 @@ const instr = computed(() => data.value?.instruction ?? null)
 const title = ref('')
 const slug = ref('')
 const description = ref('')
+const productBarcode = ref('')
 const draft = ref<object>(EMPTY_DOC)
 const saving = ref(false)
 const lastSavedAt = ref<Date | null>(null)
 const slugError = ref<string | null>(null)
+const saveError = ref<string | null>(null)
 const publishing = ref(false)
 
 let saveTimer: any = null
@@ -42,6 +44,7 @@ function hydrateInstruction(next: any) {
   title.value = next.title
   slug.value = next.slug
   description.value = next.description ?? ''
+  productBarcode.value = next.productBarcode ?? ''
   draft.value = next.draftContent ?? EMPTY_DOC
   nextTick(() => {
     suppressAutosave = false
@@ -57,6 +60,7 @@ function scheduleSave() {
   clearTimeout(saveTimer)
   saveTimer = setTimeout(async () => {
     saving.value = true; slugError.value = null
+    saveError.value = null
     try {
       // Only send slug if changed and looks valid — invalid slugs are rejected
       // server-side and we don't want to spam the user with errors mid-typing.
@@ -66,6 +70,7 @@ function scheduleSave() {
       const body: any = {
         title: title.value,
         description: description.value,
+        productBarcode: productBarcode.value.trim() || null,
         draftContent: draft.value
       }
       if (slugChanged && slugValid) body.slug = cleanSlug
@@ -75,11 +80,12 @@ function scheduleSave() {
     } catch (e: any) {
       const msg = e?.data?.statusMessage ?? 'Ошибка сохранения'
       if (msg.toLowerCase().includes('slug')) slugError.value = msg
+      else saveError.value = msg
     } finally { saving.value = false }
   }, 800)
 }
 
-watch([title, slug, description, draft], scheduleSave, { deep: true })
+watch([title, slug, description, productBarcode, draft], scheduleSave, { deep: true })
 
 async function publish() {
   publishing.value = true
@@ -473,6 +479,14 @@ async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: stri
           class="block w-full rounded-md bg-transparent px-2 py-1 -mx-2 text-h3 text-ink outline-none transition-colors hover:bg-surface focus:bg-surface focus:ring-2 focus:ring-primary/30"
           placeholder="Название инструкции"
         >
+        <div class="mt-2 max-w-sm">
+          <UiInput
+            v-model="productBarcode"
+            label="ШК товара"
+            placeholder="Например 4601234567890"
+            hint="По этому коду свободный QR привяжется к инструкции"
+          />
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-caption text-steel">
@@ -582,6 +596,7 @@ async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: stri
       Публичная страница не открывается. Данные и ссылки сохранены.
       <button class="ml-2 underline" @click="unarchive">Восстановить</button>
     </UiAlert>
+    <UiAlert v-if="saveError" kind="error">{{ saveError }}</UiAlert>
 
     <div v-if="isStreaming || streamError || generationUsage" class="flex items-center gap-2">
       <span v-if="isStreaming" class="flex items-center gap-2 text-caption-bold text-primary">

@@ -81,6 +81,7 @@ model Tenant {
   apiKeys             ApiKey[]
   mediaAssets         MediaAsset[]
   productGroups       ProductGroup[]
+  activationQrCodes   ActivationQrCode[]
 }
 
 enum Role {
@@ -177,6 +178,7 @@ model Instruction {
   title          String
   description    String?
   language       String           @default("en")                  // ISO 639-1
+  productBarcode String?                                          // barcode/GTIN used to bind blank QR codes on picking
   status         InstructionStatus @default(DRAFT)
 
   // Working draft content (mutable; promoted to immutable Version on publish)
@@ -200,10 +202,31 @@ model Instruction {
   blockFeedback     BlockFeedback[]
   warrantyRegistrations WarrantyRegistration[]
   feedbackSubmissions   FeedbackSubmission[]
+  activationQrCodes     ActivationQrCode[]
 
   @@unique([tenantId, slug])
+  @@unique([tenantId, productBarcode])
   @@index([tenantId, status])
   @@index([productGroupId])
+}
+
+// Blank QR codes printed before the exact product instruction is known.
+// A picker signed into this tenant opens /s/<shortId>, scans the product
+// barcode, and the code becomes permanently bound to that instruction.
+model ActivationQrCode {
+  id            String   @id @default(cuid())
+  shortId       String   @unique
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  instructionId String?
+  instruction   Instruction? @relation(fields: [instructionId], references: [id], onDelete: SetNull)
+  createdById   String?
+  boundAt       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, instructionId])
 }
 
 // Immutable snapshot. Created on publish or explicit "save version".

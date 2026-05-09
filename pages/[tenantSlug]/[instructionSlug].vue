@@ -5,7 +5,7 @@ const route = useRoute()
 const tenantSlug = route.params.tenantSlug as string
 const instructionSlug = route.params.instructionSlug as string
 
-const { data, error } = await useFetch(`/api/public/${tenantSlug}/${instructionSlug}`, {
+const { data, error } = await useFetch<any>(`/api/public/${tenantSlug}/${instructionSlug}`, {
   key: `pub-${tenantSlug}-${instructionSlug}`
 })
 
@@ -40,18 +40,18 @@ const brandingStyle = computed(() => {
 })
 
 const beforeSlots = computed(() => {
-  const sec = (data.value?.sections ?? []).filter((s) => s.slot === 'before').sort((a, b) => a.position - b.position)
-  const mod = (data.value?.modules ?? []).filter((m) => m.slot === 'before').sort((a, b) => a.position - b.position)
+  const sec = ((data.value?.sections ?? []) as any[]).filter((s: any) => s.slot === 'before').sort((a: any, b: any) => a.position - b.position)
+  const mod = ((data.value?.modules ?? []) as any[]).filter((m: any) => m.slot === 'before').sort((a: any, b: any) => a.position - b.position)
   return { sections: sec, modules: mod }
 })
 const afterSlots = computed(() => {
-  const sec = (data.value?.sections ?? []).filter((s) => s.slot === 'after').sort((a, b) => a.position - b.position)
-  const mod = (data.value?.modules ?? []).filter((m) => m.slot === 'after').sort((a, b) => a.position - b.position)
+  const sec = ((data.value?.sections ?? []) as any[]).filter((s: any) => s.slot === 'after').sort((a: any, b: any) => a.position - b.position)
+  const mod = ((data.value?.modules ?? []) as any[]).filter((m: any) => m.slot === 'after').sort((a: any, b: any) => a.position - b.position)
   return { sections: sec, modules: mod }
 })
 const sidebarSlots = computed(() => {
-  const sec = (data.value?.sections ?? []).filter((s) => s.slot === 'sidebar').sort((a, b) => a.position - b.position)
-  const mod = (data.value?.modules ?? []).filter((m) => m.slot === 'sidebar').sort((a, b) => a.position - b.position)
+  const sec = ((data.value?.sections ?? []) as any[]).filter((s: any) => s.slot === 'sidebar').sort((a: any, b: any) => a.position - b.position)
+  const mod = ((data.value?.modules ?? []) as any[]).filter((m: any) => m.slot === 'sidebar').sort((a: any, b: any) => a.position - b.position)
   return { sections: sec, modules: mod }
 })
 const hasSidebar = computed(() => sidebarSlots.value.sections.length > 0 || sidebarSlots.value.modules.length > 0)

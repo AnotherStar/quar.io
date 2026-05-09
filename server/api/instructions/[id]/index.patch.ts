@@ -17,6 +17,13 @@ export default defineEventHandler(async (event) => {
     if (taken) throw createError({ statusCode: 400, statusMessage: 'Slug уже используется' })
   }
 
+  if (body.productBarcode && body.productBarcode !== exists.productBarcode) {
+    const taken = await prisma.instruction.findUnique({
+      where: { tenantId_productBarcode: { tenantId: tenant.id, productBarcode: body.productBarcode } }
+    })
+    if (taken) throw createError({ statusCode: 400, statusMessage: 'Этот ШК уже указан у другой инструкции' })
+  }
+
   const instruction = await prisma.instruction.update({
     where: { id },
     data: {
@@ -24,6 +31,7 @@ export default defineEventHandler(async (event) => {
       slug: body.slug,
       description: body.description,
       language: body.language,
+      productBarcode: body.productBarcode === undefined ? undefined : body.productBarcode || null,
       productGroupId: body.productGroupId,
       draftContent: body.draftContent ?? undefined
     }

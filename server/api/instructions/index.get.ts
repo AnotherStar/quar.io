@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
         shortId: true,
         title: true,
         language: true,
+        productBarcode: true,
         status: true,
         updatedAt: true,
         publishedAt: true,
