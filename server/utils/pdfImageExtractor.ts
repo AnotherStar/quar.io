@@ -6,20 +6,48 @@
 // deduplicates repeated images (e.g. headers/logos) by content hash.
 import { createCanvas } from '@napi-rs/canvas'
 import { createHash } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 // pdfjs-dist legacy build is the Node-friendly one
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 
+function resolvePdfjsPackageRoot(): string {
+  const tryFromPackageJson = (dir: string): string | null => {
+    const pkgJson = path.join(dir, 'package.json')
+    if (!existsSync(pkgJson)) return null
+    try {
+      return path.dirname(createRequire(pkgJson).resolve('pdfjs-dist/package.json'))
+    } catch {
+      return null
+    }
+  }
+
+  // PM2/Nitro: cwd is the app root with node_modules (import.meta.url points at bundled chunk)
+  const fromCwd = tryFromPackageJson(process.cwd())
+  if (fromCwd) return fromCwd
+
+  let dir = path.dirname(fileURLToPath(import.meta.url))
+  for (let i = 0; i < 20; i++) {
+    const found = tryFromPackageJson(dir)
+    if (found) return found
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+
+  throw new Error(
+    'Could not resolve pdfjs-dist (ensure dependencies are installed and cwd is the project root).'
+  )
+}
+
 // Nitro bundles server code into a single chunk; pdf.js then resolves the fake worker's
 // dynamic import relative to that chunk, so `./pdf.worker.mjs` breaks on prod. Point at the
 // real package file so `import(workerSrc)` loads WorkerMessageHandler correctly.
-const pdfjsPkgRoot = path.dirname(
-  createRequire(import.meta.url).resolve('pdfjs-dist/package.json')
-)
+const pdfjsPkgRoot = resolvePdfjsPackageRoot()
 pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(
   path.join(pdfjsPkgRoot, 'legacy/build/pdf.worker.mjs')
 ).href
