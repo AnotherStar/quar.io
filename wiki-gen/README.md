@@ -1,6 +1,6 @@
-# ManualOnline Wiki Generator
+# quar.io Wiki Generator
 
-AI-генератор Markdown-документации для структуры ManualOnline.
+AI-генератор Markdown-документации для структуры quar.io.
 
 ## Запуск
 

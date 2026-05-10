@@ -2,7 +2,7 @@ export function getOpenAIBaseUrl() {
   const baseUrl = process.env.OPENAI_BASE_URL?.trim()
 
   if (!baseUrl) {
-    throw new Error('OPENAI_BASE_URL must be explicitly set before starting ManualOnline')
+    throw new Error('OPENAI_BASE_URL must be explicitly set before starting quar.io')
   }
 
   try {

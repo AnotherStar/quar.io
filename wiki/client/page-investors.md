@@ -2,7 +2,7 @@
 
 ## Назначение
 
-`page-investors` — это публичная Nuxt-страница `pages/investors.vue`, представляющая investor pitch ManualOnline. Модуль показывает инвестиционный нарратив продукта: проблему плохих инструкций, решение через QR-ready мобильные инструкции, план проверки спроса, бизнес-модель, дифференциацию, roadmap и инвестиционный запрос.
+`page-investors` — это публичная Nuxt-страница `pages/investors.vue`, представляющая investor pitch quar.io. Модуль показывает инвестиционный нарратив продукта: проблему плохих инструкций, решение через QR-ready мобильные инструкции, план проверки спроса, бизнес-модель, дифференциацию, roadmap и инвестиционный запрос.
 
 Страница не реализует интерактивную бизнес-функциональность SaaS, а служит маркетингово-презентационным лендингом для инвесторов.
 
@@ -11,7 +11,7 @@
 - Публичная страница investor pitch по маршруту `/investors`.
 - Использование отдельного layout `blank`, без стандартного приложения/дашборда.
 - SEO-настройки через `useHead`: заголовок и meta description.
-- Hero-блок с positioning ManualOnline и CTA-ссылками:
+- Hero-блок с positioning quar.io и CTA-ссылками:
   - `#deck` — переход к pitch-секции;
   - `#ask` — переход к инвестиционному запросу.
 - Визуальный mockup продукта:
@@ -56,15 +56,15 @@ pages/
 definePageMeta({ layout: 'blank' })
 ```
 
-Страница использует layout `blank`. Это означает, что она намеренно отделена от основного интерфейса ManualOnline, например от публичных страниц инструкций или seller dashboard.
+Страница использует layout `blank`. Это означает, что она намеренно отделена от основного интерфейса quar.io, например от публичных страниц инструкций или seller dashboard.
 
 ```ts
 useHead({
-  title: 'ManualOnline — investor pitch',
+  title: 'quar.io — investor pitch',
   meta: [
     {
       name: 'description',
-      content: 'Investor pitch for ManualOnline: QR-ready mobile instructions that protect marketplace product ratings.'
+      content: 'Investor pitch for quar.io: QR-ready mobile instructions that protect marketplace product ratings.'
     }
   ]
 })
@@ -102,7 +102,7 @@ useHead({
    - четыре карточки с аспектами боли.
 
 3. **Solution**
-   - описание ManualOnline как post-purchase канала;
+   - описание quar.io как post-purchase канала;
    - карточки `wedgeSteps`.
 
 4. **Market wedge**
@@ -275,11 +275,11 @@ const roadmap: string[]
 
 В коде нет серверной бизнес-логики, авторизации, тарифных ограничений, работы с БД, публикации инструкций или API-запросов.
 
-Однако в тексте страницы зафиксирована продуктовая и go-to-market логика ManualOnline:
+Однако в тексте страницы зафиксирована продуктовая и go-to-market логика quar.io:
 
 ### 1. Основная инвестиционная гипотеза
 
-ManualOnline позиционируется как инструмент защиты рейтинга товара через понятные QR-инструкции.
+quar.io позиционируется как инструмент защиты рейтинга товара через понятные QR-инструкции.
 
 Ключевой тезис:
 
@@ -346,7 +346,7 @@ ManualOnline позиционируется как инструмент защи
 
 ## Зависимости
 
-### Внутренние зависимости ManualOnline
+### Внутренние зависимости quar.io
 
 В коде явно используются только инфраструктурные элементы frontend-проекта:
 
@@ -447,11 +447,11 @@ SEO-метаданные задаются в `useHead`:
 
 ```ts
 useHead({
-  title: 'ManualOnline — investor pitch',
+  title: 'quar.io — investor pitch',
   meta: [
     {
       name: 'description',
-      content: 'Investor pitch for ManualOnline: QR-ready mobile instructions that protect marketplace product ratings.'
+      content: 'Investor pitch for quar.io: QR-ready mobile instructions that protect marketplace product ratings.'
     }
   ]
 })
@@ -468,7 +468,7 @@ useHead({
 - Повторяющиеся визуальные паттерны карточек можно в будущем вынести в UI-компоненты, если investor pitch будет расширяться или появятся похожие лендинги.
 - Страница сильно зависит от глобальных CSS utility-классов проекта. Если дизайн-токены будут переименованы, этот модуль потребует синхронного обновления.
 - В коде нет явных TODO.
-- Инвестиционные метрики и бизнес-модель представлены как статический текст; они не связаны с реальной аналитикой ManualOnline.
+- Инвестиционные метрики и бизнес-модель представлены как статический текст; они не связаны с реальной аналитикой quar.io.
 
 ---
 module: page-investors

@@ -179,7 +179,7 @@ await navigateTo(`/${data.value.tenant.slug}/${data.value.instruction.slug}`, {
 
 ## Зависимости
 
-### Внутренние зависимости ManualOnline
+### Внутренние зависимости quar.io
 
 Модуль зависит от публичного API разрешения коротких ссылок:
 

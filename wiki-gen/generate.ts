@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /**
- * ManualOnline Wiki Generator
+ * quar.io Wiki Generator
  *
  * Обходит смысловые зоны Nuxt 3 fullstack-проекта и генерирует Markdown-статьи
  * через LLM API. Поддерживает OpenAI и Anthropic — выбор по наличию ключа в .env.
@@ -499,7 +499,7 @@ function buildPrompt(targetModule: ModuleTarget, files: FileContent[]): string {
         ? `\nКраткий контекст модуля: ${targetModule.description}\n`
         : '';
 
-    return `Ты технический писатель для проекта ManualOnline. Это Nuxt 3 fullstack SaaS для создания, публикации и аналитики интерактивных инструкций к товарам: публичные страницы инструкций, дашборд продавца, TipTap-редактор, reusable sections, pluggable instruction modules, Prisma/PostgreSQL и S3/MinIO для медиа.
+    return `Ты технический писатель для проекта quar.io. Это Nuxt 3 fullstack SaaS для создания, публикации и аналитики интерактивных инструкций к товарам: публичные страницы инструкций, дашборд продавца, TipTap-редактор, reusable sections, pluggable instruction modules, Prisma/PostgreSQL и S3/MinIO для медиа.
 
 Твоя задача — сгенерировать wiki-статью на русском языке по модулю "${targetModule.name}" из раздела "${sectionLabel[targetModule.section]}".${description}
 
@@ -512,12 +512,12 @@ ${fileBlocks}
 Сгенерируй подробную wiki-статью в формате Markdown со следующей структурой:
 
 1. **Заголовок** — название модуля (h1)
-2. **Назначение** — 1-3 предложения: что делает модуль и какую роль играет в ManualOnline
+2. **Назначение** — 1-3 предложения: что делает модуль и какую роль играет в quar.io
 3. **Ключевые возможности** — список основных функций, кратко и по делу
 4. **Архитектура** — описание структуры файлов, компонентов, composables, API-роутов, схем или сервисных функций; как они взаимодействуют
 5. **API / Интерфейс** — для Nitro route-файлов перечисли эндпоинты и HTTP-методы из имён файлов; для Vue-компонентов опиши props/events/slots; для zod-схем и SDK — основные контракты
 6. **Бизнес-логика** — ключевые правила, проверки, алгоритмы, статусы, ограничения тарифов или сценарии публикации, если они видны в коде
-7. **Зависимости** — от каких внутренних модулей ManualOnline и внешних сервисов зависит
+7. **Зависимости** — от каких внутренних модулей quar.io и внешних сервисов зависит
 8. **Примеры использования** — 1-2 коротких сценария или сниппета, если уместно
 9. **Замечания** — технический долг, известные ограничения, TODO или риски, если они явно видны из кода
 
@@ -574,7 +574,7 @@ function generateIndex(modules: ModuleTarget[]): string {
     const sectionOrder: WikiSection[] = ['server', 'client', 'shared', 'modules', 'data'];
 
     const lines = [
-        '# ManualOnline Wiki — Индекс',
+        '# quar.io Wiki — Индекс',
         '',
         `> Автоматически сгенерировано: ${new Date().toISOString().split('T')[0]}`,
         '',

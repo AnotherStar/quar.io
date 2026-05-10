@@ -2,7 +2,7 @@
 
 ## Назначение
 
-Модуль `composables` содержит переиспользуемые Vue/Nuxt composables и клиентские утилиты для фронтенда ManualOnline. Они закрывают сквозные сценарии: работу с авторизацией и tenant-контекстом, загрузку медиа, потоковую генерацию инструкций, якоря заголовков в публичных инструкциях, анимацию вставки AI-блоков в TipTap и идентификацию viewer-сессии для аналитики.
+Модуль `composables` содержит переиспользуемые Vue/Nuxt composables и клиентские утилиты для фронтенда quar.io. Они закрывают сквозные сценарии: работу с авторизацией и tenant-контекстом, загрузку медиа, потоковую генерацию инструкций, якоря заголовков в публичных инструкциях, анимацию вставки AI-блоков в TipTap и идентификацию viewer-сессии для аналитики.
 
 ## Ключевые возможности
 
@@ -182,7 +182,7 @@ POST /api/media/confirm
 export function useApi(): typeof $fetch
 ```
 
-Возвращает fetch-клиент для запросов к backend API ManualOnline.
+Возвращает fetch-клиент для запросов к backend API quar.io.
 
 #### Поведение
 
@@ -440,7 +440,7 @@ mo_vid=<sid>; Max-Age=31536000; Path=/; SameSite=Lax
 
 ### Tenant-aware API-запросы
 
-Большая часть backend API ManualOnline работает в контексте tenant. Поэтому `useApi()` автоматически добавляет `x-tenant-id`, если текущий tenant известен.
+Большая часть backend API quar.io работает в контексте tenant. Поэтому `useApi()` автоматически добавляет `x-tenant-id`, если текущий tenant известен.
 
 Это правило также вручную продублировано в `streamInstructionFromFile()`, потому что там используется native `fetch()` для чтения streaming response, а не `$fetch`.
 
@@ -565,7 +565,7 @@ editor.commands.insertContent(node)
 
 ## Зависимости
 
-### Внутренние зависимости ManualOnline
+### Внутренние зависимости quar.io
 
 - `/api/auth/me` — получение текущего пользователя и membership’ов.
 - `/api/instructions/:id/generate-stream` — потоковая AI-генерация инструкции.

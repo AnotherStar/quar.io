@@ -1,4 +1,4 @@
-// OpenAI model catalog used by ManualOnline.
+// OpenAI model catalog used by quar.io.
 //
 // Source of truth:
 // - https://developers.openai.com/api/docs/models
