@@ -64,6 +64,9 @@ const boundConflict = ref<{
 } | null>(null)
 const unbinding = ref(false)
 const unbindError = ref<string | null>(null)
+// shortIds the user has dismissed via "X" / backdrop on the bound-conflict
+// modal — we don't re-prompt for the same code while it's still in frame.
+const dismissedBoundQrs = new Set<string>()
 
 // When a different QR is seen while we already have one captured, prompt
 // the user to either replace or keep the current one.
@@ -245,6 +248,7 @@ async function onQrDetected(rawValue: string) {
     if (data.kind === 'boundQr') {
       // Already bound — show conflict modal instead of auto-redirecting
       if (!data.canManage) return
+      if (dismissedBoundQrs.has(shortId)) return
       boundConflict.value = {
         qrId: data.qrCode.id,
         shortId: data.qrCode.shortId,
@@ -455,6 +459,13 @@ function cancelPicker() {
   }
   status.value = 'scanning'
   startScanner()
+}
+
+function dismissBoundConflict() {
+  if (boundConflict.value) dismissedBoundQrs.add(boundConflict.value.shortId)
+  boundConflict.value = null
+  unbindError.value = null
+  status.value = 'scanning'
 }
 
 async function goToBound() {
@@ -686,9 +697,8 @@ const hint = computed(() => {
     <!-- Already-bound modal: don't auto-redirect, let the user choose -->
     <UiModal
       :open="!!boundConflict"
-      :close-on-backdrop="false"
-      :close-on-esc="false"
       size="sm"
+      @close="dismissBoundConflict"
     >
       <template #header>
         <h2 class="text-h4 text-ink">QR уже настроен</h2>

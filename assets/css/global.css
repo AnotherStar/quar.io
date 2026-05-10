@@ -7,15 +7,71 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Запрещаем «pull-to-refresh»/раскачку body внутри standalone-PWA на iOS,
+     * но даём вертикальный скролл странице. */
+    overscroll-behavior-y: none;
+    /* Для standalone-режима фон viewport должен совпадать с canvas,
+     * чтобы при rubber-band-прокрутке не светилась чёрная полоса. */
+    background: var(--color-canvas);
+    /* iOS Safari/standalone: высота 100% от реального viewport — без -webkit-fill-available
+     * на iOS 15.4+ работает и обычная svh, держим оба варианта. */
+    min-height: 100vh;
+    min-height: 100svh;
   }
   body {
     @apply bg-canvas text-ink font-sans;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
+    min-height: 100vh;
+    min-height: 100svh;
+    /* Без этого iOS даёт синюю подсветку при тапе — на standalone-PWA
+     * выглядит особенно неаккуратно. Safe-area опциональна через утилиты
+     * .safe-* ниже, чтобы не ломать существующие full-bleed-секции. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Подавляем встроенные жесты «свайп назад/вперёд» в standalone, оставляя
+   * нативный скролл внутри документа. */
+  @media (display-mode: standalone) {
+    html, body {
+      overscroll-behavior: none;
+    }
+    /* В standalone PWA на iOS не показываем выделение текста по long-press
+     * на интерактивных элементах, чтобы поведение было ближе к нативному. */
+    button, a, [role='button'] {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    /* Текст в инструкциях/редакторе должен оставаться выделяемым. */
+    .prose-mo, .tiptap, [contenteditable='true'] {
+      -webkit-touch-callout: default;
+      -webkit-user-select: text;
+      user-select: text;
+    }
   }
   ::selection {
     background: var(--color-primary);
     color: var(--color-on-primary);
   }
+}
+
+/* Утилиты safe-area: применяй точечно к sticky-хедерам, fixed-нижним
+ * докам и т.п. — у body уже есть базовый padding, но для полноэкранных
+ * лендингов / public-инструкций удобнее управлять зонами вручную. */
+@layer utilities {
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-right  { padding-right: env(safe-area-inset-right); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left   { padding-left: env(safe-area-inset-left); }
+  .safe-x { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .safe-y { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  .safe-all {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+  .min-h-dvh { min-height: 100dvh; }
+  .h-dvh    { height: 100dvh; }
 }
 
 @layer components {
