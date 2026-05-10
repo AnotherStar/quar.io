@@ -147,51 +147,58 @@ function lastDesign(code: QrCodeRow) {
 
 <template>
   <div>
-    <PageHeader icon="lucide:qr-code" title="QR-коды" />
+    <PageHeader icon="lucide:qr-code" title="QR-коды">
+      <template #actions>
+        <UiButton variant="primary" to="/qr-codes/link">
+          <Icon name="lucide:scan-line" class="h-4 w-4" />
+          Привязать на телефоне
+        </UiButton>
+      </template>
+    </PageHeader>
 
     <div class="mt-sm space-y-xl">
 
     <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
 
     <div class="grid gap-md md:grid-cols-5">
-      <UiCard>
-        <p class="text-caption text-steel uppercase">Всего</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.total }}</p>
-      </UiCard>
-      <UiCard tint="mint" :bordered="false">
-        <p class="text-caption text-steel uppercase">Свободные</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.unbound }}</p>
-      </UiCard>
-      <UiCard tint="lavender" :bordered="false">
-        <p class="text-caption text-steel uppercase">Привязанные</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.bound }}</p>
-      </UiCard>
-      <UiCard tint="peach" :bordered="false">
-        <p class="text-caption text-steel uppercase">Напечатанные</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.printed }}</p>
-      </UiCard>
-      <UiCard tint="gray" :bordered="false">
-        <p class="text-caption text-steel uppercase">Без печати</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.unprinted }}</p>
-      </UiCard>
+      <div class="rounded-lg bg-surface p-xl">
+        <p class="text-caption-bold text-steel uppercase tracking-wide">Всего</p>
+        <p class="mt-2 text-h3 text-navy">{{ stats.total }}</p>
+      </div>
+      <div class="rounded-lg bg-surface p-xl">
+        <p class="text-caption-bold text-steel uppercase tracking-wide">Свободные</p>
+        <p class="mt-2 text-h3 text-navy">{{ stats.unbound }}</p>
+      </div>
+      <div class="rounded-lg bg-surface p-xl">
+        <p class="text-caption-bold text-steel uppercase tracking-wide">Привязанные</p>
+        <p class="mt-2 text-h3 text-navy">{{ stats.bound }}</p>
+      </div>
+      <div class="rounded-lg bg-surface p-xl">
+        <p class="text-caption-bold text-steel uppercase tracking-wide">Напечатанные</p>
+        <p class="mt-2 text-h3 text-navy">{{ stats.printed }}</p>
+      </div>
+      <div class="rounded-lg bg-surface p-xl">
+        <p class="text-caption-bold text-steel uppercase tracking-wide">Без печати</p>
+        <p class="mt-2 text-h3 text-navy">{{ stats.unprinted }}</p>
+      </div>
     </div>
 
-    <UiCard>
-      <form class="grid gap-md md:grid-cols-[1fr_auto]" @submit.prevent="createBatch">
+    <div class="rounded-lg bg-surface p-xl">
+      <form class="grid gap-md md:grid-cols-[1fr_auto] md:items-end" @submit.prevent="createBatch">
         <UiInput
           v-model="countToCreate"
           label="Сколько QR создать"
           type="number"
           hint="От 1 до 5000 за раз. Это просто записи в БД — размер выберете при печати."
         />
-        <UiButton type="submit" class="self-end" :loading="creating" @click="createBatch">
+        <UiButton type="submit" :loading="creating" @click="createBatch">
           <Icon name="lucide:plus" class="h-4 w-4" />
           Сгенерировать
         </UiButton>
       </form>
-    </UiCard>
+    </div>
 
-    <UiCard>
+    <div class="rounded-lg bg-surface p-xl">
       <div class="grid gap-md md:grid-cols-[1fr_1fr_auto] md:items-end">
         <UiInput
           v-model="designLabel"
@@ -216,10 +223,13 @@ function lastDesign(code: QrCodeRow) {
         </UiButton>
       </div>
       <UiAlert v-if="printError" class="mt-md" kind="error">{{ printError }}</UiAlert>
-    </UiCard>
+    </div>
 
     <div class="flex flex-wrap items-center justify-between gap-md">
-      <div class="flex items-center gap-1 border-b border-hairline">
+      <!-- Pill-tabs (5 опций) — соответствуют segmented-control стилю из
+           инструкций, но без анимированного indicator: на 5 неравных по длине
+           надписях он съезжал бы. Активный — bg-canvas + shadow-subtle. -->
+      <div class="flex h-10 items-center gap-1 rounded-lg bg-surface p-1" role="tablist">
         <button
           v-for="opt in [
             { v: 'all', label: `Все · ${stats.total}` },
@@ -229,23 +239,20 @@ function lastDesign(code: QrCodeRow) {
             { v: 'printed', label: `Напечатанные · ${stats.printed}` }
           ]"
           :key="opt.v"
-          :class="['px-md py-sm text-body-sm-md transition-colors',
-            status === opt.v ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
+          type="button"
+          role="tab"
+          :aria-selected="status === opt.v"
+          :class="['flex h-8 items-center rounded-md px-md text-body-sm-md transition-colors',
+            status === opt.v ? 'bg-canvas text-ink shadow-subtle' : 'text-stone hover:text-ink']"
           @click="status = opt.v as StatusFilter"
         >
           {{ opt.label }}
         </button>
       </div>
-      <div class="flex flex-1 items-center justify-end gap-md">
-        <UiInput v-model="search" placeholder="Поиск по shortId, названию, ШК…" class="w-full md:w-72" />
-        <UiButton variant="primary" to="/qr-codes/link">
-          <Icon name="lucide:scan-line" class="h-4 w-4" />
-          Привязать на телефоне
-        </UiButton>
-      </div>
+      <UiInput v-model="search" placeholder="Поиск по shortId, названию, ШК…" class="w-full md:w-72" />
     </div>
 
-    <UiCard padded="sm">
+    <div>
       <div v-if="pending" class="py-md text-body text-steel">Загружаю QR-коды…</div>
 
       <table v-else-if="codes.length" class="w-full">
@@ -272,7 +279,7 @@ function lastDesign(code: QrCodeRow) {
           <tr
             v-for="code in codes"
             :key="code.id"
-            class="border-b border-hairline-soft hover:bg-surface/40"
+            class="border-b border-hairline-soft"
           >
             <td class="py-sm">
               <input
@@ -294,7 +301,7 @@ function lastDesign(code: QrCodeRow) {
             </td>
             <td class="py-sm text-body-sm">
               <template v-if="code.firstPrintedAt">
-                <UiBadge variant="tag-purple">{{ lastDesign(code) || 'Напечатан' }}</UiBadge>
+                <UiBadge variant="tag-gray">{{ lastDesign(code) || 'Напечатан' }}</UiBadge>
                 <span class="ml-xs text-caption text-steel">{{ fmtDate(code.lastPrintedAt) }}</span>
               </template>
               <span v-else class="text-caption text-steel">Не печатался</span>
@@ -327,7 +334,7 @@ function lastDesign(code: QrCodeRow) {
       <p v-if="codes.length" class="mt-md text-caption text-steel">
         Показано {{ codes.length }} из {{ totalShown }}
       </p>
-    </UiCard>
+    </div>
     </div>
   </div>
 </template>

@@ -38,58 +38,67 @@ const trialBlocked = computed(() =>
 
     <div class="mt-sm space-y-xl">
 
-    <UiCard>
+    <div class="rounded-lg bg-surface p-xl">
       <div class="flex items-start justify-between gap-md">
         <div>
-          <p class="text-caption text-steel uppercase">Текущий тариф</p>
-          <p class="mt-1 text-h2 capitalize">{{ data?.plan }}</p>
-          <div class="mt-1 flex items-center gap-2">
-            <UiBadge v-if="data?.status === 'trialing'" variant="orange">TRIAL</UiBadge>
-            <UiBadge v-else-if="data?.status === 'active' && data?.plan !== 'free'" variant="purple">ACTIVE</UiBadge>
-            <UiBadge v-else variant="tag-purple">{{ data?.status }}</UiBadge>
+          <p class="text-caption-bold text-steel uppercase tracking-wide">Текущий тариф</p>
+          <p class="mt-2 text-h2 capitalize text-navy">{{ data?.plan }}</p>
+          <div class="mt-2 flex items-center gap-2">
+            <UiBadge v-if="data?.status === 'trialing'" variant="tag-orange">TRIAL</UiBadge>
+            <UiBadge v-else-if="data?.status === 'active' && data?.plan !== 'free'" variant="tag-green">ACTIVE</UiBadge>
+            <UiBadge v-else variant="tag-gray">{{ data?.status }}</UiBadge>
           </div>
         </div>
         <div v-if="data?.trial?.isTrialing" class="text-right">
-          <p class="text-caption text-steel uppercase">Триал заканчивается через</p>
-          <p class="mt-1 text-h3">{{ data.trial.daysLeft }} дн.</p>
-          <p class="text-caption text-steel">{{ new Date(data.currentPeriodEnd).toLocaleDateString() }}</p>
+          <p class="text-caption-bold text-steel uppercase tracking-wide">Триал заканчивается через</p>
+          <p class="mt-2 text-h3 text-navy">{{ data.trial.daysLeft }} дн.</p>
+          <p class="mt-0.5 text-caption text-steel">{{ new Date(data.currentPeriodEnd).toLocaleDateString() }}</p>
         </div>
       </div>
-    </UiCard>
+    </div>
 
-    <UiCard v-if="data?.trial?.isTrialing" tint="yellow" :bordered="false">
-      <h3 class="text-h4">Что включено в триале</h3>
-      <ul class="mt-2 space-y-1 text-body-sm text-charcoal">
+    <div v-if="data?.trial?.isTrialing" class="rounded-lg bg-surface p-xl">
+      <div class="flex items-center gap-3">
+        <Icon name="lucide:gift" class="h-5 w-5 text-navy opacity-50" />
+        <h3 class="text-h4 text-navy">Что включено в триале</h3>
+      </div>
+      <ul class="mt-md space-y-1 text-body-sm text-charcoal">
         <li>✓ Кастомные секции</li>
         <li>✓ Модули (warranty-registration, ...)</li>
         <li>✓ Approval workflow</li>
         <li>✓ Расширенная аналитика (1 год)</li>
-        <li class="text-charcoal/70">⚠️ Лимит инструкций — 3, чтобы по окончании триала ничего не пропало</li>
+        <li class="text-steel">⚠️ Лимит инструкций — 3, чтобы по окончании триала ничего не пропало</li>
       </ul>
-      <p class="mt-md text-caption text-charcoal/70">
+      <p class="mt-md text-caption text-steel">
         После окончания триала платные функции отключатся. Кастомные секции и модули останутся в БД,
         но перестанут отображаться на публичных страницах до подключения платного пакета.
         Сами инструкции продолжат работать.
       </p>
-    </UiCard>
+    </div>
 
-    <UiCard v-else-if="!trialBlocked">
-      <h3 class="text-h4">Запустить триал Plus на 30 дней</h3>
-      <p class="mt-2 text-body text-slate">
+    <div v-else-if="!trialBlocked" class="rounded-lg bg-surface p-xl">
+      <div class="flex items-center gap-3">
+        <Icon name="lucide:sparkles" class="h-5 w-5 text-navy opacity-50" />
+        <h3 class="text-h4 text-navy">Запустить триал Plus на 30 дней</h3>
+      </div>
+      <p class="mt-sm text-body text-slate">
         Все функции Plus — кастомные секции, модули, workflow одобрения. Лимит инструкций
         остаётся 3, чтобы по окончании триала ничего не пропало.
       </p>
       <UiAlert v-if="error" kind="error" class="mt-md">{{ error }}</UiAlert>
       <UiButton class="mt-md" :loading="activating" @click="startTrial">Активировать триал</UiButton>
-    </UiCard>
+    </div>
 
-    <UiCard v-else-if="data?.trial?.trialUsedAt">
-      <h3 class="text-h4">Триал уже использован</h3>
-      <p class="mt-2 text-body text-slate">
+    <div v-else-if="data?.trial?.trialUsedAt" class="rounded-lg bg-surface p-xl">
+      <div class="flex items-center gap-3">
+        <Icon name="lucide:check-circle-2" class="h-5 w-5 text-navy opacity-50" />
+        <h3 class="text-h4 text-navy">Триал уже использован</h3>
+      </div>
+      <p class="mt-sm text-body text-slate">
         Триал был активирован {{ new Date(data.trial.trialUsedAt).toLocaleDateString() }}.
         Для постоянного доступа к платным функциям подключите оплату.
       </p>
-    </UiCard>
+    </div>
 
     <UiAlert kind="info" title="Биллинг ещё не подключён">
       Реальная оплата (Stripe / ЮKassa) — в TODO. Сейчас доступен только триал.

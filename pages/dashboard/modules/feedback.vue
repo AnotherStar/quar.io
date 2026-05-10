@@ -126,16 +126,16 @@ function downloadCsv() {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <div>
-      <h1 class="text-h2 text-ink">Обратная связь</h1>
-    </div>
+  <div>
+    <PageHeader icon="lucide:message-square" title="Обратная связь" />
+
+    <div class="mt-sm space-y-xl">
 
     <UiAlert v-if="!module_" kind="warning" title="Модуль не найден">
       Похоже, манифест не загружен в БД. Запустите <code>pnpm prisma db seed</code>.
     </UiAlert>
 
-    <UiCard v-else>
+    <div v-else class="rounded-lg bg-surface p-xl">
       <form class="space-y-md" @submit.prevent="save">
         <label class="flex items-center gap-2 text-body-md text-ink">
           <input v-model="enabled" type="checkbox" class="h-4 w-4 rounded border-hairline" />
@@ -150,7 +150,7 @@ function downloadCsv() {
         <UiInput v-model="form.description" label="Подзаголовок" />
         <UiInput v-model="form.successMessage" label="Сообщение об успехе" />
 
-        <fieldset class="space-y-2 rounded-md border border-hairline px-md py-md">
+        <fieldset class="space-y-2 rounded-md bg-canvas px-md py-md">
           <legend class="px-1 text-body-sm-md text-ink">Обязательные поля формы</legend>
           <label class="flex items-center gap-2 text-body-sm text-charcoal">
             <input v-model="form.requireFio" type="checkbox" class="h-4 w-4 rounded border-hairline" />
@@ -180,23 +180,24 @@ function downloadCsv() {
         <div class="flex items-center gap-2">
           <UiButton type="submit" :loading="saving">Сохранить</UiButton>
           <UiBadge v-if="module_.tenantConfig?.enabled" variant="tag-green">включён</UiBadge>
-          <UiBadge v-else variant="tag-orange">выключен</UiBadge>
+          <UiBadge v-else variant="tag-gray">выключен</UiBadge>
         </div>
       </form>
-    </UiCard>
+    </div>
 
     <div>
       <div class="mb-md flex items-center justify-between gap-md">
-        <div>
-          <h2 class="text-h3 text-ink">Сообщения</h2>
-          <p class="text-body-sm text-slate">Заявки, оставленные посетителями опубликованных инструкций.</p>
+        <div class="flex items-center gap-3">
+          <Icon name="lucide:inbox" class="h-5 w-5 text-navy opacity-50" />
+          <h2 class="text-h4 text-navy">Сообщения</h2>
         </div>
-        <UiButton variant="secondary" :disabled="!subsData?.items.length" @click="downloadCsv">
+        <UiButton variant="secondary" size="sm" :disabled="!subsData?.items.length" @click="downloadCsv">
+          <Icon name="lucide:download" class="h-4 w-4" />
           Скачать CSV
         </UiButton>
       </div>
 
-      <UiCard>
+      <div>
         <table v-if="subsData?.items.length" class="w-full">
           <thead>
             <tr class="border-b border-hairline text-caption text-steel uppercase">
@@ -237,7 +238,8 @@ function downloadCsv() {
         <p v-else class="py-md text-body text-steel">
           Пока нет сообщений. Они появятся, когда посетители заполнят форму на опубликованной инструкции.
         </p>
-      </UiCard>
+      </div>
+    </div>
     </div>
   </div>
 </template>

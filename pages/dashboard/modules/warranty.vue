@@ -40,17 +40,17 @@ function downloadCsv() {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <div class="flex items-center justify-between gap-md">
-      <div>
-        <h1 class="text-h2 text-ink">Регистрации гарантии</h1>
-      </div>
-      <UiButton variant="secondary" :disabled="!data?.items.length" @click="downloadCsv">
-        Скачать CSV
-      </UiButton>
-    </div>
+  <div>
+    <PageHeader icon="lucide:shield-check" title="Регистрации гарантии">
+      <template #actions>
+        <UiButton variant="secondary" :disabled="!data?.items.length" @click="downloadCsv">
+          <Icon name="lucide:download" class="h-4 w-4" />
+          Скачать CSV
+        </UiButton>
+      </template>
+    </PageHeader>
 
-    <UiCard>
+    <div class="mt-sm">
       <table v-if="data?.items.length" class="w-full">
         <thead>
           <tr class="border-b border-hairline text-caption text-steel uppercase">
@@ -67,7 +67,7 @@ function downloadCsv() {
             <td class="py-sm text-caption text-steel whitespace-nowrap">
               {{ new Date(r.createdAt).toLocaleString() }}
             </td>
-            <td class="py-sm text-body-sm text-ink">{{ r.customerName }}</td>
+            <td class="py-sm text-body-sm-md text-ink">{{ r.customerName }}</td>
             <td class="py-sm text-body-sm text-charcoal">
               <div>{{ r.customerEmail }}</div>
               <div v-if="r.customerPhone" class="text-steel">{{ r.customerPhone }}</div>
@@ -92,6 +92,6 @@ function downloadCsv() {
       <p v-else class="py-md text-body text-steel">
         Пока нет регистраций. Они появятся, когда покупатели отправят форму гарантии на опубликованной инструкции.
       </p>
-    </UiCard>
+    </div>
   </div>
 </template>

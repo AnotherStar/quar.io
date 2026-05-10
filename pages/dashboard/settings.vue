@@ -158,28 +158,39 @@ async function saveLegalProfile() {
   <div>
     <PageHeader icon="lucide:settings" title="Настройки" />
     <div class="mt-sm space-y-xl">
-    <UiCard>
+    <div class="rounded-lg bg-surface p-xl">
       <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
         <div>
-          <h3 class="text-h4 mb-2">Профиль</h3>
-          <p class="text-body">Email: {{ user?.email }}</p>
-          <p class="text-body">Имя: {{ user?.name ?? '—' }}</p>
+          <div class="flex items-center gap-3">
+            <Icon name="lucide:user-round" class="h-5 w-5 text-navy opacity-50" />
+            <h3 class="text-h4 text-navy">Профиль</h3>
+          </div>
+          <p class="mt-md text-body text-charcoal">Email: {{ user?.email }}</p>
+          <p class="text-body text-charcoal">Имя: {{ user?.name ?? '—' }}</p>
         </div>
         <UiButton variant="secondary" :loading="loggingOut" @click="logout">
           <Icon name="lucide:log-out" class="h-4 w-4" />
           Выйти из аккаунта
         </UiButton>
       </div>
-    </UiCard>
-    <UiCard>
-      <h3 class="text-h4 mb-2">Компания</h3>
-      <p class="text-body">{{ currentTenant?.name }} · /{{ currentTenant?.slug }}</p>
-    </UiCard>
-    <UiCard>
+    </div>
+
+    <div class="rounded-lg bg-surface p-xl">
+      <div class="flex items-center gap-3">
+        <Icon name="lucide:building-2" class="h-5 w-5 text-navy opacity-50" />
+        <h3 class="text-h4 text-navy">Компания</h3>
+      </div>
+      <p class="mt-md text-body text-charcoal">{{ currentTenant?.name }} · /{{ currentTenant?.slug }}</p>
+    </div>
+
+    <div class="rounded-lg bg-surface p-xl">
       <div class="flex flex-col gap-lg">
         <div>
-          <h3 class="text-h4 mb-2">Юридический профиль оператора</h3>
-          <p class="text-body-sm text-steel">
+          <div class="flex items-center gap-3">
+            <Icon name="lucide:shield-check" class="h-5 w-5 text-navy opacity-50" />
+            <h3 class="text-h4 text-navy">Юридический профиль оператора</h3>
+          </div>
+          <p class="mt-sm text-body-sm text-steel">
             Эти реквизиты показываются покупателю на публичных QR-формах. quar.io указывается как техническая платформа.
           </p>
         </div>
@@ -210,17 +221,21 @@ async function saveLegalProfile() {
         <UiAlert v-else-if="legalSaved" kind="success">Юридические настройки сохранены.</UiAlert>
         <UiAlert v-else-if="!canManageCompany" kind="warning">Изменять юридический профиль может только владелец.</UiAlert>
       </div>
-    </UiCard>
-    <UiCard>
+    </div>
+
+    <div class="rounded-lg bg-surface p-xl">
       <div class="flex flex-col gap-lg md:flex-row md:items-start md:justify-between">
         <div>
-          <h3 class="text-h4 mb-2">Брендинг</h3>
-          <p class="text-body text-charcoal">Логотип компании</p>
+          <div class="flex items-center gap-3">
+            <Icon name="lucide:image" class="h-5 w-5 text-navy opacity-50" />
+            <h3 class="text-h4 text-navy">Брендинг</h3>
+          </div>
+          <p class="mt-md text-body text-charcoal">Логотип компании</p>
           <p class="mt-1 text-caption text-steel">PNG, JPG, WebP или SVG до 5 МБ.</p>
         </div>
 
         <div class="w-full max-w-sm space-y-md">
-          <div class="flex min-h-24 items-center justify-center rounded-md border border-hairline bg-surface p-md">
+          <div class="flex min-h-24 items-center justify-center rounded-md bg-canvas p-md">
             <img
               v-if="logoUrl"
               :src="logoUrl"
@@ -272,7 +287,7 @@ async function saveLegalProfile() {
           <UiAlert v-else-if="!canManageCompany" kind="warning">Изменять настройки компании может только владелец.</UiAlert>
         </div>
       </div>
-    </UiCard>
+    </div>
     </div>
   </div>
 </template>
