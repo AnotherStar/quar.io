@@ -13,8 +13,7 @@ const coreItems = [
   { to: '/dashboard/instructions', label: 'Инструкции', icon: 'lucide:file-text' },
   { to: '/dashboard/sections', label: 'Секции', icon: 'lucide:blocks' },
   { to: '/dashboard/modules', label: 'Модули', icon: 'lucide:puzzle' },
-  // Stub — page exists as a placeholder so the link doesn't 404.
-  { to: '/dashboard/scan-qr', label: 'Пикнуть QR', icon: 'lucide:scan-qr-code' },
+  { to: '/dashboard/qr-codes', label: 'QR-коды', icon: 'lucide:qr-code' },
   { to: '/dashboard/billing', label: 'Тариф и оплата', icon: 'lucide:credit-card' },
   { to: '/dashboard/settings', label: 'Настройки', icon: 'lucide:settings' }
 ]

@@ -7,17 +7,41 @@ export default defineEventHandler(async (event) => {
   const qrCode = await prisma.activationQrCode.findUnique({
     where: { shortId },
     include: {
-      tenant: { select: { id: true, name: true, slug: true } },
-      instruction: { select: { slug: true, status: true } }
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          brandingLogoUrl: true,
+          brandingPrimaryColor: true,
+          supportEmail: true,
+          supportPhone: true,
+          supportTelegram: true
+        }
+      },
+      instruction: { select: { id: true, slug: true, title: true, status: true } }
     }
   })
 
   if (qrCode) {
     if (qrCode.instructionId && qrCode.instruction?.status === 'PUBLISHED') {
+      const user = await getSessionUser(event)
+      const membership = user
+        ? await prisma.membership.findUnique({
+            where: { userId_tenantId: { userId: user.id, tenantId: qrCode.tenantId } },
+            select: { role: true }
+          })
+        : null
       return {
         kind: 'boundQr',
         tenant: qrCode.tenant,
-        instruction: { slug: qrCode.instruction.slug }
+        qrCode: { id: qrCode.id, shortId: qrCode.shortId },
+        instruction: {
+          id: qrCode.instruction.id,
+          slug: qrCode.instruction.slug,
+          title: qrCode.instruction.title
+        },
+        canManage: !!membership && membership.role !== 'VIEWER'
       }
     }
 

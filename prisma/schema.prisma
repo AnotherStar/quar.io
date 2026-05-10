@@ -70,6 +70,13 @@ model Tenant {
   brandingLogoUrl      String?
   brandingFontFamily   String?
 
+  // Public support contacts — shown on the "QR not configured" stub for
+  // outsiders who scan an unbound code, and reusable as a "Support" section
+  // on the public instruction page.
+  supportEmail        String?
+  supportPhone        String?
+  supportTelegram     String?
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -298,11 +305,22 @@ model ActivationQrCode {
   instruction   Instruction? @relation(fields: [instructionId], references: [id], onDelete: SetNull)
   createdById   String?
   boundAt       DateTime?
+
+  // Print history. printRuns is a JSON array of { batchId, designLabel, printedAt }.
+  // firstPrintedAt is denormalized for fast filtering "printed / not printed".
+  printRuns       Json     @default("[]")
+  firstPrintedAt  DateTime?
+  lastPrintedAt   DateTime?
+
+  // Free-form admin notes for this QR (e.g. "стикер положили в коробку #43").
+  notes         String?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@index([tenantId, createdAt])
   @@index([tenantId, instructionId])
+  @@index([tenantId, firstPrintedAt])
 }
 
 // Immutable snapshot. Created on publish or explicit "save version".

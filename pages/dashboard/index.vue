@@ -27,7 +27,7 @@ const stats = computed(() => {
 <template>
   <div class="space-y-2xl">
     <div>
-      <h1 class="text-h2 text-ink">Привет 👋</h1>
+      <h1 class="text-h2 text-ink">Обзор</h1>
       <p class="mt-1 text-body text-slate">{{ currentTenant?.name }} · тариф {{ currentTenant?.plan }}</p>
     </div>
 
