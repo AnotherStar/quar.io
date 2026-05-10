@@ -118,6 +118,10 @@ async function logout() {
   loggingOut.value = true
   try {
     await $fetch('/api/auth/logout', { method: 'POST' })
+    // Сбрасываем клиентский стейт useAuthState — иначе guest-middleware на
+    // /auth/login увидит «залогиненного» пользователя и отбросит обратно
+    // в /dashboard, где API-запросы уже падают без сессии.
+    await refresh()
     await navigateTo('/auth/login')
   } finally {
     loggingOut.value = false

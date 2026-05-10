@@ -3,45 +3,43 @@ useHead({ title: 'Тарифы — quar.io' })
 
 const tiers = [
   {
-    code: 'free',
-    name: 'Free',
-    price: '0 ₽',
-    sub: 'навсегда',
+    code: 'pilot',
+    name: 'Пилот',
+    price: '500 ₽',
+    sub: 'разовый запуск',
     features: [
-      'До 3 инструкций',
-      'Notion-like редактор',
-      'Версионирование',
-      'Базовая аналитика (30 дней)',
-      'Публичные страницы по slug'
+      'Перенос 5-10 инструкций',
+      'QR-ссылки для карточки, вкладыша и поддержки',
+      'Разбор текущих отзывов и вопросов',
+      'Отчет по проблемным шагам через 2-4 недели',
+      '1 месяц триала в кабинете'
     ]
   },
   {
-    code: 'plus',
-    name: 'Plus',
-    price: '1 900 ₽',
+    code: 'catalog',
+    name: 'Каталог',
+    price: '4 500 ₽',
     sub: 'в месяц',
     featured: true,
     features: [
-      'До 50 инструкций',
-      'Кастомные секции',
-      'Модуль гарантии',
-      'Workflow одобрения',
-      'Аналитика 1 год',
-      'До 3 пользователей'
+      '50-200 инструкций',
+      'Массовый импорт SKU и PDF',
+      'Единый стиль мобильных инструкций',
+      'Библиотека быстрых ссылок для поддержки',
+      'Регулярные отчеты по рисковым товарам'
     ]
   },
   {
-    code: 'business',
-    name: 'Business',
-    price: '4 900 ₽',
-    sub: 'в месяц',
+    code: 'brand',
+    name: 'Бренд',
+    price: 'от 14 500 ₽',
+    sub: 'для зрелого каталога',
     features: [
-      'Безлимит инструкций',
-      'Все модули включая чат',
-      'Кастомный домен',
-      'Безлимитная аналитика',
-      'До 25 пользователей',
-      'API + webhooks (скоро)'
+      'Брендирование публичных инструкций',
+      'Переводы и языковые версии',
+      'Роли команды и история правок',
+      'Расширенная аналитика',
+      'Интеграции после подтвержденного сценария'
     ]
   }
 ]
@@ -49,8 +47,14 @@ const tiers = [
 
 <template>
   <div class="container-page py-section-lg">
-    <h1 class="text-h1 text-ink text-center">Простые тарифы</h1>
-    <p class="mt-3 text-subtitle text-slate text-center">Старт бесплатно. Платный тариф открывает кастомные блоки и модули.</p>
+    <div class="mx-auto max-w-3xl text-center">
+      <p class="text-caption-bold uppercase text-stone">Пакеты запуска</p>
+      <h1 class="mt-3 text-h1 text-ink">Начните с пилота на товарах, где инструкция уже влияет на отзывы.</h1>
+      <p class="mt-4 text-subtitle text-slate">
+        1 месяц триала входит в запуск: перенесите первые инструкции, поставьте QR-ссылки
+        в реальные каналы и посмотрите, какие шаги мешают покупателям.
+      </p>
+    </div>
 
     <div class="mt-section grid grid-cols-1 gap-md md:grid-cols-3">
       <div
@@ -67,8 +71,8 @@ const tiers = [
         </div>
         <p class="mt-md text-h2">{{ t.price }}</p>
         <p class="text-caption text-steel">{{ t.sub }}</p>
-        <UiButton :to="t.code === 'free' ? '/auth/register' : '/auth/register'" class="mt-md" block :variant="t.featured ? 'primary' : 'secondary'">
-          {{ t.code === 'free' ? 'Начать' : 'Выбрать' }}
+        <UiButton to="/auth/register" class="mt-md" block :variant="t.featured ? 'primary' : 'secondary'">
+          {{ t.code === 'pilot' ? 'Запустить триал' : 'Обсудить пакет' }}
         </UiButton>
         <ul class="mt-md space-y-2">
           <li v-for="f in t.features" :key="f" class="flex items-start gap-2 text-body-sm text-charcoal">

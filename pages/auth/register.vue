@@ -35,7 +35,7 @@ async function submit() {
         <span class="text-h5 text-ink">quar.io</span>
       </NuxtLink>
       <h1 class="text-h2 text-ink">Создать аккаунт</h1>
-      <p class="mt-2 text-body text-slate">Бесплатно: до трёх инструкций.</p>
+      <p class="mt-2 text-body text-slate">1 месяц триала для первых QR-инструкций и отчета по проблемным шагам.</p>
 
       <form class="mt-8 grid gap-4" @submit.prevent="submit">
         <UiInput v-model="form.email" type="email" label="Email" autocomplete="email" required />
