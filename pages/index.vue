@@ -108,12 +108,6 @@ const packageCards = [
 <template>
   <div class="bg-canvas text-ink">
     <section class="relative overflow-hidden bg-navy text-white">
-      <div class="absolute inset-0 opacity-70">
-        <div class="absolute left-[8%] top-[18%] h-5 w-5 rotate-6 rounded-sm bg-brand-yellow" />
-        <div class="absolute bottom-[18%] left-[14%] h-4 w-4 -rotate-12 rounded-sm bg-brand-pink" />
-        <div class="absolute right-[9%] top-[22%] h-4 w-4 rotate-12 rounded-sm bg-brand-green" />
-        <div class="absolute bottom-[26%] right-[16%] h-5 w-5 -rotate-6 rounded-sm bg-brand-orange" />
-      </div>
 
       <div class="container-page relative py-8 md:py-10">
         <div class="grid gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">

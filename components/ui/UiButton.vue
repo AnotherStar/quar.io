@@ -27,9 +27,9 @@ const variantClass: Record<Variant, string> = {
 }
 
 const sizeClass: Record<Size, string> = {
-  sm: 'px-sm py-xs text-btn rounded-md',
-  md: 'px-[18px] py-[10px] text-btn rounded-md',
-  lg: 'px-md py-sm text-body-sm-md rounded-md'
+  sm: 'h-8 px-sm text-btn rounded-md',
+  md: 'h-10 px-[18px] text-btn rounded-lg',
+  lg: 'h-12 px-md text-body-sm-md rounded-lg'
 }
 
 const Tag = computed(() => (props.to ? resolveComponent('NuxtLink') : props.href ? 'a' : 'button'))

@@ -1,10 +1,12 @@
 /* Design tokens from DESIGN-notion.md.
  * CSS custom properties so per-tenant branding can override at runtime. */
 :root {
-  /* Brand & Primary */
-  --color-primary: #5645d4;
-  --color-primary-pressed: #4534b3;
-  --color-primary-deep: #3a2a99;
+  /* Brand & Primary — синий quar.io под цвет логотипа.
+   * Раньше тут жил Notion-фиолетовый, но логотип уже жёстко синий, поэтому
+   * primary CTA и иконка приложения сводятся в одну тональность. */
+  --color-primary: #0c3fe9;
+  --color-primary-pressed: #0a36c7;
+  --color-primary-deep: #082db0;
   --color-on-primary: #ffffff;
   --color-brand-navy: #0a1530;
   --color-brand-navy-deep: #070f24;

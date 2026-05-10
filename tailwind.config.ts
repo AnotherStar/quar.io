@@ -23,6 +23,7 @@ export default <Config>{
           pressed: 'var(--color-primary-pressed)',
           deep: 'var(--color-primary-deep)'
         },
+        'on-primary': 'var(--color-on-primary)',
         ink: {
           deep: 'var(--color-ink-deep)',
           DEFAULT: 'var(--color-ink)'

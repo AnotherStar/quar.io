@@ -114,47 +114,72 @@ async function unarchive(id: string) {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <div class="flex items-center justify-between gap-2">
-      <h1 class="text-h2 text-ink">Инструкции</h1>
-      <UiButton :loading="creating" @click="createNew">
-        <Icon name="lucide:plus" class="h-4 w-4" />
-        Новая
-      </UiButton>
+  <div>
+    <!-- Header-row страницы. min-h-16 + items-center выравнивает заголовок
+         ровно по центру brand-зоны сайдбара (та же высота 64px). -->
+    <div class="flex min-h-16 items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <Icon name="lucide:file-text" class="h-6 w-6 text-navy opacity-50" />
+        <h1 class="text-h3 text-navy">Инструкции</h1>
+      </div>
     </div>
 
-    <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
+    <UiAlert v-if="createError" kind="error" class="mt-md">{{ createError }}</UiAlert>
 
-    <div class="flex flex-wrap items-center justify-between gap-md">
-      <div class="flex items-center gap-1 border-b border-hairline">
+    <div class="mt-sm flex flex-wrap items-center justify-between gap-md">
+      <!-- Segmented control: пилюля с фоном bg-surface, внутри «ездящая» белая
+           плашка под активным табом. Сетка inline-grid даёт обеим кнопкам
+           одинаковую ширину, и плашка покрывает активную ровно на 50%.
+           h-10 = 40px — общая высота элементов этой строки (input, button). -->
+      <div
+        class="relative inline-grid h-10 grid-cols-2 rounded-lg bg-surface p-1"
+        role="tablist"
+      >
+        <span
+          aria-hidden="true"
+          class="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-md bg-canvas shadow-subtle transition-transform duration-200 ease-out"
+          :style="{ transform: tab === 'archive' ? 'translateX(100%)' : 'translateX(0)' }"
+        />
         <button
-          :class="['px-md py-sm text-body-sm-md transition-colors',
-            tab === 'active' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
+          type="button"
+          role="tab"
+          :aria-selected="tab === 'active'"
+          :class="['relative z-10 flex items-center justify-center rounded-md px-md text-body-sm-md transition-colors',
+            tab === 'active' ? 'text-ink' : 'text-stone hover:text-ink']"
           @click="tab = 'active'"
         >
           Активные · {{ counts.active }}
         </button>
         <button
-          :class="['px-md py-sm text-body-sm-md transition-colors',
-            tab === 'archive' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
+          type="button"
+          role="tab"
+          :aria-selected="tab === 'archive'"
+          :class="['relative z-10 flex items-center justify-center rounded-md px-md text-body-sm-md transition-colors',
+            tab === 'archive' ? 'text-ink' : 'text-stone hover:text-ink']"
           @click="tab = 'archive'"
         >
           Архив · {{ counts.archive }}
         </button>
       </div>
 
-      <div class="relative w-full max-w-sm">
-        <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Поиск по названию или URL"
-          class="w-full rounded-md border border-hairline-strong bg-canvas px-md py-sm pl-9 text-body-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-        >
+      <div class="flex flex-1 items-center justify-end gap-md">
+        <div class="relative w-full max-w-sm">
+          <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Поиск по названию или URL"
+            class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+          >
+        </div>
+        <UiButton :loading="creating" @click="createNew">
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          Новая
+        </UiButton>
       </div>
     </div>
 
-    <UiCard>
+    <div class="mt-xl">
       <table v-if="visible.length" class="w-full">
         <thead>
           <tr class="border-b border-hairline text-caption text-steel uppercase">
@@ -172,7 +197,7 @@ async function unarchive(id: string) {
                 :to="`/dashboard/instructions/${i.id}/edit`"
                 class="group block"
               >
-                <span class="text-body-md text-ink group-hover:text-primary">{{ i.title }}</span>
+                <span class="text-body-sm-md text-ink group-hover:text-primary">{{ i.title }}</span>
                 <span class="block text-caption text-steel group-hover:text-link">
                   /{{ currentTenant?.slug }}/{{ i.slug }}
                 </span>
@@ -182,7 +207,7 @@ async function unarchive(id: string) {
               </NuxtLink>
             </td>
             <td class="py-sm align-top">
-              <UiBadge :variant="i.status === 'PUBLISHED' ? 'tag-green' : i.status === 'ARCHIVED' ? 'tag-orange' : i.status === 'IN_REVIEW' ? 'tag-orange' : 'tag-purple'">
+              <UiBadge :variant="i.status === 'PUBLISHED' ? 'tag-green' : i.status === 'ARCHIVED' ? 'tag-orange' : i.status === 'IN_REVIEW' ? 'tag-orange' : 'tag-gray'">
                 {{ i.status }}
               </UiBadge>
             </td>
@@ -287,6 +312,6 @@ async function unarchive(id: string) {
         <span v-else-if="tab === 'archive'">Архив пуст.</span>
         <span v-else>Пока пусто. Создайте первую инструкцию.</span>
       </p>
-    </UiCard>
+    </div>
   </div>
 </template>
