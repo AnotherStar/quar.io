@@ -25,7 +25,7 @@ async function submit() {
   <div class="container-page flex min-h-screen items-center justify-center py-section">
     <div class="w-full max-w-md">
       <NuxtLink to="/" class="mb-8 inline-flex items-center gap-2">
-        <div class="grid h-9 w-9 place-items-center rounded-md bg-primary text-white text-h5">q</div>
+        <img src="/icons/icon-192.png" alt="" width="36" height="36" class="h-9 w-9 rounded-md" />
         <span class="text-h5 text-ink">quar.io</span>
       </NuxtLink>
       <h1 class="text-h2 text-ink">Вход</h1>

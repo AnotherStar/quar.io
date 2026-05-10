@@ -43,31 +43,16 @@ const isActive = (to: string, exact?: boolean) =>
 watch(() => route.fullPath, () => {
   mobileMenuOpen.value = false
 })
-
-async function logout() {
-  await $fetch('/api/auth/logout', { method: 'POST' })
-  await navigateTo('/auth/login')
-}
 </script>
 
 <template>
   <div class="min-h-screen bg-surface-soft">
     <header class="sticky top-0 z-40 border-b border-hairline bg-canvas">
       <div class="container-page flex h-16 items-center justify-between">
-        <div class="flex min-w-0 items-center gap-4">
-          <NuxtLink to="/dashboard" class="flex items-center gap-2">
-            <div class="grid h-8 w-8 place-items-center rounded-md bg-primary text-white text-h5">q</div>
-            <span class="text-body-md text-ink">quar.io</span>
-          </NuxtLink>
-          <span v-if="currentTenant" class="hidden rounded-sm bg-surface px-2 py-1 text-body-sm-md text-charcoal sm:inline-flex">
-            {{ currentTenant.name }}
-          </span>
-        </div>
-        <div class="flex items-center gap-3">
-          <span class="hidden text-body-sm text-steel md:inline">{{ user?.email }}</span>
+        <div class="flex min-w-0 items-center gap-2 sm:gap-4">
           <button
             type="button"
-            class="grid h-9 w-9 place-items-center rounded-md text-charcoal transition-colors hover:bg-surface md:hidden"
+            class="-ml-2 grid h-9 w-9 shrink-0 place-items-center rounded-md text-charcoal transition-colors hover:bg-surface md:hidden"
             :aria-label="mobileMenuOpen ? 'Закрыть меню' : 'Открыть меню'"
             :aria-expanded="mobileMenuOpen"
             aria-controls="mobile-dashboard-menu"
@@ -75,7 +60,16 @@ async function logout() {
           >
             <Icon :name="mobileMenuOpen ? 'lucide:x' : 'lucide:menu'" class="h-4 w-4" />
           </button>
-          <UiButton variant="ghost" size="sm" @click="logout">Выйти</UiButton>
+          <NuxtLink to="/dashboard" class="flex items-center gap-2">
+            <img src="/icons/icon-192.png" alt="" width="40" height="40" class="h-10 w-10 rounded-md" />
+            <span class="text-h5 text-ink">quar.io</span>
+          </NuxtLink>
+          <span v-if="currentTenant" class="hidden rounded-sm bg-surface px-2 py-1 text-body-sm-md text-charcoal sm:inline-flex">
+            {{ currentTenant.name }}
+          </span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="hidden text-body-sm text-steel md:inline">{{ user?.email }}</span>
         </div>
       </div>
       <Transition name="dashboard-mobile-menu">

@@ -112,6 +112,18 @@ async function removeLogo() {
   }
 }
 
+const loggingOut = ref(false)
+async function logout() {
+  if (loggingOut.value) return
+  loggingOut.value = true
+  try {
+    await $fetch('/api/auth/logout', { method: 'POST' })
+    await navigateTo('/auth/login')
+  } finally {
+    loggingOut.value = false
+  }
+}
+
 async function saveLegalProfile() {
   if (!canManageCompany.value) return
   legalError.value = null
@@ -142,9 +154,17 @@ async function saveLegalProfile() {
   <div class="space-y-xl">
     <h1 class="text-h2 text-ink">Настройки</h1>
     <UiCard>
-      <h3 class="text-h4 mb-2">Профиль</h3>
-      <p class="text-body">Email: {{ user?.email }}</p>
-      <p class="text-body">Имя: {{ user?.name ?? '—' }}</p>
+      <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
+        <div>
+          <h3 class="text-h4 mb-2">Профиль</h3>
+          <p class="text-body">Email: {{ user?.email }}</p>
+          <p class="text-body">Имя: {{ user?.name ?? '—' }}</p>
+        </div>
+        <UiButton variant="secondary" :loading="loggingOut" @click="logout">
+          <Icon name="lucide:log-out" class="h-4 w-4" />
+          Выйти из аккаунта
+        </UiButton>
+      </div>
     </UiCard>
     <UiCard>
       <h3 class="text-h4 mb-2">Компания</h3>
