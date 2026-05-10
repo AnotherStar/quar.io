@@ -21,21 +21,21 @@ function isEmpty(content: any): boolean {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <div class="flex items-center justify-between gap-md">
-      <div>
-        <h1 class="text-h2 text-ink">Переиспользуемые секции</h1>
-        <p class="mt-1 text-body text-slate">Например: «Спасибо за покупку» или «Получи баллы за отзыв».</p>
-      </div>
-      <UiButton v-if="isPaid" to="/dashboard/sections/new">
-        <Icon name="lucide:plus" class="h-4 w-4" />
-        Новая секция
-      </UiButton>
-      <UiButton v-else disabled>
-        <Icon name="lucide:plus" class="h-4 w-4" />
-        Новая секция
-      </UiButton>
-    </div>
+  <div>
+    <PageHeader icon="lucide:blocks" title="Переиспользуемые секции">
+      <template #actions>
+        <UiButton v-if="isPaid" to="/dashboard/sections/new">
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          Новая секция
+        </UiButton>
+        <UiButton v-else disabled>
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          Новая секция
+        </UiButton>
+      </template>
+    </PageHeader>
+
+    <div class="mt-sm space-y-xl">
 
     <UiAlert v-if="!isPaid" kind="warning" title="Нужен платный тариф">
       Кастомные секции доступны на тарифе Plus и выше.
@@ -74,5 +74,6 @@ function isEmpty(content: any): boolean {
     <UiCard v-else>
       <p class="py-md text-body text-steel">Пока нет секций. Создайте первую — она будет доступна для вставки в любую инструкцию.</p>
     </UiCard>
+    </div>
   </div>
 </template>

@@ -1,12 +1,12 @@
 ---
 version: alpha
-name: Notion
-description: Notion presents itself as the all-in-one workspace through a confident, illustration-rich brand voice — anchored by a deep navy hero band ({colors.brand-navy}) decorated with brand-colored sticky-note dots and mesh wire illustrations, a signature purple pill primary CTA ({colors.primary}), and a rich palette of pastel-tinted feature cards that echo the colorful database properties of the live product. The system uses a Notion-Sans (Inter-based) typeface across every UI surface, anchors a 4-tier pricing comparison (Free / Plus / Business / Enterprise), and presents the live workspace UI mockup directly inside the hero band. Coverage spans homepage, Enterprise, Product AI, Product Agents, Startups, and Pricing surfaces.
+name: quar.io
+description: quar.io combines two distinct visual modes — a Notion-flavoured marketing surface (illustration-rich, pastel feature cards, navy hero band) and a calm, macOS-Settings-inspired dashboard (inset rounded sidebar on a white canvas, no top header, brand-row and content header-row aligned). Primary CTA is the brand blue {colors.primary} (sourced from the quar.io logo so logotype and primary action share the same hue). Typography is Inter-based across all surfaces. Dashboard pages share a single `PageHeader` component (icon + h3 title in navy with 50% opacity icon), a segmented-tabs / pill-search row, and unwrapped tables — no card borders inside the working canvas.
 
 colors:
-  primary: "#5645d4"
-  primary-pressed: "#4534b3"
-  primary-deep: "#3a2a99"
+  primary: "#0c3fe9"
+  primary-pressed: "#0a36c7"
+  primary-deep: "#082db0"
   on-primary: "#ffffff"
   brand-navy: "#0a1530"
   brand-navy-deep: "#070f24"
@@ -173,8 +173,9 @@ components:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
     typography: "{typography.button-md}"
-    rounded: "{rounded.md}"
-    padding: "10px 18px"
+    rounded: "{rounded.lg}"
+    height: 40px
+    padding: "0 18px"
   button-primary-pressed:
     backgroundColor: "{colors.primary-pressed}"
     textColor: "{colors.on-primary}"
@@ -185,27 +186,31 @@ components:
     backgroundColor: "{colors.ink-deep}"
     textColor: "{colors.on-dark}"
     typography: "{typography.button-md}"
-    rounded: "{rounded.md}"
-    padding: "10px 18px"
+    rounded: "{rounded.lg}"
+    height: 40px
+    padding: "0 18px"
   button-secondary:
     backgroundColor: "transparent"
     textColor: "{colors.ink}"
     typography: "{typography.button-md}"
-    rounded: "{rounded.md}"
-    padding: "10px 18px"
+    rounded: "{rounded.lg}"
+    height: 40px
+    padding: "0 18px"
     border: "1px solid {colors.hairline-strong}"
   button-on-dark:
     backgroundColor: "{colors.on-dark}"
     textColor: "{colors.ink}"
     typography: "{typography.button-md}"
-    rounded: "{rounded.md}"
-    padding: "10px 18px"
+    rounded: "{rounded.lg}"
+    height: 40px
+    padding: "0 18px"
   button-secondary-on-dark:
     backgroundColor: "transparent"
     textColor: "{colors.on-dark}"
     typography: "{typography.button-md}"
-    rounded: "{rounded.md}"
-    padding: "10px 18px"
+    rounded: "{rounded.lg}"
+    height: 40px
+    padding: "0 18px"
     border: "1px solid {colors.on-dark-muted}"
   button-ghost:
     backgroundColor: "transparent"
@@ -372,6 +377,12 @@ components:
     typography: "{typography.caption-bold}"
     rounded: "{rounded.sm}"
     padding: "2px 8px"
+  badge-tag-gray:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.steel}"
+    typography: "{typography.caption-bold}"
+    rounded: "{rounded.sm}"
+    padding: "2px 8px"
   badge-popular:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
@@ -441,6 +452,84 @@ components:
     textColor: "{colors.steel}"
     typography: "{typography.body-sm}"
     padding: "{spacing.xxs} 0"
+  dashboard-shell:
+    backgroundColor: "{colors.canvas}"
+    layout: "grid 288px / 1fr"
+    description: "Top-level grid for dashboard pages. No top header — sidebar holds the brand row, content holds its own header-row. 24px outer inset on right/bottom, 12px on top (lifts brand and page header)."
+  dashboard-sidebar:
+    backgroundColor: "transparent"
+    width: 288px
+    padding: "12px 24px 24px 24px"
+    sticky: true
+    description: "Sticky vertical column. Inner box has no background — brand-row sits on canvas (white), while a separate shell below provides the surface tint."
+  dashboard-sidebar-brand:
+    backgroundColor: "{colors.canvas}"
+    height: 64px
+    padding: "0 8px"
+    description: "Brand row: 48×48 rounded-lg logo + UPPERCASE wordmark 'quar.io' in {typography.heading-4} with letter-spacing, color {colors.brand-navy} at 50% opacity. Matches the y-coordinate of the page header-row."
+  dashboard-sidebar-shell:
+    backgroundColor: "{colors.surface}"
+    rounded: "14px"
+    padding: "{spacing.sm}"
+    description: "Grey rounded panel under the brand row. Holds collapse button, navigation, and footer. Gap of 12px above separates it from the brand row."
+  dashboard-sidebar-nav-item:
+    backgroundColor: "transparent"
+    textColor: "{colors.charcoal}"
+    typography: "{typography.body-sm-medium}"
+    rounded: "{rounded.md}"
+    height: 36px
+    padding: "0 {spacing.sm}"
+    gap: 12px
+    description: "Sidebar navigation item. Left-aligned icon (16px) + label."
+  dashboard-sidebar-nav-item-active:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    description: "Active state — primary-blue pill, white text and icon."
+  dashboard-sidebar-footer:
+    backgroundColor: "transparent"
+    padding: "8px 0 0 0"
+    border: "0 0 0 0 / 1px 0 0 0 solid {colors.hairline}"
+    description: "Footer section at the bottom of the shell. Holds tenant row (read-only) and user-row (NuxtLink to /dashboard/settings)."
+  dashboard-sidebar-footer-row:
+    backgroundColor: "transparent"
+    textColor: "{colors.charcoal}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.md}"
+    padding: "6px 10px"
+    gap: 8px
+    minHeight: 32px
+    description: "Single row inside the footer: 16px icon + label. User-row is interactive and uses the active-pill treatment when /dashboard/settings is open."
+  page-header:
+    backgroundColor: "transparent"
+    minHeight: 64px
+    description: "Page-level header row inside .dashboard-content. Always: 24px icon ({colors.brand-navy} at 50% opacity) + h3 title ({typography.heading-3}, {colors.brand-navy}). Vertically centred; right side holds optional #actions slot."
+  page-header-title:
+    typography: "{typography.heading-3}"
+    textColor: "{colors.brand-navy}"
+  page-header-icon:
+    color: "{colors.brand-navy}"
+    opacity: 0.5
+    size: 24px
+  segmented-tabs:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: "4px"
+    height: 40px
+    description: "Pill container holding two or more equal-width buttons in inline-grid. A floating bg-canvas indicator with {shadow.subtle} translates between positions on selection (200ms ease-out)."
+  segmented-tab-active:
+    textColor: "{colors.ink}"
+  segmented-tab-inactive:
+    textColor: "{colors.stone}"
+  search-pill:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    placeholderColor: "{colors.stone}"
+    typography: "{typography.body-sm-medium}"
+    rounded: "{rounded.lg}"
+    padding: "0 {spacing.md} 0 36px"
+    height: 40px
+    border: "1px solid transparent"
+    description: "Dashboard search input. Same height as segmented-tabs and primary button. On focus, background flips to canvas, border to primary, plus 2px ring at 20% opacity."
 ---
 
 ## Overview
@@ -803,6 +892,85 @@ Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguis
 - Pastel illustrations inside feature cards scale proportionally
 - Customer logo wall: wordmarks at consistent 60–80px height
 
+## Dashboard
+
+The dashboard mode is a separate visual track from the marketing surfaces — closer to **macOS System Settings** than to Notion's landing pages. It is what users see at `/dashboard/*` after they log in.
+
+### Mental model
+
+Two boxes on a white canvas: a sticky **sidebar** on the left, **content** on the right. There is **no top header** — the brand row (logo + wordmark) lives inside the sidebar, and each page provides its own header-row that aligns horizontally with that brand row.
+
+### Layout shell — `dashboard-shell`
+
+- Top-level CSS grid: `288px` sidebar column (`80px` when collapsed) + `1fr` content column.
+- Body background is `{colors.canvas}` (white). The grid uses default `stretch` on the cross axis so the sidebar column matches content height — essential for `position: sticky` to engage inside the sidebar.
+- Outer insets are asymmetric on purpose: **top 12px, right/left/bottom 24px**. The 12px top raises the brand row and page header-row toward the chrome edge of the window.
+
+### Sidebar — `dashboard-sidebar` + `dashboard-sidebar-inner`
+
+The sidebar is a `position: sticky` (`top: 12px`) flex column with two distinct visual zones:
+
+**Brand-row (`dashboard-sidebar-brand`)** — height 64px, lives on the canvas-white background (NOT inside the grey shell). Holds the 48×48 rounded-lg logo and the UPPERCASE wordmark "quar.io" rendered in `{typography.heading-4}` with `tracking-wider`, colour `{colors.brand-navy}` at 50% opacity. The brand row's vertical centre line is the single horizontal anchor for every page header-row in the dashboard.
+
+**Shell (`dashboard-sidebar-shell`)** — grey panel with `{rounded.lg+}` (14px), background `{colors.surface}`. Stacked vertically inside:
+1. **Collapse button** — left-aligned, in line with nav-items (icon + label or icon only when collapsed).
+2. **Navigation** — `flex: 1` so it pushes the footer to the bottom. Each item: 36px tall, `{rounded.md}`. Active state is the primary-blue pill (`bg-primary` + `text-on-primary`). Hover: `bg-canvas/70`.
+3. **Footer (`dashboard-sidebar-footer`)** — divided from nav by a 1px hairline. Holds two rows: tenant (icon `lucide:building-2`, read-only) and user (icon `lucide:user-round`, this row is a `NuxtLink` to `/dashboard/settings` and renders the active-pill when that page is open).
+
+### Content — `dashboard-content`
+
+- Padding-top 12px (matches the sidebar so brand-row and page header-row share a y-coordinate).
+- No `max-width` — content fills the column. Dense tables get full width on wide monitors.
+- The first child must be a `PageHeader` (see below).
+- Between `PageHeader` and the next working row (tabs / filters / form) place `mt-sm` (12px). The sidebar uses a 12px gap between brand-row and shell — this matches.
+
+### Page header — `PageHeader` component
+
+Every dashboard page MUST start with:
+
+```vue
+<PageHeader icon="lucide:..." title="Page name">
+  <template #actions>
+    <!-- optional right-side controls -->
+  </template>
+</PageHeader>
+```
+
+Render contract:
+- Flex row, `min-h-16` (64px), `items-center`, `justify-between`.
+- Left: 24px icon in `{colors.brand-navy}` at 50% opacity + h3 (`{typography.heading-3}`) title in `{colors.brand-navy}`.
+- Right: `#actions` slot for buttons/links.
+- Icon choice MUST match the sidebar nav-item icon (`lucide:file-text` for Instructions, `lucide:qr-code` for QR codes, etc.) so the page identity is consistent between the menu and the content.
+
+### Working row — segmented tabs + search + button
+
+Below `PageHeader` (with `mt-sm`), pages typically render a single horizontal flex row containing:
+- **Segmented tabs** on the left — `segmented-tabs` component (height 40px). Two or more equal-width buttons; a floating `bg-canvas` indicator with `{shadow.subtle}` translates between positions on selection.
+- **Search input** — `search-pill` component. Same height, same `{rounded.lg}`. Grey at rest, primary-blue border + canvas background + 20%-ring on focus.
+- **Primary CTA** — `UiButton size="md"` (height 40px, `{rounded.lg}`). Lives in the same row as search, on the right.
+
+All three elements share **h-10 (40px)** height and `{rounded.lg}` for visual alignment. This is the canonical working-row of the dashboard.
+
+### Tables
+
+- **No `UiCard` wrapper around tables**, no surrounding border. Tables sit directly on the canvas so the leftmost column heading aligns with the page title and tab pill above.
+- Column headers: `{typography.caption}` uppercase, colour `{colors.steel}`, bottom-border `1px solid {colors.hairline}`.
+- Row title: `{typography.body-sm-medium}` (14px / 500), colour `{colors.ink}`. Secondary line (slug, barcode): `{typography.caption}`, colour `{colors.steel}`.
+- Rows separated by `1px solid {colors.hairline-soft}` (no full grid).
+
+### Status badges in dashboard tables
+
+Use the `tag-*` variants (rounded-sm chips, NOT full pills):
+- `tag-green` for success states (e.g. `PUBLISHED`).
+- `tag-orange` for warning / outdated states (`ARCHIVED`, `IN_REVIEW`).
+- `tag-gray` for neutral states (`DRAFT`). `tag-gray` is a quar.io-specific variant — Notion's original tag-purple was kept for marketing surfaces but felt off-tone for state pills inside the dashboard.
+
+### Mobile
+
+- Sidebar is hidden below `md`. A `position: fixed` 40×40 hamburger button sits in the top-left.
+- Tap opens a left-sliding overlay panel (86vw, max 320px) with the same brand row, nav, and footer.
+- Backdrop is `rgba(15,15,15,0.32)`. Click outside the panel closes it.
+
 ## Iteration Guide
 
 1. Focus on ONE component at a time
@@ -810,8 +978,9 @@ Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguis
 3. Run `npx @google/design.md lint DESIGN.md` after edits
 4. Add new variants as separate `components:` entries
 5. Default to `{typography.body-md}` for body
-6. Keep `{colors.primary}` (purple) as the primary CTA — distinct from `{colors.link-blue}` for inline links
-7. Use `{rounded.md}` for buttons (rectangles), `{rounded.lg}` for cards, `{rounded.full}` for pill tabs/badges only
+6. Keep `{colors.primary}` (blue, sourced from the quar.io logo) as the primary CTA — distinct from `{colors.link-blue}` for inline links
+7. Use `{rounded.lg}` (12px) for buttons, inputs, segmented-tabs, and cards in the dashboard. `{rounded.md}` (8px) is reserved for small/compact controls (small buttons, nav-items inside the sidebar). `{rounded.full}` for status pills and circular badges only.
+8. Inside the dashboard, NEVER add a top header bar. The brand row lives in the sidebar; each page brings its own `PageHeader`.
 
 ## Known Gaps
 

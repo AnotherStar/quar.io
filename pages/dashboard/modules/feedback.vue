@@ -128,11 +128,7 @@ function downloadCsv() {
 <template>
   <div class="space-y-xl">
     <div>
-      <NuxtLink to="/dashboard/modules" class="text-caption text-steel hover:text-ink">← Все модули</NuxtLink>
-      <h1 class="mt-1 text-h2 text-ink">Обратная связь</h1>
-      <p class="mt-1 text-body text-slate">
-        Настройки формы применяются ко всем инструкциям, где подключён этот модуль.
-      </p>
+      <h1 class="text-h2 text-ink">Обратная связь</h1>
     </div>
 
     <UiAlert v-if="!module_" kind="warning" title="Модуль не найден">

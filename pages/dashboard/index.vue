@@ -25,11 +25,10 @@ const stats = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-2xl">
-    <div>
-      <h1 class="text-h2 text-ink">Обзор</h1>
-      <p class="mt-1 text-body text-slate">{{ currentTenant?.name }} · тариф {{ currentTenant?.plan }}</p>
-    </div>
+  <div>
+    <PageHeader icon="lucide:layout-dashboard" title="Обзор" />
+
+    <div class="mt-sm space-y-2xl">
 
     <div class="grid grid-cols-2 gap-md md:grid-cols-4">
       <UiCard><p class="text-caption text-steel uppercase tracking-wide">Всего</p><p class="mt-2 text-h2">{{ stats.total }}</p></UiCard>
@@ -57,6 +56,7 @@ const stats = computed(() => {
           <NuxtLink to="/dashboard/instructions" class="text-link hover:underline">Создать первую</NuxtLink>
         </div>
       </UiCard>
+    </div>
     </div>
   </div>
 </template>

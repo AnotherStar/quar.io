@@ -146,20 +146,10 @@ function lastDesign(code: QrCodeRow) {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <div class="flex flex-col justify-between gap-md md:flex-row md:items-end">
-      <div>
-        <h1 class="text-h2 text-ink">QR-коды</h1>
-        <p class="mt-1 max-w-2xl text-body text-slate">
-          Все QR-коды вашего аккаунта. Создавайте, печатайте партии в разных дизайнах
-          и привязывайте их к инструкциям прямо со смартфона.
-        </p>
-      </div>
-      <UiButton variant="primary" to="/qr-codes/link">
-        <Icon name="lucide:scan-line" class="h-4 w-4" />
-        Привязать на телефоне
-      </UiButton>
-    </div>
+  <div>
+    <PageHeader icon="lucide:qr-code" title="QR-коды" />
+
+    <div class="mt-sm space-y-xl">
 
     <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
 
@@ -246,7 +236,13 @@ function lastDesign(code: QrCodeRow) {
           {{ opt.label }}
         </button>
       </div>
-      <UiInput v-model="search" placeholder="Поиск по shortId, названию, ШК…" class="w-full md:w-72" />
+      <div class="flex flex-1 items-center justify-end gap-md">
+        <UiInput v-model="search" placeholder="Поиск по shortId, названию, ШК…" class="w-full md:w-72" />
+        <UiButton variant="primary" to="/qr-codes/link">
+          <Icon name="lucide:scan-line" class="h-4 w-4" />
+          Привязать на телефоне
+        </UiButton>
+      </div>
     </div>
 
     <UiCard padded="sm">
@@ -332,5 +328,6 @@ function lastDesign(code: QrCodeRow) {
         Показано {{ codes.length }} из {{ totalShown }}
       </p>
     </UiCard>
+    </div>
   </div>
 </template>

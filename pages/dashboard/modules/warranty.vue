@@ -43,11 +43,7 @@ function downloadCsv() {
   <div class="space-y-xl">
     <div class="flex items-center justify-between gap-md">
       <div>
-        <NuxtLink to="/dashboard/modules" class="text-caption text-steel hover:text-ink">← Все модули</NuxtLink>
-        <h1 class="mt-1 text-h2 text-ink">Регистрации гарантии</h1>
-        <p class="mt-1 text-body text-slate">
-          Покупатели, которые отправили форму гарантии на ваших инструкциях.
-        </p>
+        <h1 class="text-h2 text-ink">Регистрации гарантии</h1>
       </div>
       <UiButton variant="secondary" :disabled="!data?.items.length" @click="downloadCsv">
         Скачать CSV

@@ -33,8 +33,10 @@ const trialBlocked = computed(() =>
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <h1 class="text-h2 text-ink">Тариф и оплата</h1>
+  <div>
+    <PageHeader icon="lucide:credit-card" title="Тариф и оплата" />
+
+    <div class="mt-sm space-y-xl">
 
     <UiCard>
       <div class="flex items-start justify-between gap-md">
@@ -92,5 +94,6 @@ const trialBlocked = computed(() =>
     <UiAlert kind="info" title="Биллинг ещё не подключён">
       Реальная оплата (Stripe / ЮKassa) — в TODO. Сейчас доступен только триал.
     </UiAlert>
+    </div>
   </div>
 </template>

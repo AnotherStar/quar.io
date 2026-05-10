@@ -155,8 +155,9 @@ async function saveLegalProfile() {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <h1 class="text-h2 text-ink">Настройки</h1>
+  <div>
+    <PageHeader icon="lucide:settings" title="Настройки" />
+    <div class="mt-sm space-y-xl">
     <UiCard>
       <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
         <div>
@@ -272,5 +273,6 @@ async function saveLegalProfile() {
         </div>
       </div>
     </UiCard>
+    </div>
   </div>
 </template>

@@ -115,14 +115,14 @@ async function unarchive(id: string) {
 
 <template>
   <div>
-    <!-- Header-row страницы. min-h-16 + items-center выравнивает заголовок
-         ровно по центру brand-зоны сайдбара (та же высота 64px). -->
-    <div class="flex min-h-16 items-center justify-between gap-2">
-      <div class="flex items-center gap-3">
-        <Icon name="lucide:file-text" class="h-6 w-6 text-navy opacity-50" />
-        <h1 class="text-h3 text-navy">Инструкции</h1>
-      </div>
-    </div>
+    <PageHeader icon="lucide:file-text" title="Инструкции">
+      <template #actions>
+        <UiButton :loading="creating" @click="createNew">
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          Новая
+        </UiButton>
+      </template>
+    </PageHeader>
 
     <UiAlert v-if="createError" kind="error" class="mt-md">{{ createError }}</UiAlert>
 
@@ -162,20 +162,14 @@ async function unarchive(id: string) {
         </button>
       </div>
 
-      <div class="flex flex-1 items-center justify-end gap-md">
-        <div class="relative w-full max-w-sm">
-          <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
-          <input
-            v-model="search"
-            type="text"
-            placeholder="Поиск по названию или URL"
-            class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
-          >
-        </div>
-        <UiButton :loading="creating" @click="createNew">
-          <Icon name="lucide:plus" class="h-4 w-4" />
-          Новая
-        </UiButton>
+      <div class="relative w-full max-w-sm">
+        <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Поиск по названию или URL"
+          class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+        >
       </div>
     </div>
 

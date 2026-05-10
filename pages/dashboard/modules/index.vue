@@ -20,11 +20,10 @@ async function toggle(code: string, enabled: boolean, config: object) {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <h1 class="text-h2 text-ink">Модули</h1>
-    <p class="text-body text-slate">Подключаемые блоки функциональности для ваших инструкций.</p>
+  <div>
+    <PageHeader icon="lucide:puzzle" title="Модули" />
 
-    <div class="grid grid-cols-1 gap-md md:grid-cols-2">
+    <div class="mt-sm grid grid-cols-1 gap-md md:grid-cols-2">
       <UiCard v-for="m in data?.modules" :key="m.id">
         <div class="flex items-start justify-between gap-md">
           <div class="min-w-0">
