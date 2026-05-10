@@ -2,11 +2,11 @@
 definePageMeta({ layout: 'blank' })
 
 useHead({
-  title: 'ManualOnline — investor pitch',
+  title: 'quar.io — investor pitch',
   meta: [
     {
       name: 'description',
-      content: 'Investor pitch for ManualOnline: QR-ready mobile instructions that protect marketplace product ratings.'
+      content: 'Investor pitch for quar.io: QR-ready mobile instructions that protect marketplace product ratings.'
     }
   ]
 })
@@ -100,13 +100,13 @@ const roadmap = [
       <div class="container-page relative py-20 md:py-hero">
         <div class="mx-auto max-w-5xl text-center">
           <p class="text-micro uppercase tracking-[1px] text-white/60">
-            ManualOnline investor pitch
+            quar.io investor pitch
           </p>
           <h1 class="mt-5 text-[44px] font-semibold leading-[1.05] md:text-[80px]">
             Защита рейтинга товара через QR-инструкции, которые покупатель понимает.
           </h1>
           <p class="mx-auto mt-6 max-w-3xl text-subtitle text-white/75">
-            ManualOnline помогает селлерам маркетплейсов превращать плохие PDF, бумажные вкладыши
+            quar.io помогает селлерам маркетплейсов превращать плохие PDF, бумажные вкладыши
             и хаотичные инструкции в мобильные шаги, QR-коды и отчет по местам, которые портят отзывы.
           </p>
           <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -125,7 +125,7 @@ const roadmap = [
               <span class="h-3 w-3 rounded-full bg-[#ff5f57]" />
               <span class="h-3 w-3 rounded-full bg-[#febc2e]" />
               <span class="h-3 w-3 rounded-full bg-[#28c840]" />
-              <span class="ml-md text-caption text-steel">manual.online/product/chair-42</span>
+              <span class="ml-md text-caption text-steel">quar.io/product/chair-42</span>
             </div>
             <div class="grid gap-lg p-lg md:grid-cols-[0.95fr_1.05fr] md:p-2xl">
               <div class="rounded-lg bg-tint-sky p-lg">
@@ -258,7 +258,7 @@ const roadmap = [
       <div class="container-page py-section-lg">
         <div class="mx-auto max-w-3xl text-center">
           <p class="text-micro uppercase tracking-[1px] text-stone">Solution</p>
-          <h2 class="mt-3 text-[48px] font-semibold leading-[1.15]">ManualOnline превращает инструкцию в управляемый post-purchase канал.</h2>
+          <h2 class="mt-3 text-[48px] font-semibold leading-[1.15]">quar.io превращает инструкцию в управляемый post-purchase канал.</h2>
         </div>
 
         <div class="mt-section grid gap-md lg:grid-cols-3">
@@ -346,7 +346,7 @@ const roadmap = [
             <h2 class="mt-3 text-[48px] font-semibold leading-[1.15]">Конкурируем не количеством фич, а моментом боли.</h2>
             <p class="mt-4 text-subtitle text-slate">
               QR-хостинг PDF, редакторы инструкций и AI-manual tools уже существуют.
-              ManualOnline должен выигрывать конкретным входом: плохие отзывы в карточке товара.
+              quar.io должен выигрывать конкретным входом: плохие отзывы в карточке товара.
             </p>
           </div>
           <div class="grid gap-md">

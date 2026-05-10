@@ -29,15 +29,18 @@ export default defineNuxtConfig({
       publicUrl: process.env.S3_PUBLIC_URL || ''
     },
     openai: {
-      apiKey: process.env.OPENAI_API_KEY || ''
+      apiKey: process.env.OPENAI_API_KEY || '',
+      baseUrl: process.env.OPENAI_BASE_URL || ''
     },
     public: {
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:4200'
     }
   },
   app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
+    layoutTransition: { name: 'layout', mode: 'out-in' },
     head: {
-      title: 'ManualOnline — инструкции, которые работают',
+      title: 'quar.io — инструкции, которые работают',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width,initial-scale=1' },

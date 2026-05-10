@@ -100,14 +100,14 @@ async function remove() {
     <UiInput v-model="name" placeholder="Название секции" />
     <UiInput v-model="description" placeholder="Описание (опц.)" />
 
-    <UiCard padded="lg">
+    <div>
       <ClientOnly>
         <InstructionEditor v-model="content" placeholder="Контент секции..." disable-section-refs />
         <template #fallback>
           <div class="min-h-[400px] animate-pulse rounded-md bg-surface" />
         </template>
       </ClientOnly>
-    </UiCard>
+    </div>
 
     <hr class="border-hairline">
 

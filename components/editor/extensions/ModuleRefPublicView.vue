@@ -8,8 +8,9 @@ const override = computed(() => (props.node.attrs.configOverride as Record<strin
 const refs = inject<{
   modules: Record<string, { code: string; config: Record<string, unknown> }>
   instructionId: string
+  versionId?: string | null
   viewerSessionId: string
-}>('publicRefs', { modules: {}, instructionId: '', viewerSessionId: '' })
+}>('publicRefs', { modules: {}, instructionId: '', versionId: null, viewerSessionId: '' })
 
 const data = computed(() => (id.value ? refs.modules[id.value] : null))
 const mergedConfig = computed(() => ({ ...(data.value?.config ?? {}), ...override.value }))
@@ -22,6 +23,7 @@ const mergedConfig = computed(() => ({ ...(data.value?.config ?? {}), ...overrid
         :code="data.code"
         :config="mergedConfig"
         :instruction-id="refs.instructionId"
+        :version-id="refs.versionId"
         :viewer-session-id="refs.viewerSessionId"
       />
     </ClientOnly>

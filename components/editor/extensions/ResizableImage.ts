@@ -25,6 +25,24 @@ export const ResizableImage = Image.extend({
         default: 'center',
         parseHTML: (el) => el.getAttribute('data-align') || 'center',
         renderHTML: (attrs) => ({ 'data-align': attrs.align })
+      },
+      intrinsicWidth: {
+        default: null,
+        parseHTML: (el) => {
+          const value = el.getAttribute('data-intrinsic-width')
+          const num = value ? parseInt(value, 10) : NaN
+          return Number.isFinite(num) ? num : null
+        },
+        renderHTML: (attrs) => attrs.intrinsicWidth ? { 'data-intrinsic-width': attrs.intrinsicWidth } : {}
+      },
+      intrinsicHeight: {
+        default: null,
+        parseHTML: (el) => {
+          const value = el.getAttribute('data-intrinsic-height')
+          const num = value ? parseInt(value, 10) : NaN
+          return Number.isFinite(num) ? num : null
+        },
+        renderHTML: (attrs) => attrs.intrinsicHeight ? { 'data-intrinsic-height': attrs.intrinsicHeight } : {}
       }
     }
   },

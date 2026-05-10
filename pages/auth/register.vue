@@ -31,8 +31,8 @@ async function submit() {
   <div class="container-page flex min-h-screen items-center justify-center py-section">
     <div class="w-full max-w-md">
       <NuxtLink to="/" class="mb-8 inline-flex items-center gap-2">
-        <div class="grid h-9 w-9 place-items-center rounded-md bg-primary text-white text-h5">M</div>
-        <span class="text-h5 text-ink">ManualOnline</span>
+        <div class="grid h-9 w-9 place-items-center rounded-md bg-primary text-white text-h5">q</div>
+        <span class="text-h5 text-ink">quar.io</span>
       </NuxtLink>
       <h1 class="text-h2 text-ink">Создать аккаунт</h1>
       <p class="mt-2 text-body text-slate">Бесплатно: до трёх инструкций.</p>
@@ -43,7 +43,7 @@ async function submit() {
         <UiInput v-model="form.name" label="Имя" autocomplete="name" />
         <hr class="border-hairline">
         <UiInput v-model="form.tenantName" label="Название компании" required />
-        <UiInput v-model="form.tenantSlug" label="Slug компании" :prefix="`manual.online/`" hint="Латиница, цифры, дефис" required />
+        <UiInput v-model="form.tenantSlug" label="Slug компании" :prefix="`quar.io/`" hint="Латиница, цифры, дефис" required />
 
         <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
 

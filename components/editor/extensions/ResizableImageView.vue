@@ -6,6 +6,8 @@ const props = defineProps(nodeViewProps)
 const src = computed(() => props.node.attrs.src as string)
 const alt = computed(() => (props.node.attrs.alt as string) || '')
 const widthPx = computed(() => (props.node.attrs.width as number | null) ?? null)
+const intrinsicWidth = computed(() => (props.node.attrs.intrinsicWidth as number | null) ?? null)
+const intrinsicHeight = computed(() => (props.node.attrs.intrinsicHeight as number | null) ?? null)
 const align = computed(() => (props.node.attrs.align as 'left' | 'center' | 'right') || 'center')
 
 const wrapperRef = ref<HTMLElement | null>(null)
@@ -19,6 +21,22 @@ const alignClass = computed(() =>
 )
 
 const showToolbar = computed(() => editable.value && (isHovered.value || isDragging.value))
+const aspectRatio = computed(() => {
+  if (!intrinsicWidth.value || !intrinsicHeight.value) return null
+  return `${intrinsicWidth.value} / ${intrinsicHeight.value}`
+})
+const wrapperStyle = computed(() => ({
+  ...(widthPx.value
+    ? { width: `${widthPx.value}px` }
+    : intrinsicWidth.value
+      ? { width: `${intrinsicWidth.value}px` }
+      : {}),
+  ...(aspectRatio.value ? { aspectRatio: aspectRatio.value } : {})
+}))
+const imageStyle = computed(() => {
+  if (widthPx.value || aspectRatio.value) return { width: '100%', height: 'auto' }
+  return { width: 'auto' }
+})
 
 function startResize(e: PointerEvent) {
   if (!editable.value || !imgRef.value) return
@@ -66,8 +84,8 @@ const tbDivider = 'mx-0.5 h-4 w-px bg-hairline'
   >
     <div
       ref="wrapperRef"
-      class="relative inline-block"
-      :style="widthPx ? { width: widthPx + 'px' } : undefined"
+      class="relative inline-block max-w-full overflow-hidden rounded-md bg-surface"
+      :style="wrapperStyle"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
     >
@@ -101,8 +119,10 @@ const tbDivider = 'mx-0.5 h-4 w-px bg-hairline'
         ref="imgRef"
         :src="src"
         :alt="alt"
+        :width="intrinsicWidth || undefined"
+        :height="intrinsicHeight || undefined"
         class="block h-auto max-w-full rounded-md select-none"
-        :style="widthPx ? { width: '100%' } : { width: 'auto' }"
+        :style="imageStyle"
         draggable="false"
       >
 

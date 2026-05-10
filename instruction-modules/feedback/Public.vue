@@ -1,9 +1,11 @@
 <script setup lang="ts">
 const props = defineProps<{
   instructionId: string
+  versionId?: string | null
   config: Record<string, any>
   viewerSessionId: string
 }>()
+const legal = inject<any>('publicLegal', null)
 
 const title = computed(() => String(props.config?.title ?? 'Свяжитесь с нами'))
 const description = computed(() => String(props.config?.description ?? ''))
@@ -22,10 +24,23 @@ const form = reactive({
   telegram: '',
   message: ''
 })
+const consent = ref({
+  personalData: false,
+  marketing: false
+})
 const status = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
 const errorMsg = ref<string | null>(null)
+const documentVersionIds = computed(() => {
+  const docs = legal?.documents ?? {}
+  return [
+    docs.PERSONAL_DATA_CONSENT?.id,
+    consent.value.marketing ? docs.MARKETING_CONSENT?.id : null
+  ].filter(Boolean)
+})
+const canSubmit = computed(() => consent.value.personalData && status.value !== 'loading')
 
 async function submit() {
+  if (!consent.value.personalData) return
   status.value = 'loading'
   errorMsg.value = null
   try {
@@ -37,7 +52,15 @@ async function submit() {
         phone: form.phone || undefined,
         email: form.email || undefined,
         telegram: form.telegram || undefined,
-        message: form.message || undefined
+        message: form.message || undefined,
+        versionId: props.versionId ?? undefined,
+        sessionId: props.viewerSessionId,
+        pageUrl: window.location.href,
+        consent: {
+          personalData: consent.value.personalData,
+          marketing: consent.value.marketing,
+          documentVersionIds: documentVersionIds.value
+        }
       }
     })
     status.value = 'success'
@@ -63,23 +86,28 @@ async function submit() {
       <p v-if="description" class="mt-1 text-body-sm text-slate">{{ description }}</p>
 
       <form class="mt-md grid gap-3" @submit.prevent="submit">
-      <UiInput v-model="form.fio" label="ФИО" :required="requireFio" />
-      <UiInput v-model="form.phone" type="tel" label="Телефон" :required="requirePhone" />
-      <UiInput v-model="form.email" type="email" label="Email" :required="requireEmail" />
-      <UiInput v-model="form.telegram" label="Telegram" placeholder="@username" :required="requireTelegram" />
-      <label class="block">
-        <span class="mb-1 block text-body-sm-md text-ink">
-          Сообщение<span v-if="requireMessage" class="text-error">&nbsp;*</span>
-        </span>
-        <textarea
-          v-model="form.message"
-          rows="4"
-          :required="requireMessage"
-          class="w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-body outline-none focus:border-primary"
+        <UiInput v-model="form.fio" label="ФИО" :required="requireFio" />
+        <UiInput v-model="form.phone" type="tel" label="Телефон" :required="requirePhone" />
+        <UiInput v-model="form.email" type="email" label="Email" :required="requireEmail" />
+        <UiInput v-model="form.telegram" label="Telegram" placeholder="@username" :required="requireTelegram" />
+        <label class="block">
+          <span class="mb-1 block text-body-sm-md text-ink">
+            Сообщение<span v-if="requireMessage" class="text-error">&nbsp;*</span>
+          </span>
+          <textarea
+            v-model="form.message"
+            rows="4"
+            :required="requireMessage"
+            class="w-full rounded-md border border-hairline bg-canvas px-3 py-2 text-body outline-none focus:border-primary"
+          />
+        </label>
+        <PublicConsentFields
+          v-model="consent"
+          :legal="legal"
+          purpose="обработка обращения и обратная связь по товару"
         />
-      </label>
         <UiAlert v-if="status === 'error'" kind="error">{{ errorMsg }}</UiAlert>
-        <UiButton type="submit" :loading="status === 'loading'" block>Отправить</UiButton>
+        <UiButton type="submit" :loading="status === 'loading'" :disabled="!canSubmit" block>Отправить</UiButton>
       </form>
     </template>
   </section>

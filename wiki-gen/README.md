@@ -26,3 +26,4 @@ npm run generate -- --section modules
 - `data` — `prisma`
 
 Ключи `OPENAI_API_KEY` или `ANTHROPIC_API_KEY` читаются из корневого `.env` или из `wiki-gen/.env`.
+Для OpenAI также должен быть явно задан `OPENAI_BASE_URL`, например `https://api.openai.com/v1`.

@@ -129,6 +129,10 @@ const streamError = ref<string | null>(null)
 const generationStatus = ref('')
 const generationUsage = ref<any | null>(null)
 const generationImages = ref({ extracted: 0, uploaded: 0 })
+const generationAbortController = shallowRef<AbortController | null>(null)
+const isCancellingGeneration = ref(false)
+const generationOverlayTitleId = useId()
+let generationScrollFrame: number | null = null
 
 const generationUsageText = computed(() => {
   const u = generationUsage.value
@@ -139,7 +143,29 @@ const generationUsageText = computed(() => {
   return `${formatNumber(u.totalTokens)} токенов${cost}`
 })
 
-function aiBlockToTipTapNode(b: AiBlock): any {
+const generationOverlayDetails = computed(() => {
+  if (generationUsageText.value) return generationUsageText.value
+  if (generationImages.value.extracted) {
+    return `Изображения: ${generationImages.value.uploaded}/${generationImages.value.extracted}`
+  }
+  return 'Страница заблокирована до завершения процесса'
+})
+
+function cancelGeneration() {
+  if (!isStreaming.value) return
+  isCancellingGeneration.value = true
+  generationStatus.value = 'Прерываю процесс…'
+  generationAbortController.value?.abort()
+}
+
+onBeforeUnmount(() => {
+  if (import.meta.client && generationScrollFrame !== null) window.cancelAnimationFrame(generationScrollFrame)
+})
+
+function aiBlockToTipTapNode(
+  b: AiBlock,
+  imageDimensions: Map<string, { width: number; height: number }> = new Map()
+): any {
   switch (b.type) {
     case 'heading':
       return { type: 'heading', attrs: { level: b.level }, content: textToTipTapContent(b.text, b.links) }
@@ -178,8 +204,18 @@ function aiBlockToTipTapNode(b: AiBlock): any {
       return tableBlockToTipTapNode(b.rows, b.hasHeaderRow)
     case 'safety':
       return { type: 'safetyBlock', attrs: { severity: b.severity }, content: textToTipTapContent(b.text, b.links) }
-    case 'image':
-      return { type: 'image', attrs: { src: b.url, alt: b.description || '' } }
+    case 'image': {
+      const dimensions = imageDimensions.get(b.url)
+      return {
+        type: 'image',
+        attrs: {
+          src: b.url,
+          alt: b.description || '',
+          intrinsicWidth: dimensions?.width ?? null,
+          intrinsicHeight: dimensions?.height ?? null
+        }
+      }
+    }
     case 'image_placeholder':
       return { type: 'safetyBlock', attrs: { severity: 'info' }, content: [{ type: 'text', text: `📷 ${b.description}` }] }
     case 'youtube':
@@ -309,6 +345,9 @@ async function runStream(file: File) {
   const ed = editorInstance.value
   console.log('[gen] editor instance:', ed)
   if (!ed) { console.warn('[gen] no editor instance — aborting'); return }
+  const abortController = new AbortController()
+  generationAbortController.value = abortController
+  isCancellingGeneration.value = false
   streamError.value = null
   generationStatus.value = 'Готовлю файл к чтению'
   generationUsage.value = null
@@ -322,6 +361,7 @@ async function runStream(file: File) {
   // Avoids the "nested-into-previous-list" bug from insertContent at cursor.
   const streamedNodes: any[] = []
   const browserUploadedImages: any[] = []
+  const imageDimensions = new Map<string, { width: number; height: number }>()
   let firstDonePayload: any = null
   let finalDonePayload: any = null
 
@@ -333,8 +373,10 @@ async function runStream(file: File) {
     },
     onBlock: (b: AiBlock) => {
       console.log('[gen] block', b)
-      streamedNodes.push(aiBlockToTipTapNode(b))
-      ed.commands.setContent({ type: 'doc', content: streamedNodes }, false)
+      const node = aiBlockToTipTapNode(b, imageDimensions)
+      streamedNodes.push(node)
+      appendNodeToEditor(ed, node)
+      scrollGenerationToEnd()
       generationStatus.value = `Пишу инструкцию: ${streamedNodes.length} блоков`
     },
     onProgress: (payload: any) => {
@@ -363,9 +405,10 @@ async function runStream(file: File) {
           sizeBytes: payload.sizeBytes
         })
         generationStatus.value = `Загружаю изображение ${payload.index}`
-        const file = await fileFromDataUrl(payload.dataUrl, payload.filename, payload.mimeType)
-        const uploaded = await uploadFile(file)
+        const file = await fileFromDataUrl(payload.dataUrl, payload.filename, payload.mimeType, abortController.signal)
+        const uploaded = await uploadFile(file, undefined, { signal: abortController.signal })
         browserUploadedImages.push({ ...payload, dataUrl: undefined, url: uploaded.url, assetId: uploaded.assetId })
+        imageDimensions.set(uploaded.url, { width: payload.width, height: payload.height })
         generationImages.value.uploaded = browserUploadedImages.length
         generationStatus.value = `Загружено изображений: ${browserUploadedImages.length}`
         console.log('[gen] browser image uploaded', {
@@ -379,9 +422,10 @@ async function runStream(file: File) {
         firstDonePayload = payload
         console.log('[gen] done', { ...payload, browserUploadedImages })
       }
-    })
+    }, abortController.signal)
 
     if (firstDonePayload?.browserUploadRequired && browserUploadedImages.length) {
+      if (abortController.signal.aborted) throw createGenerationAbortError()
       const imageLibrary = browserUploadedImages.map((img) => ({
         index: img.index,
         url: img.url,
@@ -405,7 +449,7 @@ async function runStream(file: File) {
             console.log('[gen] done with AI', { ...payload, browserUploadedImages })
           }
         },
-        undefined,
+        abortController.signal,
         { imageLibrary }
       )
     } else {
@@ -420,8 +464,23 @@ async function runStream(file: File) {
     if (generationUsage.value) {
       generationStatus.value = 'Генерация завершена'
     }
+  } catch (e: any) {
+    if (isGenerationAbortError(e)) {
+      console.log('[gen] aborted by user')
+      streamError.value = null
+      generationStatus.value = 'Процесс прерван'
+      draft.value = ed.getJSON()
+      return
+    }
+    console.error('[gen] failed', e)
+    streamError.value = e?.message || 'Ошибка генерации'
+    generationStatus.value = 'Ошибка генерации'
   } finally {
     isStreaming.value = false
+    isCancellingGeneration.value = false
+    if (generationAbortController.value === abortController) {
+      generationAbortController.value = null
+    }
     suppressAutosave = false
   }
 }
@@ -452,13 +511,46 @@ function updateGenerationStatus(payload: any) {
   }
 }
 
+function appendNodeToEditor(ed: any, node: any) {
+  ed.chain()
+    .insertContentAt(ed.state.doc.content.size, node, { updateSelection: false })
+    .run()
+}
+
+async function scrollGenerationToEnd() {
+  if (!import.meta.client) return
+  await nextTick()
+  if (generationScrollFrame !== null) window.cancelAnimationFrame(generationScrollFrame)
+  generationScrollFrame = window.requestAnimationFrame(() => {
+    generationScrollFrame = null
+    const editorEl = document.querySelector('.tiptap.ProseMirror')
+    const target = editorEl?.lastElementChild as HTMLElement | null
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    } else {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    }
+  })
+}
+
 function formatNumber(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value || 0)
 }
 
-async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: string): Promise<File> {
-  const blob = await fetch(dataUrl).then((res) => res.blob())
+async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: string, signal?: AbortSignal): Promise<File> {
+  const blob = await fetch(dataUrl, { signal }).then((res) => res.blob())
   return new File([blob], filename, { type: mimeType || blob.type || 'application/octet-stream' })
+}
+
+function createGenerationAbortError() {
+  if (typeof DOMException !== 'undefined') return new DOMException('Generation aborted', 'AbortError')
+  const error = new Error('Generation aborted')
+  error.name = 'AbortError'
+  return error
+}
+
+function isGenerationAbortError(error: any) {
+  return error?.name === 'AbortError'
 }
 </script>
 
@@ -490,8 +582,7 @@ async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: stri
       </div>
       <div class="flex items-center gap-2">
         <span class="text-caption text-steel">
-          <span v-if="isStreaming">{{ generationStatus || 'ИИ генерирует…' }}</span>
-          <span v-else-if="saving">Сохранение…</span>
+          <span v-if="saving">Сохранение…</span>
           <span v-else-if="lastSavedAt">Сохранено {{ lastSavedAt.toLocaleTimeString() }}</span>
         </span>
 
@@ -598,11 +689,7 @@ async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: stri
     </UiAlert>
     <UiAlert v-if="saveError" kind="error">{{ saveError }}</UiAlert>
 
-    <div v-if="isStreaming || streamError || generationUsage" class="flex items-center gap-2">
-      <span v-if="isStreaming" class="flex items-center gap-2 text-caption-bold text-primary">
-        <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-primary" />
-        {{ generationStatus || 'ИИ читает файл и пишет инструкцию…' }}
-      </span>
+    <div v-if="streamError || generationUsage" class="flex items-center gap-2">
       <span v-if="generationUsageText" class="text-caption text-steel">
         {{ generationUsageText }}
       </span>
@@ -612,7 +699,7 @@ async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: stri
     </div>
     <UiAlert v-if="streamError" kind="error">{{ streamError }}</UiAlert>
 
-    <UiCard class="p-lg">
+    <div>
       <ClientOnly>
         <InstructionEditor
           v-model="draft"
@@ -623,7 +710,63 @@ async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: stri
           <div class="min-h-[400px] animate-pulse rounded-md bg-surface" />
         </template>
       </ClientOnly>
-    </UiCard>
+    </div>
     </template>
+
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="isStreaming"
+          class="fixed inset-0 z-[190] flex items-center justify-center bg-canvas/60 p-md backdrop-blur-[2px]"
+        >
+          <section
+            class="w-full max-w-md rounded-lg border border-hairline bg-canvas p-lg shadow-modal"
+            role="dialog"
+            aria-modal="true"
+            :aria-labelledby="generationOverlayTitleId"
+          >
+            <div class="flex items-start gap-md">
+              <div class="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+                <Icon name="lucide:sparkles" class="h-5 w-5 animate-pulse" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p :id="generationOverlayTitleId" class="text-caption-bold uppercase tracking-wide text-steel">
+                  {{ isCancellingGeneration ? 'Останавливаю' : 'Заполняю инструкцию' }}
+                </p>
+                <p class="mt-1 text-body-sm-md text-ink" aria-live="polite">
+                  {{ generationStatus || 'ИИ читает файл и пишет инструкцию…' }}
+                </p>
+                <p class="mt-1 text-caption text-steel">
+                  {{ generationOverlayDetails }}
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-md h-1.5 overflow-hidden rounded-full bg-surface">
+              <div class="h-full w-1/2 animate-pulse rounded-full bg-primary" />
+            </div>
+
+            <div class="mt-lg flex justify-end">
+              <UiButton
+                variant="secondary"
+                size="sm"
+                :disabled="isCancellingGeneration"
+                @click="cancelGeneration"
+              >
+                <Icon name="lucide:x" class="h-4 w-4" />
+                {{ isCancellingGeneration ? 'Прерываю…' : 'Прервать' }}
+              </UiButton>
+            </div>
+          </section>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

@@ -66,7 +66,7 @@ function btnClass(active: boolean) {
 </script>
 
 <template>
-  <div class="sticky top-0 z-10 -mx-lg -mt-lg mb-md flex flex-wrap items-center gap-1 border-b border-hairline bg-canvas/95 px-lg py-2 backdrop-blur">
+  <div class="sticky top-0 z-10 flex flex-wrap items-center gap-1 rounded-md border border-hairline bg-canvas/95 px-md py-2 shadow-card backdrop-blur">
     <!-- Heading -->
     <div class="relative">
       <button type="button" :class="btnClass(isActive('heading'))" title="Заголовок" @click="showHeadings = !showHeadings; showSafety = false">

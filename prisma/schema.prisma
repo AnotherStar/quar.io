@@ -1,4 +1,4 @@
-// ManualOnline — schema
+// quar.io — schema
 // PostgreSQL + Prisma. All architectural hooks for backlog features
 // are present from day one (i18n, custom domains, modules, branching, etc).
 
@@ -82,6 +82,81 @@ model Tenant {
   mediaAssets         MediaAsset[]
   productGroups       ProductGroup[]
   activationQrCodes   ActivationQrCode[]
+  legalProfile        TenantLegalProfile?
+  legalDocuments      LegalDocumentVersion[]
+  consentEvents       ConsentEvent[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legal profiles + consent evidence
+// ─────────────────────────────────────────────────────────────────────────────
+
+model TenantLegalProfile {
+  id        String   @id @default(cuid())
+  tenantId  String   @unique
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  legalName String?
+  inn       String?
+  ogrn      String?
+  address   String?
+  pdEmail   String?
+  policyUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LegalDocumentType {
+  PERSONAL_DATA_POLICY
+  PERSONAL_DATA_CONSENT
+  MARKETING_CONSENT
+  USER_AGREEMENT
+  COOKIE_NOTICE
+  DPA
+}
+
+model LegalDocumentVersion {
+  id        String            @id @default(cuid())
+  tenantId  String
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type      LegalDocumentType
+  title     String
+  content   String
+  textHash  String
+
+  publishedAt DateTime @default(now())
+  archivedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, type, publishedAt])
+}
+
+model ConsentEvent {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  instructionId String?
+  instruction   Instruction? @relation(fields: [instructionId], references: [id], onDelete: SetNull)
+
+  versionId     String?
+  sessionId     String?
+  subjectKey    String?
+  formType      String
+  purpose       String
+  documentVersionIds String[] @default([])
+  checkboxValues Json
+  pageUrl       String?
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  warrantyRegistration WarrantyRegistration?
+  feedbackSubmission   FeedbackSubmission?
+
+  @@index([tenantId, createdAt])
+  @@index([instructionId, createdAt])
+  @@index([subjectKey])
 }
 
 enum Role {
@@ -203,6 +278,7 @@ model Instruction {
   warrantyRegistrations WarrantyRegistration[]
   feedbackSubmissions   FeedbackSubmission[]
   activationQrCodes     ActivationQrCode[]
+  consentEvents         ConsentEvent[]
 
   @@unique([tenantId, slug])
   @@unique([tenantId, productBarcode])
@@ -436,6 +512,8 @@ model WarrantyRegistration {
   serialNumber  String?
   purchaseDate  DateTime?
   metadata      Json     @default("{}")
+  consentEventId String? @unique
+  consentEvent   ConsentEvent? @relation(fields: [consentEventId], references: [id], onDelete: SetNull)
   createdAt     DateTime @default(now())
 
   @@index([instructionId])
@@ -453,6 +531,8 @@ model FeedbackSubmission {
   telegram      String?
   message       String?
   metadata      Json     @default("{}")
+  consentEventId String? @unique
+  consentEvent   ConsentEvent? @relation(fields: [consentEventId], references: [id], onDelete: SetNull)
   createdAt     DateTime @default(now())
 
   @@index([instructionId])

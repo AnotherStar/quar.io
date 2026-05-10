@@ -12,6 +12,7 @@ const { data, error } = await useFetch<any>(`/api/public/${tenantSlug}/${instruc
 if (error.value || !data.value) throw createError({ statusCode: 404, statusMessage: 'Инструкция не найдена', fatal: true })
 
 const sessionId = useViewerSession()
+const { accepted: cookieConsentAccepted } = usePublicCookieConsent()
 
 // Make resolved section/module refs available to the read-only NodeViews
 // inside <InstructionContent>. inject('publicRefs') reads this.
@@ -20,8 +21,10 @@ provide('publicRefs', {
   sections: data.value!.refs.sections,
   modules: data.value!.refs.modules,
   instructionId: data.value!.instruction.id,
+  versionId: data.value!.instruction.versionId,
   viewerSessionId: sessionId.value
 })
+provide('publicLegal', data.value!.legal)
 
 useHead({
   title: () => `${data.value!.instruction.title} — ${data.value!.tenant.name}`,
@@ -90,6 +93,7 @@ useHeadingAnchors('.js-instruction-content')
             :code="m.code"
             :config="m.config"
             :instruction-id="data!.instruction.id"
+            :version-id="data!.instruction.versionId"
             :viewer-session-id="sessionId"
           />
         </template>
@@ -115,6 +119,7 @@ useHeadingAnchors('.js-instruction-content')
             :code="m.code"
             :config="m.config"
             :instruction-id="data!.instruction.id"
+            :version-id="data!.instruction.versionId"
             :viewer-session-id="sessionId"
           />
         </template>
@@ -134,6 +139,7 @@ useHeadingAnchors('.js-instruction-content')
             :code="m.code"
             :config="m.config"
             :instruction-id="data!.instruction.id"
+            :version-id="data!.instruction.versionId"
             :viewer-session-id="sessionId"
           />
         </template>
@@ -142,12 +148,13 @@ useHeadingAnchors('.js-instruction-content')
 
     <footer class="border-t border-hairline py-md">
       <div class="container-page text-caption text-steel">
-        Создано на <NuxtLink to="/" class="text-link hover:underline">ManualOnline</NuxtLink>
+        Создано на <NuxtLink to="/" class="text-link hover:underline">quar.io</NuxtLink>
       </div>
     </footer>
 
     <ClientOnly>
       <AnalyticsBeacon
+        v-if="cookieConsentAccepted"
         :instruction-id="data!.instruction.id"
         :version-id="data!.instruction.versionId"
         :session-id="sessionId"
@@ -159,6 +166,7 @@ useHeadingAnchors('.js-instruction-content')
         root-selector="#instruction-root"
       />
       <InstructionSearch root-selector="#instruction-root" />
+      <PublicCookieNotice :legal="data!.legal" />
     </ClientOnly>
   </div>
 </template>

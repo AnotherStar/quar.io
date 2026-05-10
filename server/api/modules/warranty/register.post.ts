@@ -9,11 +9,19 @@ import { z } from 'zod'
 
 const schema = z.object({
   instructionId: z.string(),
+  versionId: z.string().optional(),
+  sessionId: z.string().min(8).max(64).optional(),
+  pageUrl: z.string().url().max(2048).optional(),
   customerName: z.string().min(1).max(120),
   customerEmail: z.string().email(),
   customerPhone: z.string().max(40).optional(),
   serialNumber: z.string().max(80).optional(),
-  purchaseDate: z.string().datetime().optional()
+  purchaseDate: z.string().datetime().optional(),
+  consent: z.object({
+    personalData: z.literal(true),
+    marketing: z.boolean().optional().default(false),
+    documentVersionIds: z.array(z.string()).max(10).optional().default([])
+  })
 })
 
 export default defineEventHandler(async (event) => {
@@ -37,15 +45,41 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Module not attached' })
   }
 
-  const reg = await prisma.warrantyRegistration.create({
-    data: {
-      instructionId: body.instructionId,
-      customerName: body.customerName,
-      customerEmail: body.customerEmail,
-      customerPhone: body.customerPhone,
-      serialNumber: body.serialNumber,
-      purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : undefined
-    }
+  const ip = getRequestHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() ?? getRequestHeader(event, 'x-real-ip') ?? null
+  const userAgent = getRequestHeader(event, 'user-agent') ?? null
+
+  const reg = await prisma.$transaction(async (tx) => {
+    const consentEvent = await tx.consentEvent.create({
+      data: {
+        tenantId: instr.tenantId,
+        instructionId: body.instructionId,
+        versionId: body.versionId,
+        sessionId: body.sessionId,
+        subjectKey: body.customerEmail.toLowerCase(),
+        formType: 'warranty-registration',
+        purpose: 'Регистрация расширенной гарантии и обратная связь по товару',
+        documentVersionIds: body.consent.documentVersionIds,
+        checkboxValues: {
+          personalData: body.consent.personalData,
+          marketing: body.consent.marketing
+        },
+        pageUrl: body.pageUrl,
+        ip,
+        userAgent
+      }
+    })
+
+    return tx.warrantyRegistration.create({
+      data: {
+        instructionId: body.instructionId,
+        customerName: body.customerName,
+        customerEmail: body.customerEmail,
+        customerPhone: body.customerPhone,
+        serialNumber: body.serialNumber,
+        purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : undefined,
+        consentEventId: consentEvent.id
+      }
+    })
   })
   return { ok: true, id: reg.id }
 })

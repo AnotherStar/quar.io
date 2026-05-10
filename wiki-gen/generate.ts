@@ -18,6 +18,7 @@
  */
 
 import fs from 'fs';
+import http from 'http';
 import path from 'path';
 import https from 'https';
 
@@ -382,6 +383,48 @@ function httpPost(
     });
 }
 
+function postToUrl(
+    url: URL,
+    headers: Record<string, string>,
+    body: unknown,
+): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify(body);
+        const transport = url.protocol === 'http:' ? http : https;
+        const req = transport.request(
+            {
+                hostname: url.hostname,
+                port: url.port || undefined,
+                path: `${url.pathname}${url.search}`,
+                method: 'POST',
+                headers: { ...headers, 'Content-Length': Buffer.byteLength(data) },
+            },
+            res => {
+                let raw = '';
+                res.on('data', chunk => { raw += chunk; });
+                res.on('end', () => resolve(raw));
+            },
+        );
+        req.on('error', reject);
+        req.write(data);
+        req.end();
+    });
+}
+
+function openAIEndpoint(pathname: string): URL {
+    const rawBaseUrl = process.env.OPENAI_BASE_URL?.trim();
+    if (!rawBaseUrl) {
+        throw new Error('OPENAI_BASE_URL должен быть задан для OpenAI-вызовов');
+    }
+
+    const baseUrl = new URL(rawBaseUrl);
+    const basePath = baseUrl.pathname.replace(/\/$/, '');
+    const endpointPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    baseUrl.pathname = `${basePath}${endpointPath}`;
+    baseUrl.search = '';
+    return baseUrl;
+}
+
 async function callOpenAI(prompt: string): Promise<string> {
     const apiKey = process.env.OPENAI_API_KEY!;
     const body = {
@@ -389,7 +432,7 @@ async function callOpenAI(prompt: string): Promise<string> {
         // max_tokens: 4096,
         messages: [{ role: 'user', content: prompt }],
     };
-    const raw = await httpPost('api.openai.com', '/v1/chat/completions', {
+    const raw = await postToUrl(openAIEndpoint('/chat/completions'), {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
     }, body);

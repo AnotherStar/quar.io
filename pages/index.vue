@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useHead({ title: 'ManualOnline — инструкции, которые работают' })
+useHead({ title: 'quar.io — инструкции, которые работают' })
 </script>
 
 <template>
@@ -25,7 +25,7 @@ useHead({ title: 'ManualOnline — инструкции, которые рабо
             <span class="h-3 w-3 rounded-full bg-[#ff5f57]" />
             <span class="h-3 w-3 rounded-full bg-[#febc2e]" />
             <span class="h-3 w-3 rounded-full bg-[#28c840]" />
-            <span class="ml-md text-caption text-steel">manual.online/atvel/f-16</span>
+            <span class="ml-md text-caption text-steel">quar.io/atvel/f-16</span>
           </div>
           <div class="p-2xl text-left">
             <h2 class="text-h2">F-16 · Сборка модели 1:48</h2>

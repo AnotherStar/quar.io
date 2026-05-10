@@ -7,8 +7,8 @@ const { user } = useAuthState()
     <header class="sticky top-0 z-30 border-b border-hairline bg-canvas/95 backdrop-blur">
       <div class="container-page flex h-16 items-center justify-between">
         <NuxtLink to="/" class="flex items-center gap-2">
-          <div class="grid h-8 w-8 place-items-center rounded-md bg-primary text-white text-h5">M</div>
-          <span class="text-body-md text-ink">ManualOnline</span>
+          <div class="grid h-8 w-8 place-items-center rounded-md bg-primary text-white text-h5">q</div>
+          <span class="text-body-md text-ink">quar.io</span>
         </NuxtLink>
         <nav class="hidden items-center gap-6 md:flex">
           <NuxtLink to="/pricing" class="text-body-sm-md text-charcoal hover:text-ink">Тарифы</NuxtLink>
@@ -34,8 +34,8 @@ const { user } = useAuthState()
       <div class="container-page py-section">
         <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div class="flex items-center gap-2">
-            <div class="grid h-7 w-7 place-items-center rounded-md bg-primary text-white text-body-sm-md">M</div>
-            <span class="text-body-sm text-steel">© {{ new Date().getFullYear() }} ManualOnline</span>
+            <div class="grid h-7 w-7 place-items-center rounded-md bg-primary text-white text-body-sm-md">q</div>
+            <span class="text-body-sm text-steel">© {{ new Date().getFullYear() }} quar.io</span>
           </div>
           <div class="flex gap-5 text-body-sm text-steel">
             <NuxtLink to="/pricing">Тарифы</NuxtLink>

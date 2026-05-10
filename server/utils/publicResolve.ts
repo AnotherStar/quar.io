@@ -3,6 +3,7 @@
 // with plan-aware filtering of sections and modules.
 import { prisma } from './prisma'
 import { effectiveFeatures, planAllowsModule } from './plan'
+import { getPublicLegalPayload, normalizeLegalProfile } from './legal'
 import type { TiptapDoc, TiptapNode } from '~~/shared/types/instruction'
 
 export interface ResolvedSectionRef {
@@ -37,6 +38,27 @@ export interface PublicRenderPayload {
       logoUrl: string | null
       fontFamily: string | null
     } | null
+  }
+  legal: {
+    operator: {
+      configured: boolean
+      operatorName: string
+      legalName: string | null
+      inn: string | null
+      ogrn: string | null
+      address: string | null
+      pdEmail: string | null
+      policyUrl: string | null
+      platformName: string
+    }
+    documents: Record<string, {
+      id: string
+      type: string
+      title: string
+      content: string
+      textHash: string
+      publishedAt: Date
+    }>
   }
   // slot-attached (legacy / "always show before/after")
   sections: Array<{ id: string; name: string; slot: string; position: number; content: unknown }>
@@ -91,7 +113,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
   const instruction = await prisma.instruction.findFirst({
     where,
     include: {
-      tenant: { include: { subscription: { include: { plan: true } } } },
+      tenant: { include: { subscription: { include: { plan: true } }, legalProfile: true } },
       publishedVersion: true,
       sectionAttachments: { include: { section: true }, orderBy: { position: 'asc' } },
       moduleAttachments: {
@@ -170,6 +192,8 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
           fontFamily: planActive ? instruction.tenant.brandingFontFamily : null
         }
       : null
+  const legalProfile = normalizeLegalProfile(instruction.tenant)
+  const legal = await getPublicLegalPayload(instruction.tenant.id, instruction.tenant.name, legalProfile)
 
   return {
     instruction: {
@@ -188,6 +212,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
       slug: instruction.tenant.slug,
       branding
     },
+    legal,
     sections,
     modules,
     refs: { sections: refSections, modules: refModules },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useHead({ title: 'Тарифы — ManualOnline' })
+useHead({ title: 'Тарифы — quar.io' })
 
 const tiers = [
   {

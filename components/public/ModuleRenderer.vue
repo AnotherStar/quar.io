@@ -5,6 +5,7 @@ const props = defineProps<{
   code: string
   config: Record<string, any>
   instructionId: string
+  versionId?: string | null
   viewerSessionId: string
 }>()
 
@@ -32,6 +33,7 @@ onMounted(async () => {
       :is="Component"
       v-if="Component"
       :instruction-id="instructionId"
+      :version-id="versionId"
       :config="config"
       :viewer-session-id="viewerSessionId"
     />

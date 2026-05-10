@@ -8,11 +8,19 @@ import { z } from 'zod'
 
 const schema = z.object({
   instructionId: z.string(),
+  versionId: z.string().optional(),
+  sessionId: z.string().min(8).max(64).optional(),
+  pageUrl: z.string().url().max(2048).optional(),
   fio: z.string().max(160).optional(),
   phone: z.string().max(40).optional(),
   email: z.string().email().max(160).optional(),
   telegram: z.string().max(80).optional(),
-  message: z.string().max(4000).optional()
+  message: z.string().max(4000).optional(),
+  consent: z.object({
+    personalData: z.literal(true),
+    marketing: z.boolean().optional().default(false),
+    documentVersionIds: z.array(z.string()).max(10).optional().default([])
+  })
 }).refine(
   (v) => Boolean(v.fio || v.phone || v.email || v.telegram || v.message),
   { message: 'Заполните хотя бы одно поле' }
@@ -37,15 +45,42 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Модуль не подключён к инструкции' })
   }
 
-  const submission = await prisma.feedbackSubmission.create({
-    data: {
-      instructionId: body.instructionId,
-      fio: body.fio,
-      phone: body.phone,
-      email: body.email,
-      telegram: body.telegram,
-      message: body.message
-    }
+  const ip = getRequestHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() ?? getRequestHeader(event, 'x-real-ip') ?? null
+  const userAgent = getRequestHeader(event, 'user-agent') ?? null
+  const subjectKey = body.email?.toLowerCase() ?? body.phone ?? body.telegram ?? body.fio ?? body.sessionId
+
+  const submission = await prisma.$transaction(async (tx) => {
+    const consentEvent = await tx.consentEvent.create({
+      data: {
+        tenantId: instr.tenantId,
+        instructionId: body.instructionId,
+        versionId: body.versionId,
+        sessionId: body.sessionId,
+        subjectKey,
+        formType: 'feedback',
+        purpose: 'Обработка обращения и обратная связь по товару',
+        documentVersionIds: body.consent.documentVersionIds,
+        checkboxValues: {
+          personalData: body.consent.personalData,
+          marketing: body.consent.marketing
+        },
+        pageUrl: body.pageUrl,
+        ip,
+        userAgent
+      }
+    })
+
+    return tx.feedbackSubmission.create({
+      data: {
+        instructionId: body.instructionId,
+        fio: body.fio,
+        phone: body.phone,
+        email: body.email,
+        telegram: body.telegram,
+        message: body.message,
+        consentEventId: consentEvent.id
+      }
+    })
   })
 
   // TODO(notification): forward to recipientEmail from TenantModuleConfig.config.

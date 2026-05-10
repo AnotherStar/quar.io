@@ -99,14 +99,20 @@ defineExpose({
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative space-y-lg">
     <EditorToolbar v-if="editor" :editor="editor" :disable-section-refs="disableSectionRefs" />
-    <EditorContent :editor="editor" />
+    <EditorContent class="mo-editor-canvas" :editor="editor" />
     <SlashMenu v-if="editor" :editor="editor" :disable-section-refs="disableSectionRefs" />
   </div>
 </template>
 
 <style>
+.mo-editor-canvas {
+  @apply px-1 sm:px-lg;
+}
+.mo-editor-canvas .tiptap {
+  @apply min-h-[560px] pb-2xl;
+}
 .tiptap {
   @apply text-body text-ink;
 }

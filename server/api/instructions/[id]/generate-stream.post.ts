@@ -18,6 +18,7 @@ import {
 import { StreamingBlockExtractor, normalizeBlock } from '~~/server/utils/streamingBlockExtractor'
 import { extractImagesFromPdf } from '~~/server/utils/pdfImageExtractor'
 import { generateShortId } from '~~/server/utils/slug'
+import { getOpenAIApiKey, getOpenAIBaseUrl } from '~~/server/utils/openai'
 import {
   INSTRUCTION_GENERATION_MODEL,
   getOpenAIModelInfo,
@@ -71,8 +72,17 @@ export default defineEventHandler(async (event) => {
   })
   const res = event.node.res
   ;(res as any).flushHeaders?.()
+  const requestAbort = new AbortController()
+  res.on('close', () => {
+    if (!res.writableEnded) requestAbort.abort()
+  })
+
+  const throwIfAborted = () => {
+    if (requestAbort.signal.aborted) throw createAbortError()
+  }
 
   const sse = (eventName: string, payload: unknown) => {
+    if (requestAbort.signal.aborted || res.destroyed || res.writableEnded) return
     res.write(`event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`)
     ;(res as any).flush?.()
   }
@@ -96,6 +106,7 @@ export default defineEventHandler(async (event) => {
     try {
       extracted = await extractImagesFromPdf(file.data, {
         onProgress: (progress) => {
+          throwIfAborted()
           console.info('[generate-stream]', {
             requestId,
             stage: 'extracting-images-progress',
@@ -119,6 +130,7 @@ export default defineEventHandler(async (event) => {
       })
       sse('progress', { stage: 'images-extracted', count: extracted.length })
     } catch (e: any) {
+      if (isAbortError(e)) throw e
       console.error('[generate-stream]', {
         requestId,
         stage: 'images-extract-failed',
@@ -130,6 +142,7 @@ export default defineEventHandler(async (event) => {
 
     if (extracted.length) {
       for (const [index, img] of extracted.entries()) {
+        throwIfAborted()
         const imageIndex = index + 1
         console.info('[generate-stream]', {
           requestId,
@@ -183,10 +196,10 @@ export default defineEventHandler(async (event) => {
   })
 
   const cfg = useRuntimeConfig()
-  if (!cfg.openai.apiKey) {
-    throw createError({ statusCode: 500, statusMessage: 'OPENAI_API_KEY не настроен' })
-  }
-  const client = new OpenAI({ apiKey: cfg.openai.apiKey })
+  const client = new OpenAI({
+    apiKey: getOpenAIApiKey(String(cfg.openai.apiKey || '')),
+    baseURL: getOpenAIBaseUrl()
+  })
 
   const userContent: any[] = [{ type: 'input_text', text: userText }]
   if (isImage) {
@@ -214,9 +227,10 @@ export default defineEventHandler(async (event) => {
         format: { type: 'json_schema', name: 'instruction', schema: RESPONSE_SCHEMA as any, strict: true }
       },
       stream: true
-    })
+    }, { signal: requestAbort.signal } as any)
 
     for await (const chunk of stream as any) {
+      throwIfAborted()
       const t = chunk?.type as string | undefined
       if (t === 'response.completed') {
         usage = normalizeResponseUsage(chunk.response?.usage, INSTRUCTION_GENERATION_MODEL)
@@ -275,6 +289,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const finalParse = extractor.finalize().full
+    throwIfAborted()
     if (finalParse && typeof finalParse === 'object') {
       for (const k of ['title', 'slug', 'description', 'language'] as const) {
         if (!meta[k] && typeof finalParse[k] === 'string') {
@@ -292,6 +307,8 @@ export default defineEventHandler(async (event) => {
       blocks: collectedBlocks
     }
     const draft = aiBlocksToTipTap(fullAi)
+    applyImageDimensionsToTipTap(draft, imageLibrary)
+    throwIfAborted()
     await prisma.instruction.update({
       where: { id: instr.id },
       data: {
@@ -316,6 +333,10 @@ export default defineEventHandler(async (event) => {
     console.info('[generate-stream]', { requestId, stage: 'done', ...summary })
     sse('done', summary)
   } catch (e: any) {
+    if (isAbortError(e)) {
+      console.info('[generate-stream]', { requestId, stage: 'aborted' })
+      return
+    }
     console.error('[generate-stream]', {
       requestId,
       stage: 'error',
@@ -323,7 +344,7 @@ export default defineEventHandler(async (event) => {
     })
     sse('error', { message: e?.message || 'Ошибка генерации' })
   } finally {
-    res.end()
+    if (!res.writableEnded && !res.destroyed) res.end()
   }
 })
 
@@ -367,6 +388,44 @@ function parseImageLibraryPart(data?: Buffer) {
   } catch {
     return []
   }
+}
+
+function applyImageDimensionsToTipTap(
+  node: any,
+  imageLibrary: Array<{ url: string; width: number; height: number }>
+) {
+  if (!imageLibrary.length || !node) return
+  const dimensionsByUrl = new Map(
+    imageLibrary
+      .filter((image) => image.url && image.width && image.height)
+      .map((image) => [image.url, { width: image.width, height: image.height }])
+  )
+
+  const visit = (current: any) => {
+    if (!current || typeof current !== 'object') return
+    if (current.type === 'image' && current.attrs?.src) {
+      const dimensions = dimensionsByUrl.get(current.attrs.src)
+      if (dimensions) {
+        current.attrs.intrinsicWidth = dimensions.width
+        current.attrs.intrinsicHeight = dimensions.height
+      }
+    }
+    if (Array.isArray(current.content)) {
+      for (const child of current.content) visit(child)
+    }
+  }
+
+  visit(node)
+}
+
+function createAbortError() {
+  const error = new Error('Generation aborted')
+  error.name = 'AbortError'
+  return error
+}
+
+function isAbortError(error: any) {
+  return error?.name === 'AbortError'
 }
 
 function normalizeResponseUsage(raw: any, model: OpenAIModelId) {
