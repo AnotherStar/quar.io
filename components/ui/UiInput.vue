@@ -21,8 +21,10 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
     </span>
     <div
       :class="[
-        'flex items-stretch overflow-hidden rounded-md border bg-canvas transition-colors',
-        error ? 'border-error' : 'border-hairline-strong focus-within:border-primary focus-within:border-2'
+        'flex h-10 items-stretch overflow-hidden rounded-lg border bg-canvas transition-shadow',
+        error
+          ? 'border-error focus-within:ring-2 focus-within:ring-error/20'
+          : 'border-hairline focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15'
       ]"
     >
       <span v-if="prefix" class="flex items-center bg-surface px-md text-body-sm text-steel">
@@ -35,7 +37,7 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
         :required="required"
         :autocomplete="autocomplete"
         :disabled="disabled"
-        class="w-full bg-transparent px-md py-sm text-body outline-none disabled:cursor-not-allowed disabled:text-muted"
+        class="w-full bg-transparent px-md text-body-sm-md placeholder:text-stone outline-none disabled:cursor-not-allowed disabled:text-muted"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       >
     </div>

@@ -46,18 +46,18 @@ function isEmpty(content: any): boolean {
       <p class="py-md text-body text-steel">Загружаю секции…</p>
     </UiCard>
 
-    <div v-else-if="data?.sections.length" class="space-y-md">
+    <div v-else class="space-y-md">
       <NuxtLink
-        v-for="s in data.sections"
+        v-for="s in data?.sections ?? []"
         :key="s.id"
         :to="`/dashboard/sections/${s.id}`"
-        class="group relative block overflow-hidden rounded-lg border border-hairline bg-canvas transition-shadow hover:shadow-card"
+        class="group block rounded-lg bg-surface p-xs transition-shadow duration-150 hover:shadow-[0_3px_8px_-1px_rgba(0,0,0,0.18)]"
       >
-        <div class="border-b border-hairline px-xl py-md">
+        <div class="px-xs pb-sm pt-xs">
           <h3 class="text-h5 text-ink group-hover:text-primary">{{ s.name }}</h3>
           <p v-if="s.description" class="mt-0.5 text-body-sm text-steel">{{ s.description }}</p>
         </div>
-        <div class="relative max-h-[260px] overflow-hidden bg-canvas px-xl py-md">
+        <div class="relative max-h-[260px] overflow-hidden rounded-md bg-canvas px-xl py-md">
           <div v-if="isEmpty(s.content)" class="py-md text-body-sm text-stone">
             Пусто — нажмите чтобы наполнить
           </div>
@@ -69,11 +69,30 @@ function isEmpty(content: any): boolean {
           <div class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-canvas to-transparent" />
         </div>
       </NuxtLink>
-    </div>
 
-    <UiCard v-else>
-      <p class="py-md text-body text-steel">Пока нет секций. Создайте первую — она будет доступна для вставки в любую инструкцию.</p>
-    </UiCard>
+      <!-- «Add new» карточка — той же геометрии, что и секции. Показывается
+           только на платных тарифах; на бесплатном пользователь уже видит
+           warning-алерт выше с CTA на биллинг. -->
+      <NuxtLink
+        v-if="isPaid"
+        to="/dashboard/sections/new"
+        class="group block rounded-lg bg-surface p-xs transition-shadow duration-150 hover:shadow-[0_3px_8px_-1px_rgba(0,0,0,0.18)]"
+      >
+        <div class="px-xs pb-sm pt-xs">
+          <h3 class="text-h5 text-ink group-hover:text-primary">Создайте свою секцию</h3>
+          <p class="mt-0.5 text-body-sm text-steel">
+            Любой переиспользуемый блок: «Спасибо за покупку», «Оставьте отзыв», промо, FAQ.
+            Создаётся один раз — подключается в любую инструкцию.
+          </p>
+        </div>
+        <div class="relative flex h-[160px] items-center justify-center rounded-md bg-canvas">
+          <div class="flex flex-col items-center gap-2 text-stone">
+            <Icon name="lucide:plus" class="h-8 w-8" />
+            <span class="text-body-sm-md">Добавить новую секцию</span>
+          </div>
+        </div>
+      </NuxtLink>
+    </div>
     </div>
   </div>
 </template>

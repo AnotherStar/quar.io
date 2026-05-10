@@ -87,20 +87,25 @@ async function remove() {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <div class="flex items-center justify-between gap-md">
-      <NuxtLink to="/dashboard/sections" class="text-caption text-steel hover:text-ink">← Все секции</NuxtLink>
-      <span class="text-caption text-steel">
-        <span v-if="saving">Сохранение…</span>
-        <span v-else-if="!currentId">Не сохранено</span>
-        <span v-else>Автосохранение включено</span>
-      </span>
+  <div>
+    <PageHeader
+      icon="lucide:blocks"
+      :title="isNew ? 'Новая секция' : 'Редактирование секции'"
+    >
+      <template v-if="saving || !currentId" #actions>
+        <span class="text-caption text-steel">
+          <span v-if="saving">Сохранение…</span>
+          <span v-else-if="!currentId">Не сохранено</span>
+        </span>
+      </template>
+    </PageHeader>
+
+    <div class="mt-sm space-y-md">
+      <UiInput v-model="name" placeholder="Название секции" />
+      <UiInput v-model="description" placeholder="Описание (опц.)" />
     </div>
 
-    <UiInput v-model="name" placeholder="Название секции" />
-    <UiInput v-model="description" placeholder="Описание (опц.)" />
-
-    <div>
+    <div class="mt-xl">
       <ClientOnly>
         <InstructionEditor v-model="content" placeholder="Контент секции..." disable-section-refs />
         <template #fallback>
@@ -109,11 +114,10 @@ async function remove() {
       </ClientOnly>
     </div>
 
-    <hr class="border-hairline">
-
-    <div class="flex justify-end">
+    <div class="mt-xl flex justify-end border-t border-hairline pt-md">
       <button
-        class="inline-flex items-center gap-2 rounded-md border border-hairline px-md py-sm text-body-sm-md text-steel transition-colors hover:border-error hover:text-error"
+        type="button"
+        class="inline-flex h-10 items-center gap-2 rounded-lg bg-surface px-md text-body-sm-md text-steel transition-colors hover:bg-tint-gray hover:text-error"
         :disabled="deleting"
         @click="remove"
       >

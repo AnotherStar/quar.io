@@ -19,7 +19,10 @@ const props = withDefaults(
 const variantClass: Record<Variant, string> = {
   primary: 'bg-primary text-white hover:bg-primary-pressed disabled:bg-hairline disabled:text-muted',
   dark: 'bg-ink-deep text-white hover:bg-ink',
-  secondary: 'bg-transparent text-ink border border-hairline-strong hover:bg-surface',
+  // Secondary — soft pill, no border. Same rounded/height as primary so the
+  // two stack visually in the same row. Background is the dashboard surface
+  // grey, text is charcoal. Hover deepens to tint-gray.
+  secondary: 'bg-surface text-charcoal hover:bg-tint-gray disabled:text-muted',
   'on-dark': 'bg-white text-ink hover:bg-surface',
   'secondary-on-dark': 'bg-transparent text-white border border-stone hover:bg-white/10',
   ghost: 'bg-transparent text-ink hover:bg-surface',

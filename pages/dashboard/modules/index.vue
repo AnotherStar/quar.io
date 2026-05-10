@@ -24,13 +24,17 @@ async function toggle(code: string, enabled: boolean, config: object) {
     <PageHeader icon="lucide:puzzle" title="Модули" />
 
     <div class="mt-sm grid grid-cols-1 gap-md md:grid-cols-2">
-      <UiCard v-for="m in data?.modules" :key="m.id">
+      <div
+        v-for="m in data?.modules"
+        :key="m.id"
+        class="rounded-lg bg-surface p-xl"
+      >
         <div class="flex items-start justify-between gap-md">
           <div class="min-w-0">
             <h3 class="text-h4 text-ink">{{ m.name }}</h3>
             <p class="mt-1 text-body-sm text-slate">{{ m.description }}</p>
             <div class="mt-2 flex items-center gap-2">
-              <UiBadge variant="tag-purple">v{{ m.version }}</UiBadge>
+              <UiBadge variant="tag-gray">v{{ m.version }}</UiBadge>
               <UiBadge v-if="m.requiresPlan" variant="tag-orange">от {{ m.requiresPlan }}</UiBadge>
               <UiBadge v-if="!m.allowedByPlan" variant="tag-orange">недоступен на тарифе</UiBadge>
               <UiBadge v-else-if="m.tenantConfig?.enabled" variant="tag-green">включён</UiBadge>
@@ -63,7 +67,7 @@ async function toggle(code: string, enabled: boolean, config: object) {
             Настроить →
           </UiButton>
         </div>
-      </UiCard>
+      </div>
     </div>
   </div>
 </template>

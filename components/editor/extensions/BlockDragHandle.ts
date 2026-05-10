@@ -369,7 +369,7 @@ function createPlugin() {
           const lineHeight = parseFloat(getComputedStyle(blockEl).lineHeight) || 24
           const verticalCenter = blockRect.top + Math.min(lineHeight, blockRect.height) / 2
           handle.style.top = `${verticalCenter - 11}px`
-          handle.style.left = `${blockRect.left - 48}px`
+          handle.style.left = `${blockRect.left - 44}px`
         }
         handle.classList.add('mo-block-handle--visible')
       }

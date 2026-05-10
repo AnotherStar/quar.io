@@ -28,11 +28,46 @@ function uploadImage() {
   input.onchange = async () => {
     const file = input.files?.[0]
     if (!file) return
+
+    // Optimistic placeholder — мгновенно вставляем картинку с локальным blob
+    // URL, чтобы пользователь видел её положение и размер ещё до завершения
+    // upload'а. После ответа сервера меняем src на постоянный URL.
+    const blobUrl = URL.createObjectURL(file)
+    props.editor.chain().focus().setImage({ src: blobUrl }).run()
+
     try {
       const { url } = await uploadFile(file)
-      props.editor.chain().focus().setImage({ src: url }).run()
+      // Заменить src placeholder'а на финальный URL.
+      props.editor.commands.command(({ tr, state }) => {
+        let replaced = false
+        state.doc.descendants((node, pos) => {
+          if (replaced) return false
+          if (node.type.name === 'image' && node.attrs.src === blobUrl) {
+            tr.setNodeMarkup(pos, undefined, { ...node.attrs, src: url })
+            replaced = true
+            return false
+          }
+        })
+        return replaced
+      })
     } catch (e) {
+      // Откат — удалить placeholder'а с blob URL.
+      props.editor.commands.command(({ tr, state }) => {
+        let removed = false
+        state.doc.descendants((node, pos) => {
+          if (removed) return false
+          if (node.type.name === 'image' && node.attrs.src === blobUrl) {
+            tr.delete(pos, pos + node.nodeSize)
+            removed = true
+            return false
+          }
+        })
+        return true
+      })
       alert('Не удалось загрузить: ' + (e as Error).message)
+    } finally {
+      // Освободить blob URL — он либо уже заменён, либо узел удалён.
+      URL.revokeObjectURL(blobUrl)
     }
   }
   input.click()

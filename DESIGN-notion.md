@@ -190,13 +190,13 @@ components:
     height: 40px
     padding: "0 18px"
   button-secondary:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.charcoal}"
     typography: "{typography.button-md}"
     rounded: "{rounded.lg}"
     height: 40px
     padding: "0 18px"
-    border: "1px solid {colors.hairline-strong}"
+    description: "Soft pill — same geometry as primary, no border. Used on dashboard surfaces next to primary CTAs and as quiet navigation buttons (e.g. 'Все инструкции' on the overview page). Hover deepens to {colors.tint-gray}."
   button-on-dark:
     backgroundColor: "{colors.on-dark}"
     textColor: "{colors.ink}"
@@ -301,15 +301,18 @@ components:
   text-input:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.md}"
-    padding: "{spacing.sm} {spacing.md}"
-    border: "1px solid {colors.hairline-strong}"
-    height: 44px
+    placeholderColor: "{colors.stone}"
+    typography: "{typography.body-sm-medium}"
+    rounded: "{rounded.lg}"
+    padding: "0 {spacing.md}"
+    border: "1px solid {colors.hairline}"
+    height: 40px
+    description: "Form input. Quiet hairline border at rest. Focus state keeps the border 1px (no width change → no layout shift) but darkens to primary and adds a 2px primary ring at 15% opacity via box-shadow. Geometry matches search-pill / segmented-tabs / button-primary."
   text-input-focused:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
-    border: "2px solid {colors.primary}"
+    border: "1px solid {colors.primary}"
+    ring: "0 0 0 2px rgba({colors.primary}, 0.15)"
   search-pill:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.steel}"
