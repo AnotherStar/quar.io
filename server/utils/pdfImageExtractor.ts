@@ -6,10 +6,23 @@
 // deduplicates repeated images (e.g. headers/logos) by content hash.
 import { createCanvas } from '@napi-rs/canvas'
 import { createHash } from 'node:crypto'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 // pdfjs-dist legacy build is the Node-friendly one
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
+
+// Nitro bundles server code into a single chunk; pdf.js then resolves the fake worker's
+// dynamic import relative to that chunk, so `./pdf.worker.mjs` breaks on prod. Point at the
+// real package file so `import(workerSrc)` loads WorkerMessageHandler correctly.
+const pdfjsPkgRoot = path.dirname(
+  createRequire(import.meta.url).resolve('pdfjs-dist/package.json')
+)
+pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(
+  path.join(pdfjsPkgRoot, 'legacy/build/pdf.worker.mjs')
+).href
 
 export interface ExtractedImage {
   page: number
@@ -39,7 +52,6 @@ export async function extractImagesFromPdf(
   const data = new Uint8Array(buf)
   const doc = await pdfjs.getDocument({
     data,
-    isEvalSupported: false,
     useSystemFonts: false,
     disableFontFace: true
   }).promise
