@@ -14,3 +14,4 @@ dist
 coverage
 prisma/migrations/dev.db*
 .data
+--*
