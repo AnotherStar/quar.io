@@ -80,8 +80,8 @@ watch(() => route.fullPath, () => {
                 class="h-12 w-12 shrink-0 rounded-lg"
               />
               <span
-                v-if="!sidebarCollapsed"
-                class="truncate text-h4 uppercase tracking-wider text-navy opacity-50"
+                class="dashboard-fade-label text-h4 uppercase tracking-wider text-navy opacity-50"
+                :class="sidebarCollapsed ? 'is-hidden' : ''"
               >quar.io</span>
             </NuxtLink>
           </div>
@@ -90,25 +90,30 @@ watch(() => route.fullPath, () => {
                начинаются табы / основной контент страницы. -->
           <div class="dashboard-sidebar-shell">
             <!-- Collapse-кнопка. Выровнена по левому краю, в одну колонку
-                 с пунктами меню. -->
+                 с пунктами меню. Padding и gap фиксированы — текст плавно
+                 fade-out'ится при сворачивании через .dashboard-fade-label. -->
             <button
               type="button"
-              :class="[
-                'mb-xs flex h-8 w-full items-center rounded-md text-body-sm-md text-steel transition-colors hover:bg-canvas/70 hover:text-ink',
-                sidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-sm'
-              ]"
+              class="mb-xs flex h-8 w-full items-center gap-3 rounded-md px-sm text-body-sm-md text-steel transition-colors hover:bg-canvas/70 hover:text-ink"
               :aria-label="sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'"
               :aria-expanded="!sidebarCollapsed"
               @click="sidebarCollapsed = !sidebarCollapsed"
             >
               <Icon
-                :name="sidebarCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'"
+                :name="sidebarCollapsed ? 'lucide:chevron-right' : 'lucide:chevron-left'"
                 class="h-4 w-4 shrink-0"
               />
-              <span v-if="!sidebarCollapsed">Свернуть</span>
+              <span
+                class="dashboard-fade-label"
+                :class="sidebarCollapsed ? 'is-hidden' : ''"
+              >Свернуть</span>
             </button>
 
-            <!-- Меню. flex-1 толкает user-зону к низу. -->
+            <hr class="border-hairline-soft" />
+
+            <!-- Меню. flex-1 толкает user-зону к низу. Padding/gap pill'ов
+                 фиксированы — при сворачивании иконка остаётся на той же
+                 x-координате, не «прыгает». -->
             <nav class="flex flex-1 flex-col gap-1 overflow-y-auto">
               <NuxtLink
                 v-for="i in coreItems"
@@ -116,13 +121,15 @@ watch(() => route.fullPath, () => {
                 :to="i.to"
                 :title="sidebarCollapsed ? i.label : undefined"
                 :class="[
-                  'flex h-9 items-center rounded-md text-body-sm-md transition-colors',
-                  sidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-sm',
+                  'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
                   isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-canvas/70 hover:text-ink'
                 ]"
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
-                <span :class="sidebarCollapsed ? 'sr-only' : 'truncate'">{{ i.label }}</span>
+                <span
+                  class="dashboard-fade-label truncate"
+                  :class="sidebarCollapsed ? 'is-hidden' : ''"
+                >{{ i.label }}</span>
               </NuxtLink>
 
               <template v-if="moduleNavItems.length">
@@ -133,13 +140,15 @@ watch(() => route.fullPath, () => {
                   :to="i.to"
                   :title="sidebarCollapsed ? i.label : undefined"
                   :class="[
-                    'flex h-9 items-center rounded-md text-body-sm-md transition-colors',
-                    sidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-sm',
+                    'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
                     isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-canvas/70 hover:text-ink'
                   ]"
                 >
                   <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
-                  <span :class="sidebarCollapsed ? 'sr-only' : 'truncate'">{{ i.label }}</span>
+                  <span
+                    class="dashboard-fade-label truncate"
+                    :class="sidebarCollapsed ? 'is-hidden' : ''"
+                  >{{ i.label }}</span>
                 </NuxtLink>
               </template>
             </nav>
@@ -149,11 +158,13 @@ watch(() => route.fullPath, () => {
               <div
                 v-if="currentTenant"
                 class="dashboard-sidebar-footer-row"
-                :class="sidebarCollapsed ? 'justify-center' : ''"
                 :title="sidebarCollapsed ? currentTenant.name : undefined"
               >
                 <Icon name="lucide:building-2" class="h-4 w-4 shrink-0 text-steel" />
-                <span v-if="!sidebarCollapsed" class="truncate text-body-sm-md text-charcoal">
+                <span
+                  class="dashboard-fade-label text-body-sm-md text-charcoal"
+                  :class="sidebarCollapsed ? 'is-hidden' : ''"
+                >
                   {{ currentTenant.name }}
                 </span>
               </div>
@@ -161,16 +172,16 @@ watch(() => route.fullPath, () => {
                 v-if="user"
                 to="/dashboard/settings"
                 class="dashboard-sidebar-footer-row rounded-md transition-colors"
-                :class="[
-                  sidebarCollapsed ? 'justify-center' : '',
-                  isActive('/dashboard/settings')
-                    ? 'bg-primary text-on-primary'
-                    : 'text-charcoal hover:bg-canvas/70 hover:text-ink'
-                ]"
+                :class="isActive('/dashboard/settings')
+                  ? 'bg-primary text-on-primary'
+                  : 'text-charcoal hover:bg-canvas/70 hover:text-ink'"
                 :title="sidebarCollapsed ? user.email : undefined"
               >
                 <Icon name="lucide:user-round" class="h-4 w-4 shrink-0" />
-                <span v-if="!sidebarCollapsed" class="truncate text-body-sm">
+                <span
+                  class="dashboard-fade-label text-body-sm"
+                  :class="sidebarCollapsed ? 'is-hidden' : ''"
+                >
                   {{ user.email }}
                 </span>
               </NuxtLink>
@@ -268,7 +279,11 @@ watch(() => route.fullPath, () => {
   }
 
   .dashboard-shell.is-sidebar-collapsed {
-    --dashboard-sidebar-width: 80px;
+    /* 136px = (16 icon) + (12 + 12 pill padding) + (12 + 12 shell padding)
+     *      + (12 + 12 sidebar-inner padding) + (24 + 24 aside outer padding)
+     * — единственная ширина, при которой иконка пункта меню оказывается
+     * идеально по центру pill'а без условных классов justify-center. */
+    --dashboard-sidebar-width: 114px;
   }
 }
 
@@ -341,6 +356,34 @@ watch(() => route.fullPath, () => {
   gap: 8px;
   padding: 6px 10px;
   min-height: 32px;
+}
+
+/* Текстовые лейблы в сайдбаре (логотип «quar.io», подписи пунктов меню,
+ * email/tenant в футере) при сворачивании плавно «схлопываются» — fade-out
+ * через opacity + max-width transition. Padding и gap внутри pill'ов не
+ * меняются, поэтому иконки остаются ровно на той же x-координате и сайдбар
+ * не «прыгает». */
+.dashboard-fade-label {
+  display: inline-block;
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 150ms ease, max-width 200ms ease, margin-left 200ms ease;
+}
+
+.dashboard-fade-label.is-hidden {
+  opacity: 0;
+  max-width: 0;
+  /* gap-3 = 12px в родительском flex'е — отрицательным margin-left съедаем
+   * этот gap, чтобы иконка не оставалась с пустотой справа от себя. */
+  margin-left: -12px;
+  pointer-events: none;
+}
+
+/* В footer-row gap=8px, поэтому компенсация margin-left другая. */
+.dashboard-sidebar-footer-row .dashboard-fade-label.is-hidden {
+  margin-left: -8px;
 }
 
 /* Контент: padding-top 12px такой же, как у .dashboard-sidebar — благодаря

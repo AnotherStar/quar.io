@@ -533,6 +533,29 @@ components:
     height: 40px
     border: "1px solid transparent"
     description: "Dashboard search input. Same height as segmented-tabs and primary button. On focus, background flips to canvas, border to primary, plus 2px ring at 20% opacity."
+  info-card:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xl}"
+    description: "Канонический контейнер любой содержательной секции внутри dashboard'а — статистики на «Обзоре», блоки настроек, формы биллинга. Серый surface на белом canvas, без обводки, без тени. Внутри обычно мини-header (иконка + h4) и тело."
+  stat-card:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xl}"
+    description: "Узкий info-card для одной метрики. Лейбл — {typography.caption-bold}, uppercase, {colors.steel}. Цифра — {typography.heading-3} в {colors.brand-navy}. На «Обзоре» собирается в grid из 4-х, на QR-codes — из 5-ти."
+  section-preview-card:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: "{spacing.xs}"
+    description: "Карточка переиспользуемой секции на странице /dashboard/sections. Бежевый внешний бокс (8px padding), внутри которого — header-row (название + описание) и белый rounded preview-блок с обрезанным контентом. На hover лёгкая тень `0 3px 8px -1px rgba(0,0,0,0.18)` (компактная и контрастная)."
+  section-mini-header:
+    description: "Заголовок внутренней секции страницы. Flex row, gap 12px: иконка {colors.brand-navy} 50% opacity (h-5/w-5) + {typography.heading-4} в {colors.brand-navy}. Используется внутри info-card и над списками («Последние инструкции», «Сообщения», секции settings)."
+  pill-tabs:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: "4px"
+    height: 40px
+    description: "Альтернатива segmented-tabs для 3+ опций с разной длиной текста (на QR-codes — 5 фильтров). Контейнер тот же серый surface, но без анимированного индикатора-плашки: каждая кнопка сама получает `bg-canvas + shadow-subtle` при активном состоянии. Неактивные — {colors.stone}, hover → {colors.ink}."
 ---
 
 ## Overview
@@ -945,6 +968,48 @@ Render contract:
 - Right: `#actions` slot for buttons/links.
 - Icon choice MUST match the sidebar nav-item icon (`lucide:file-text` for Instructions, `lucide:qr-code` for QR codes, etc.) so the page identity is consistent between the menu and the content.
 
+### Content card — `info-card` / `stat-card`
+
+The canonical content container inside a dashboard page is a flat grey rounded box on the white canvas — no border, no shadow:
+
+```html
+<div class="rounded-lg bg-surface p-xl">
+  <SectionMiniHeader icon="lucide:..." title="..." />
+  …content…
+</div>
+```
+
+Variants:
+- **stat-card** — single metric. Caption-bold uppercase steel label on top, h3 navy number below. Stack 4–5 across a `grid` for the overview/metrics row.
+- **info-card** — settings block, form, or any informational panel (Profile, Company, Legal Profile, Branding on `/dashboard/settings`; trial banner on `/dashboard/billing`; module config form on `/dashboard/modules/feedback`).
+- **module tile** — same geometry, no shadow, no hover — `/dashboard/modules` grid.
+
+Never wrap dashboard content in `<UiCard>` (white + border) — that style is reserved for marketing surfaces.
+
+### Section mini-header
+
+Inside an info-card or above a list/table, use the same horizontal pattern as `PageHeader`, just one size smaller:
+
+```html
+<div class="flex items-center gap-3">
+  <Icon name="lucide:..." class="h-5 w-5 text-navy opacity-50" />
+  <h3 class="text-h4 text-navy">Заголовок секции</h3>
+</div>
+```
+
+Examples: «Последние инструкции» on overview, «Сообщения» on feedback, every settings sub-section.
+
+### Section preview card
+
+`/dashboard/sections` lists section previews — special card geometry:
+
+- Outer wrapper: `bg-surface` + `rounded-lg` + `p-xs` (8px padding around an inner preview).
+- Inside: a header strip with section name + description directly on the bezhevy outer, no border.
+- Then a `bg-canvas` + `rounded-md` preview box (8 px inset from the outer card) showing the actual TipTap content with a `from-canvas → transparent` gradient fade at the bottom.
+- Hover: compact, contrasty shadow `0 3px 8px -1px rgba(0,0,0,0.18)` — a brief dark "pop" rather than a diffuse lift.
+
+The "Создайте свою секцию" placeholder card uses the same geometry, with a centred `lucide:plus` and "Добавить новую секцию" caption inside the preview box.
+
 ### Working row — segmented tabs + search + button
 
 Below `PageHeader` (with `mt-sm`), pages typically render a single horizontal flex row containing:
@@ -953,6 +1018,8 @@ Below `PageHeader` (with `mt-sm`), pages typically render a single horizontal fl
 - **Primary CTA** — `UiButton size="md"` (height 40px, `{rounded.lg}`). Lives in the same row as search, on the right.
 
 All three elements share **h-10 (40px)** height and `{rounded.lg}` for visual alignment. This is the canonical working-row of the dashboard.
+
+For filter rows with **3+ options** of uneven label length (e.g. QR-codes status filter: `Все · 10 / Свободные · 4 / Привязанные · 6 / …`), the animated indicator of segmented-tabs gets visually misaligned, so use `pill-tabs` instead: same container, but each button independently flips to `bg-canvas + shadow-subtle` when active. Inactive labels in `{colors.stone}`, hover → `{colors.ink}`.
 
 ### Tables
 
@@ -974,6 +1041,13 @@ Use the `tag-*` variants (rounded-sm chips, NOT full pills):
 - Tap opens a left-sliding overlay panel (86vw, max 320px) with the same brand row, nav, and footer.
 - Backdrop is `rgba(15,15,15,0.32)`. Click outside the panel closes it.
 
+### Editor (TipTap) inside dashboard
+
+- The editor renders directly inside `dashboard-content` without an outer card. No border, no rounded wrapper — the working area is the canvas itself.
+- **Placeholder on first empty line**: TipTap's placeholder extension puts `is-editor-empty` on the root `.tiptap` div and `is-empty` on every empty node. CSS targets `.tiptap.is-editor-empty p:first-child::before, .tiptap p.is-empty:first-child::before { opacity: 1; color: var(--color-stone) }` — full opacity so the prompt ("Контент секции…", "Начните писать…") stays legible even when unfocused. Other `is-empty` paragraphs render `¶` at 25 % opacity.
+- **Block drag-handle** (`+` + grip): floats 44 px to the left of the block. Closer than 40 px overlaps text; further than ~48 px feels detached.
+- **Optimistic image upload**: when a user picks a file in the toolbar, a `blob:` URL is inserted immediately as the image src so the layout snaps into place. The real upload runs in the background; on success the src is swapped via `setNodeMarkup`; on failure the placeholder node is deleted. Either way `URL.revokeObjectURL` is called in `finally`.
+
 ## Iteration Guide
 
 1. Focus on ONE component at a time
@@ -984,6 +1058,10 @@ Use the `tag-*` variants (rounded-sm chips, NOT full pills):
 6. Keep `{colors.primary}` (blue, sourced from the quar.io logo) as the primary CTA — distinct from `{colors.link-blue}` for inline links
 7. Use `{rounded.lg}` (12px) for buttons, inputs, segmented-tabs, and cards in the dashboard. `{rounded.md}` (8px) is reserved for small/compact controls (small buttons, nav-items inside the sidebar). `{rounded.full}` for status pills and circular badges only.
 8. Inside the dashboard, NEVER add a top header bar. The brand row lives in the sidebar; each page brings its own `PageHeader`.
+9. Inside the dashboard, NEVER wrap content blocks in `<UiCard>` (white + border). Use the `info-card` / `stat-card` pattern: `<div class="rounded-lg bg-surface p-xl">`. Tables sit directly on the canvas with no wrapper, so their leftmost column heading aligns with the page title.
+10. Section-level headings inside a page (above lists, inside cards) use the **section mini-header**: 20 px navy/50%-opacity icon + `text-h4 text-navy`. Same icon vocabulary as the sidebar / PageHeader.
+11. `text-input` and `search-pill` keep a constant 1 px border at all states. Focus is visualised via a 2 px primary ring at 15 % opacity (box-shadow, not border-width change) — switching border-width on focus shifts layout by 1 px and is forbidden.
+12. Status badges in tables: `tag-green` (success/published), `tag-orange` (warning/archived/in-review), `tag-gray` (neutral/draft). Avoid solid `purple/pink/orange` badges in the dashboard — they belong to marketing surfaces.
 
 ## Known Gaps
 
