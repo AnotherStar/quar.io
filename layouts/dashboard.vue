@@ -8,12 +8,15 @@ const sidebarCollapsed = ref(false)
 const mobileMenuOpen = ref(false)
 
 // Core nav items. «Настройки» сюда не входят — они доступны через клик по
-// user-row в footer сайдбара.
+// user-row в footer сайдбара. Пункт «Модули» помечен exact:true, чтобы на
+// детальных страницах модулей (/dashboard/modules/feedback, …/warranty)
+// подсвечивались только их собственные пункты в module-nav, а не общий
+// «Модули» из core-nav.
 const coreItems = [
   { to: '/dashboard', label: 'Обзор', icon: 'lucide:layout-dashboard', exact: true },
   { to: '/dashboard/instructions', label: 'Инструкции', icon: 'lucide:file-text' },
   { to: '/dashboard/sections', label: 'Секции', icon: 'lucide:blocks' },
-  { to: '/dashboard/modules', label: 'Модули', icon: 'lucide:puzzle' },
+  { to: '/dashboard/modules', label: 'Модули', icon: 'lucide:puzzle', exact: true },
   { to: '/dashboard/qr-codes', label: 'QR-коды', icon: 'lucide:qr-code' },
   { to: '/dashboard/billing', label: 'Тариф и оплата', icon: 'lucide:credit-card' }
 ]
@@ -94,7 +97,7 @@ watch(() => route.fullPath, () => {
                  fade-out'ится при сворачивании через .dashboard-fade-label. -->
             <button
               type="button"
-              class="mb-xs flex h-8 w-full items-center gap-3 rounded-md px-sm text-body-sm-md text-steel transition-colors hover:bg-canvas/70 hover:text-ink"
+              class="mb-xs flex h-8 w-full items-center gap-3 rounded-md px-sm text-body-sm-md text-steel transition-colors duration-200 ease-out hover:bg-hairline-soft hover:text-ink"
               :aria-label="sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'"
               :aria-expanded="!sidebarCollapsed"
               @click="sidebarCollapsed = !sidebarCollapsed"
@@ -121,8 +124,8 @@ watch(() => route.fullPath, () => {
                 :to="i.to"
                 :title="sidebarCollapsed ? i.label : undefined"
                 :class="[
-                  'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
-                  isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-canvas/70 hover:text-ink'
+                  'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
+                  isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
                 ]"
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -140,8 +143,8 @@ watch(() => route.fullPath, () => {
                   :to="i.to"
                   :title="sidebarCollapsed ? i.label : undefined"
                   :class="[
-                    'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
-                    isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-canvas/70 hover:text-ink'
+                    'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
+                    isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
                   ]"
                 >
                   <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -171,10 +174,10 @@ watch(() => route.fullPath, () => {
               <NuxtLink
                 v-if="user"
                 to="/dashboard/settings"
-                class="dashboard-sidebar-footer-row rounded-md transition-colors"
+                class="dashboard-sidebar-footer-row rounded-md transition-colors duration-200 ease-out"
                 :class="isActive('/dashboard/settings')
                   ? 'bg-primary text-on-primary'
-                  : 'text-charcoal hover:bg-canvas/70 hover:text-ink'"
+                  : 'text-charcoal hover:bg-hairline-soft hover:text-ink'"
                 :title="sidebarCollapsed ? user.email : undefined"
               >
                 <Icon name="lucide:user-round" class="h-4 w-4 shrink-0" />
@@ -219,7 +222,7 @@ watch(() => route.fullPath, () => {
               :to="i.to"
               :class="[
                 'flex h-10 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
-                isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-canvas hover:text-ink'
+                isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
               ]"
             >
               <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -233,7 +236,7 @@ watch(() => route.fullPath, () => {
                 :to="i.to"
                 :class="[
                   'flex h-10 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
-                  isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-canvas hover:text-ink'
+                  isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
                 ]"
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -252,7 +255,7 @@ watch(() => route.fullPath, () => {
               class="dashboard-sidebar-footer-row rounded-md transition-colors"
               :class="isActive('/dashboard/settings')
                 ? 'bg-primary text-on-primary'
-                : 'text-charcoal hover:bg-canvas hover:text-ink'"
+                : 'text-charcoal hover:bg-hairline-soft hover:text-ink'"
             >
               <Icon name="lucide:user-round" class="h-4 w-4 shrink-0" />
               <span class="truncate text-body-sm">{{ user.email }}</span>

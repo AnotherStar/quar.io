@@ -127,40 +127,13 @@ async function unarchive(id: string) {
     <UiAlert v-if="createError" kind="error" class="mt-md">{{ createError }}</UiAlert>
 
     <div class="mt-sm flex flex-wrap items-center justify-between gap-md">
-      <!-- Segmented control: пилюля с фоном bg-surface, внутри «ездящая» белая
-           плашка под активным табом. Сетка inline-grid даёт обеим кнопкам
-           одинаковую ширину, и плашка покрывает активную ровно на 50%.
-           h-10 = 40px — общая высота элементов этой строки (input, button). -->
-      <div
-        class="relative inline-grid h-10 grid-cols-2 rounded-lg bg-surface p-1"
-        role="tablist"
-      >
-        <span
-          aria-hidden="true"
-          class="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-md bg-canvas shadow-subtle transition-transform duration-200 ease-out"
-          :style="{ transform: tab === 'archive' ? 'translateX(100%)' : 'translateX(0)' }"
-        />
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="tab === 'active'"
-          :class="['relative z-10 flex items-center justify-center rounded-md px-md text-body-sm-md transition-colors',
-            tab === 'active' ? 'text-ink' : 'text-stone hover:text-ink']"
-          @click="tab = 'active'"
-        >
-          Активные · {{ counts.active }}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="tab === 'archive'"
-          :class="['relative z-10 flex items-center justify-center rounded-md px-md text-body-sm-md transition-colors',
-            tab === 'archive' ? 'text-ink' : 'text-stone hover:text-ink']"
-          @click="tab = 'archive'"
-        >
-          Архив · {{ counts.archive }}
-        </button>
-      </div>
+      <UiSegmentedTabs
+        v-model="tab"
+        :tabs="[
+          { value: 'active', label: 'Активные', count: counts.active },
+          { value: 'archive', label: 'Архив', count: counts.archive }
+        ]"
+      />
 
       <div class="relative w-full max-w-sm">
         <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
@@ -173,7 +146,8 @@ async function unarchive(id: string) {
       </div>
     </div>
 
-    <div class="mt-xl">
+    <Transition name="tab-content" mode="out-in">
+    <div :key="tab" class="mt-xl">
       <table v-if="visible.length" class="w-full">
         <thead>
           <tr class="border-b border-hairline text-caption text-steel uppercase">
@@ -307,5 +281,6 @@ async function unarchive(id: string) {
         <span v-else>Пока пусто. Создайте первую инструкцию.</span>
       </p>
     </div>
+    </Transition>
   </div>
 </template>

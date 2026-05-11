@@ -115,6 +115,35 @@
   }
 }
 
+/* Анимация переключения контента между табами внутри dashboard-страниц
+ * (UiSegmentedTabs + двух/нескольких <div v-if="tab === '...'">).
+ * Старый таб уезжает влево, новый приходит справа — горизонтальное
+ * слайдер-движение в направлении «следующая страница». Mode="out-in"
+ * должен стоять на <Transition>. */
+.tab-content-enter-active,
+.tab-content-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.tab-content-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+.tab-content-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-content-enter-active,
+  .tab-content-leave-active {
+    transition: none;
+  }
+  .tab-content-enter-from,
+  .tab-content-leave-to {
+    transform: none;
+  }
+}
+
 /* Multi-column layout used inside TipTap docs (Columns/Column extensions).
  * Lives in global.css so both editor preview and public render share it.
  * grid-template-columns is set inline by renderHTML / NodeView from the

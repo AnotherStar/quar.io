@@ -81,6 +81,8 @@ const saving = ref(false)
 const saveError = ref<string | null>(null)
 const saveOk = ref(false)
 
+const tab = ref<'submissions' | 'settings'>('submissions')
+
 async function save() {
   saving.value = true
   saveError.value = null
@@ -129,75 +131,41 @@ function downloadCsv() {
   <div>
     <PageHeader icon="lucide:message-square" title="Обратная связь" />
 
-    <div class="mt-sm space-y-xl">
-
-    <UiAlert v-if="!module_" kind="warning" title="Модуль не найден">
+    <UiAlert v-if="!module_" kind="warning" title="Модуль не найден" class="mt-sm">
       Похоже, манифест не загружен в БД. Запустите <code>pnpm prisma db seed</code>.
     </UiAlert>
 
-    <div v-else class="rounded-lg bg-surface p-xl">
-      <form class="space-y-md" @submit.prevent="save">
-        <label class="flex items-center gap-2 text-body-md text-ink">
-          <input v-model="enabled" type="checkbox" class="h-4 w-4 rounded border-hairline" />
-          Модуль включён
-        </label>
+    <template v-else>
+      <!-- Working row: segmented-control + action справа.
+           Левый таб — список сообщений, правый — настройки формы. -->
+      <div class="mt-sm flex flex-wrap items-center justify-between gap-md">
+        <UiSegmentedTabs
+          v-model="tab"
+          :tabs="[
+            { value: 'submissions', label: 'Сообщения', count: subsData?.items.length ?? 0 },
+            { value: 'settings', label: 'Настройки' }
+          ]"
+        />
 
-        <div class="grid gap-md md:grid-cols-2">
-          <UiInput v-model="form.title" label="Заголовок формы" placeholder="Свяжитесь с нами" />
-          <UiInput v-model="form.recipientEmail" type="email" label="Email получателя" placeholder="hello@company.ru" />
+        <!-- Правый блок: на вкладке «Сообщения» — кнопка экспорта,
+             на «Настройках» — статусный бейдж модуля. -->
+        <div class="flex flex-1 items-center justify-end gap-md">
+          <template v-if="tab === 'submissions'">
+            <UiButton variant="secondary" :disabled="!subsData?.items.length" @click="downloadCsv">
+              <Icon name="lucide:download" class="h-4 w-4" />
+              Скачать CSV
+            </UiButton>
+          </template>
+          <template v-else>
+            <UiBadge v-if="module_.tenantConfig?.enabled" variant="tag-green">Модуль включён</UiBadge>
+            <UiBadge v-else variant="tag-gray">Модуль выключен</UiBadge>
+          </template>
         </div>
-
-        <UiInput v-model="form.description" label="Подзаголовок" />
-        <UiInput v-model="form.successMessage" label="Сообщение об успехе" />
-
-        <fieldset class="space-y-2 rounded-md bg-canvas px-md py-md">
-          <legend class="px-1 text-body-sm-md text-ink">Обязательные поля формы</legend>
-          <label class="flex items-center gap-2 text-body-sm text-charcoal">
-            <input v-model="form.requireFio" type="checkbox" class="h-4 w-4 rounded border-hairline" />
-            ФИО
-          </label>
-          <label class="flex items-center gap-2 text-body-sm text-charcoal">
-            <input v-model="form.requirePhone" type="checkbox" class="h-4 w-4 rounded border-hairline" />
-            Телефон
-          </label>
-          <label class="flex items-center gap-2 text-body-sm text-charcoal">
-            <input v-model="form.requireEmail" type="checkbox" class="h-4 w-4 rounded border-hairline" />
-            Email
-          </label>
-          <label class="flex items-center gap-2 text-body-sm text-charcoal">
-            <input v-model="form.requireTelegram" type="checkbox" class="h-4 w-4 rounded border-hairline" />
-            Telegram
-          </label>
-          <label class="flex items-center gap-2 text-body-sm text-charcoal">
-            <input v-model="form.requireMessage" type="checkbox" class="h-4 w-4 rounded border-hairline" />
-            Сообщение
-          </label>
-        </fieldset>
-
-        <UiAlert v-if="saveError" kind="error">{{ saveError }}</UiAlert>
-        <UiAlert v-if="saveOk" kind="success">Настройки сохранены.</UiAlert>
-
-        <div class="flex items-center gap-2">
-          <UiButton type="submit" :loading="saving">Сохранить</UiButton>
-          <UiBadge v-if="module_.tenantConfig?.enabled" variant="tag-green">включён</UiBadge>
-          <UiBadge v-else variant="tag-gray">выключен</UiBadge>
-        </div>
-      </form>
-    </div>
-
-    <div>
-      <div class="mb-md flex items-center justify-between gap-md">
-        <div class="flex items-center gap-3">
-          <Icon name="lucide:inbox" class="h-5 w-5 text-navy opacity-50" />
-          <h2 class="text-h4 text-navy">Сообщения</h2>
-        </div>
-        <UiButton variant="secondary" size="sm" :disabled="!subsData?.items.length" @click="downloadCsv">
-          <Icon name="lucide:download" class="h-4 w-4" />
-          Скачать CSV
-        </UiButton>
       </div>
 
-      <div>
+      <Transition name="tab-content" mode="out-in">
+      <!-- Tab #1 — Сообщения (список). -->
+      <div v-if="tab === 'submissions'" key="submissions" class="mt-xl">
         <table v-if="subsData?.items.length" class="w-full">
           <thead>
             <tr class="border-b border-hairline text-caption text-steel uppercase">
@@ -213,7 +181,7 @@ function downloadCsv() {
               <td class="py-sm text-caption text-steel whitespace-nowrap">
                 {{ new Date(r.createdAt).toLocaleString() }}
               </td>
-              <td class="py-sm text-body-sm text-ink">{{ r.fio || '—' }}</td>
+              <td class="py-sm text-body-sm-md text-ink">{{ r.fio || '—' }}</td>
               <td class="py-sm text-body-sm text-charcoal">
                 <div v-if="r.email">{{ r.email }}</div>
                 <div v-if="r.phone" class="text-steel">{{ r.phone }}</div>
@@ -239,7 +207,56 @@ function downloadCsv() {
           Пока нет сообщений. Они появятся, когда посетители заполнят форму на опубликованной инструкции.
         </p>
       </div>
-    </div>
-    </div>
+
+      <!-- Tab #2 — Настройки модуля. -->
+      <div v-else key="settings" class="mt-xl rounded-lg bg-surface p-xl">
+        <form class="space-y-md" @submit.prevent="save">
+          <label class="flex items-center gap-2 text-body-md text-ink">
+            <input v-model="enabled" type="checkbox" class="h-4 w-4 rounded border-hairline" />
+            Модуль включён
+          </label>
+
+          <div class="grid gap-md md:grid-cols-2">
+            <UiInput v-model="form.title" label="Заголовок формы" placeholder="Свяжитесь с нами" />
+            <UiInput v-model="form.recipientEmail" type="email" label="Email получателя" placeholder="hello@company.ru" />
+          </div>
+
+          <UiInput v-model="form.description" label="Подзаголовок" />
+          <UiInput v-model="form.successMessage" label="Сообщение об успехе" />
+
+          <fieldset class="space-y-2 rounded-md border border-hairline px-md pb-md pt-[6px]">
+            <legend class="px-1 text-body-sm-md text-ink">Обязательные поля формы</legend>
+            <label class="flex items-center gap-2 text-body-sm text-charcoal">
+              <input v-model="form.requireFio" type="checkbox" class="h-4 w-4 rounded border-hairline" />
+              ФИО
+            </label>
+            <label class="flex items-center gap-2 text-body-sm text-charcoal">
+              <input v-model="form.requirePhone" type="checkbox" class="h-4 w-4 rounded border-hairline" />
+              Телефон
+            </label>
+            <label class="flex items-center gap-2 text-body-sm text-charcoal">
+              <input v-model="form.requireEmail" type="checkbox" class="h-4 w-4 rounded border-hairline" />
+              Email
+            </label>
+            <label class="flex items-center gap-2 text-body-sm text-charcoal">
+              <input v-model="form.requireTelegram" type="checkbox" class="h-4 w-4 rounded border-hairline" />
+              Telegram
+            </label>
+            <label class="flex items-center gap-2 text-body-sm text-charcoal">
+              <input v-model="form.requireMessage" type="checkbox" class="h-4 w-4 rounded border-hairline" />
+              Сообщение
+            </label>
+          </fieldset>
+
+          <UiAlert v-if="saveError" kind="error">{{ saveError }}</UiAlert>
+          <UiAlert v-if="saveOk" kind="success">Настройки сохранены.</UiAlert>
+
+          <div class="flex items-center gap-2">
+            <UiButton type="submit" :loading="saving">Сохранить</UiButton>
+          </div>
+        </form>
+      </div>
+      </Transition>
+    </template>
   </div>
 </template>
