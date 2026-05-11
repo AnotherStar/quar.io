@@ -408,21 +408,25 @@ watch(() => route.fullPath, () => {
 }
 
 /* Мобильная кнопка-гамбургер — fixed в углу. Существует только до md.
- * display явно скрываем на md+ внутри scoped CSS — Tailwind'овская md:hidden
- * проигрывает по специфичности scoped-селектору и не сработала бы. */
+ * Позиция совпадает с inset сайдбара на десктопе (top/left = 24px),
+ * чтобы при ресайзе она «вырастала» в brand-row сайдбара без визуального
+ * сдвига. Backdrop-filter blur(10px) + полупрозрачный фон гарантируют, что
+ * кнопка остаётся читаемой поверх любого скроллящегося контента под ней. */
 .dashboard-mobile-toggle {
   position: fixed;
-  top: 12px;
-  left: 12px;
+  top: 24px;
+  left: 24px;
   z-index: 50;
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: var(--color-surface);
+  background: rgba(246, 245, 244, 0.72);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
   color: var(--color-charcoal);
-  border: 1px solid var(--color-hairline);
+  border: 0;
 }
 
 @media (min-width: 768px) {

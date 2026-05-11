@@ -555,7 +555,7 @@ function isGenerationAbortError(error: any) {
 </script>
 
 <template>
-  <div class="space-y-xl">
+  <div>
     <UiCard v-if="(pending || !currentTenant) && !instr">
       <p class="py-md text-body text-steel">Загружаю инструкцию…</p>
     </UiCard>
@@ -564,35 +564,31 @@ function isGenerationAbortError(error: any) {
     </UiAlert>
 
     <template v-else-if="instr">
-    <div class="flex items-center justify-between gap-md">
-      <div class="min-w-0 flex-1">
+    <!-- Header-row: иконка + title-input + actions. Выровнен с brand-row
+         сайдбара (min-h-16 + items-center). На мобиле icon+title сдвинуты
+         вправо через pl-[52px], чтобы не пересекаться с кнопкой-гамбургером. -->
+    <div class="flex min-h-16 items-center justify-between gap-md">
+      <div class="flex min-w-0 flex-1 items-center gap-3 pl-[52px] md:pl-0">
+        <Icon name="lucide:file-text" class="h-6 w-6 shrink-0 text-navy opacity-50" />
         <input
           v-model="title"
-          class="block w-full rounded-md bg-transparent px-2 py-1 -mx-2 text-h3 text-ink outline-none transition-colors hover:bg-surface focus:bg-surface focus:ring-2 focus:ring-primary/30"
+          class="-mx-2 block w-full rounded-md bg-transparent px-2 py-1 text-h3 text-navy outline-none transition-colors hover:bg-surface focus:bg-surface focus:ring-2 focus:ring-primary/15"
           placeholder="Название инструкции"
         >
-        <div class="mt-2 max-w-sm">
-          <UiInput
-            v-model="productBarcode"
-            label="ШК товара"
-            placeholder="Например 4601234567890"
-            hint="По этому коду свободный QR привяжется к инструкции"
-          />
-        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-caption text-steel">
+      <div class="flex shrink-0 items-center gap-2">
+        <span class="hidden text-caption text-steel md:inline">
           <span v-if="saving">Сохранение…</span>
           <span v-else-if="lastSavedAt">Сохранено {{ lastSavedAt.toLocaleTimeString() }}</span>
         </span>
 
-        <!-- AI fill-from-file: primary purple gradient with subtle glow -->
+        <!-- AI fill-from-file: primary blue gradient with subtle glow -->
         <label
           :class="[
-            'group relative inline-flex cursor-pointer items-center gap-2 rounded-md px-md py-sm text-body-sm-md font-medium text-white transition-all',
+            'group relative inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-[18px] text-body-sm-md font-medium text-white transition-all',
             'bg-gradient-to-r from-primary via-brand-purple to-brand-pink',
-            'shadow-[0_2px_12px_-2px_rgba(86,69,212,0.45)]',
-            'hover:shadow-[0_4px_20px_-2px_rgba(86,69,212,0.65)] hover:brightness-110',
+            'shadow-[0_2px_12px_-2px_rgba(12,63,233,0.45)]',
+            'hover:shadow-[0_4px_20px_-2px_rgba(12,63,233,0.65)] hover:brightness-110',
             isStreaming && 'pointer-events-none opacity-60'
           ]"
         >
@@ -613,16 +609,15 @@ function isGenerationAbortError(error: any) {
 
         <!-- Share popover: status, URL editing, publish, open, copy link -->
         <div ref="shareRef" class="relative">
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-md border border-hairline-strong bg-canvas px-md py-sm text-body-sm-md text-charcoal transition-colors hover:bg-surface disabled:opacity-50"
+          <UiButton
+            variant="secondary"
             :disabled="isStreaming"
             @click="shareOpen = !shareOpen"
           >
-            <Icon name="lucide:share-2" class="h-4 w-4 text-steel" />
+            <Icon name="lucide:share-2" class="h-4 w-4" />
             Поделиться
-            <Icon :name="shareOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'" class="h-3.5 w-3.5 text-steel" />
-          </button>
+            <Icon :name="shareOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'" class="h-3.5 w-3.5" />
+          </UiButton>
 
           <div
             v-if="shareOpen"
@@ -633,7 +628,7 @@ function isGenerationAbortError(error: any) {
               <div>
                 <p class="text-caption text-steel uppercase tracking-wide">Статус</p>
                 <div class="mt-1 flex items-center gap-2">
-                  <UiBadge :variant="instr.status === 'PUBLISHED' ? 'tag-green' : instr.status === 'ARCHIVED' ? 'tag-orange' : 'tag-purple'">
+                  <UiBadge :variant="instr.status === 'PUBLISHED' ? 'tag-green' : instr.status === 'ARCHIVED' ? 'tag-orange' : 'tag-gray'">
                     {{ instr.status === 'PUBLISHED' ? 'Опубликована' : instr.status === 'ARCHIVED' ? 'В архиве' : 'Черновик' }}
                   </UiBadge>
                   <span v-if="instr.publishedAt" class="text-caption text-steel">
@@ -663,6 +658,16 @@ function isGenerationAbortError(error: any) {
 
             <hr class="my-md border-hairline">
 
+            <!-- Штрих-код товара — нужен для авто-привязки свободного QR. -->
+            <UiInput
+              v-model="productBarcode"
+              label="ШК товара"
+              placeholder="Например 4601234567890"
+              hint="По этому коду свободный QR привяжется к инструкции"
+            />
+
+            <hr class="my-md border-hairline">
+
             <!-- Publish action -->
             <UiButton
               variant="primary"
@@ -683,13 +688,13 @@ function isGenerationAbortError(error: any) {
       </div>
     </div>
 
-    <UiAlert v-if="instr.status === 'ARCHIVED'" kind="warning" title="Инструкция в архиве">
+    <UiAlert v-if="instr.status === 'ARCHIVED'" kind="warning" title="Инструкция в архиве" class="mt-md">
       Публичная страница не открывается. Данные и ссылки сохранены.
       <button class="ml-2 underline" @click="unarchive">Восстановить</button>
     </UiAlert>
-    <UiAlert v-if="saveError" kind="error">{{ saveError }}</UiAlert>
+    <UiAlert v-if="saveError" kind="error" class="mt-md">{{ saveError }}</UiAlert>
 
-    <div v-if="streamError || generationUsage" class="flex items-center gap-2">
+    <div v-if="streamError || generationUsage" class="mt-md flex items-center gap-2">
       <span v-if="generationUsageText" class="text-caption text-steel">
         {{ generationUsageText }}
       </span>
@@ -697,9 +702,9 @@ function isGenerationAbortError(error: any) {
         Изображения: {{ generationImages.uploaded }}/{{ generationImages.extracted }}
       </span>
     </div>
-    <UiAlert v-if="streamError" kind="error">{{ streamError }}</UiAlert>
+    <UiAlert v-if="streamError" kind="error" class="mt-md">{{ streamError }}</UiAlert>
 
-    <div>
+    <div class="mt-sm space-y-xl">
       <ClientOnly>
         <InstructionEditor
           v-model="draft"

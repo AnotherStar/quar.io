@@ -18,7 +18,10 @@ defineProps<{
 
 <template>
   <div class="flex min-h-16 items-center justify-between gap-2">
-    <div class="flex min-w-0 items-center gap-3">
+    <!-- pl-[52px] на мобиле освобождает место под fixed-кнопку гамбургера
+         (24 left + 40 width — 12 grow toward icon). Остальной контент
+         страницы остаётся выровненным по левому краю dashboard-content. -->
+    <div class="flex min-w-0 items-center gap-3 pl-[52px] md:pl-0">
       <Icon :name="icon" class="h-6 w-6 shrink-0 text-navy opacity-50" />
       <h1 class="truncate text-h3 text-navy">{{ title }}</h1>
     </div>

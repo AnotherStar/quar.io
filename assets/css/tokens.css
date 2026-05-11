@@ -54,6 +54,8 @@
   --color-steel: #787671;
   --color-stone: #a4a097;
   --color-muted: #bbb8b1;
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: #a4a097;
 
   /* Semantic */
   --color-success: #1aae39;

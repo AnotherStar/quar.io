@@ -4,7 +4,6 @@
 // framed with a dotted outline. Kebab menu in the corner picks a
 // different module or removes the block.
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
-import { onClickOutside } from '@vueuse/core'
 import { getModuleByCode } from '~~/modules-sdk/registry'
 
 const props = defineProps(nodeViewProps)
@@ -36,10 +35,6 @@ async function ensureLoaded() {
 const current = computed(() => configId.value
   ? modules.value?.find((m) => m.tenantConfig?.id === configId.value) ?? null
   : null)
-const enabledModules = computed(
-  () => modules.value?.filter((m) => m.tenantConfig?.enabled && m.allowedByPlan) ?? []
-)
-
 const previewComponent = shallowRef<any>(null)
 const previewError = ref<string | null>(null)
 // Per-instance config component (e.g. FAQ Q&A editor). Loaded lazily; absence
@@ -74,17 +69,7 @@ const mergedConfig = computed(() => ({
   ...override.value
 }))
 
-// Menu
-const menuOpen = ref(false)
-const menuRef = ref<HTMLElement | null>(null)
-onClickOutside(menuRef, () => { menuOpen.value = false })
-
-function pick(tenantConfigId: string) {
-  props.updateAttributes({ tenantModuleConfigId: tenantConfigId })
-  menuOpen.value = false
-}
 function deleteBlock() {
-  menuOpen.value = false
   const pos = typeof props.getPos === 'function' ? props.getPos() : null
   if (pos == null) return
   props.editor.chain().focus().deleteRange({ from: pos, to: pos + props.node.nodeSize }).run()
@@ -98,7 +83,6 @@ const configDraft = ref<Record<string, unknown>>({})
 function openConfig() {
   configDraft.value = JSON.parse(JSON.stringify(override.value || {}))
   configModalOpen.value = true
-  menuOpen.value = false
 }
 function saveConfig() {
   props.updateAttributes({ configOverride: configDraft.value })
@@ -116,74 +100,32 @@ onMounted(ensureLoaded)
 
 <template>
   <NodeViewWrapper class="relative my-3 not-prose" data-type="module-ref">
-    <div ref="menuRef" class="absolute right-0 -top-3 z-10" contenteditable="false">
-        <button
-          type="button"
-          class="grid h-7 w-7 place-items-center rounded-sm border border-hairline bg-canvas/95 text-steel hover:text-ink"
-          title="Параметры модуля"
-          @click.stop="menuOpen = !menuOpen"
-        >
-          <Icon name="lucide:ellipsis-vertical" class="h-4 w-4" />
-        </button>
-
-        <div
-          v-if="menuOpen"
-          class="absolute right-0 top-full mt-1 w-72 overflow-hidden rounded-md border border-hairline bg-canvas shadow-modal"
-        >
-          <p class="px-3 pt-2 text-caption text-steel uppercase tracking-wide">Модуль</p>
-          <p v-if="loading" class="px-3 py-2 text-body-sm text-steel">Загрузка…</p>
-          <p v-else-if="!enabledModules.length" class="px-3 py-2 text-body-sm text-steel">
-            Нет включённых модулей.
-            <NuxtLink to="/dashboard/modules" class="text-link hover:underline" @click="menuOpen = false">
-              Включить
-            </NuxtLink>
-          </p>
-          <ul v-else class="max-h-[40vh] overflow-y-auto py-1">
-            <li v-for="m in enabledModules" :key="m.tenantConfig!.id">
-              <button
-                type="button"
-                class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-surface"
-                @click="pick(m.tenantConfig!.id)"
-              >
-                <Icon
-                  :name="m.tenantConfig!.id === configId ? 'lucide:check' : 'lucide:puzzle'"
-                  :class="['h-4 w-4 shrink-0', m.tenantConfig!.id === configId ? 'text-primary' : 'text-steel']"
-                />
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-body-sm" :class="m.tenantConfig!.id === configId ? 'text-ink font-medium' : 'text-charcoal'">
-                    {{ m.name }}
-                  </span>
-                  <span v-if="m.description" class="block truncate text-caption text-steel">{{ m.description }}</span>
-                </span>
-              </button>
-            </li>
-          </ul>
-          <hr v-if="current && editorConfigComponent" class="border-hairline">
-          <button
-            v-if="current && editorConfigComponent"
-            type="button"
-            class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-ink hover:bg-surface"
-            @click="openConfig"
-          >
-            <Icon name="lucide:settings-2" class="h-4 w-4 text-steel" />
-            Настроить
-          </button>
-          <hr class="border-hairline">
-          <button
-            type="button"
-            class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-error hover:bg-surface"
-            @click="deleteBlock"
-          >
-            <Icon name="lucide:trash-2" class="h-4 w-4" />
-            Удалить блок
-          </button>
-        </div>
-      </div>
+    <!-- Кнопки действий над блоком: настроить (если у модуля есть editor config)
+         и удалить. Picker модуля живёт в тулбаре. -->
+    <div class="absolute right-0 -top-3 z-10 flex items-center gap-1" contenteditable="false">
+      <button
+        v-if="current && editorConfigComponent"
+        type="button"
+        class="grid h-7 w-7 place-items-center rounded-sm border border-hairline bg-canvas/95 text-steel hover:text-ink"
+        title="Настроить модуль"
+        @click.stop="openConfig"
+      >
+        <Icon name="lucide:settings-2" class="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        class="grid h-7 w-7 place-items-center rounded-sm border border-hairline bg-canvas/95 text-steel hover:text-error"
+        title="Удалить блок"
+        @click.stop="deleteBlock"
+      >
+        <Icon name="lucide:trash-2" class="h-4 w-4" />
+      </button>
+    </div>
 
     <div contenteditable="false">
       <div v-if="!configId" class="flex items-center gap-2 py-md text-body-sm text-stone">
         <Icon name="lucide:puzzle" class="h-4 w-4" />
-        Модуль не выбран — откройте меню справа
+        Модуль не выбран
       </div>
       <div v-else-if="!current" class="py-md text-body-sm text-error">
         <span v-if="loading">Загрузка…</span>
