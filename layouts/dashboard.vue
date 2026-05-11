@@ -18,7 +18,11 @@ const coreItems = [
   { to: '/dashboard/sections', label: 'Секции', icon: 'lucide:blocks' },
   { to: '/dashboard/modules', label: 'Модули', icon: 'lucide:puzzle', exact: true },
   { to: '/dashboard/qr-codes', label: 'QR-коды', icon: 'lucide:qr-code' },
-  { to: '/dashboard/billing', label: 'Тариф и оплата', icon: 'lucide:credit-card' }
+  // Идёт сразу под «QR-коды»: вспомогательный flow для активации свободных
+  // QR со сканированием на телефоне. Иконка — две встречные стрелки
+  // (передача / привязка QR к инструкции).
+  { to: '/qr-codes/link', label: 'Активация', icon: 'lucide:arrow-left-right' }
+  // «Тариф и оплата» — теперь вкладка внутри /dashboard/settings?tab=billing.
 ]
 
 // Per-module sidebar entries — appear only when the module is enabled for
@@ -49,7 +53,11 @@ watch(() => route.fullPath, () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-canvas">
+  <!-- min-height = 100svh (small viewport, всегда с видимыми хром-барами):
+       100vh / min-h-screen в iOS Safari = large viewport, и body раздуётся
+       выше реально видимой области даже на пустых страницах → паразитный
+       вертикальный скролл. -->
+  <div class="bg-canvas min-h-[100svh]">
     <!-- Мобильная фикс-кнопка для открытия меню. На md+ скрыта, потому что
          сайдбар уже виден постоянно. -->
     <button
@@ -156,38 +164,45 @@ watch(() => route.fullPath, () => {
               </template>
             </nav>
 
-            <!-- Footer: tenant + user, прижаты к низу shell. -->
+            <!-- Footer: «Настройки» + вспомогательные ссылки, прижаты к низу
+                 shell. Раньше тут была отдельно tenant-row + email-row; обе
+                 свернули в одну ссылку «Настройки», т.к. там и компания, и
+                 профиль управляются в одной странице. -->
             <div v-if="currentTenant || user" class="dashboard-sidebar-footer">
-              <div
-                v-if="currentTenant"
-                class="dashboard-sidebar-footer-row"
-                :title="sidebarCollapsed ? currentTenant.name : undefined"
-              >
-                <Icon name="lucide:building-2" class="h-4 w-4 shrink-0 text-steel" />
-                <span
-                  class="dashboard-fade-label text-body-sm-md text-charcoal"
-                  :class="sidebarCollapsed ? 'is-hidden' : ''"
-                >
-                  {{ currentTenant.name }}
-                </span>
-              </div>
               <NuxtLink
-                v-if="user"
                 to="/dashboard/settings"
                 class="dashboard-sidebar-footer-row rounded-md transition-colors duration-200 ease-out"
                 :class="isActive('/dashboard/settings')
                   ? 'bg-primary text-on-primary'
                   : 'text-charcoal hover:bg-hairline-soft hover:text-ink'"
-                :title="sidebarCollapsed ? user.email : undefined"
+                :title="sidebarCollapsed ? 'Настройки' : undefined"
               >
-                <Icon name="lucide:user-round" class="h-4 w-4 shrink-0" />
+                <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
                 <span
                   class="dashboard-fade-label text-body-sm"
                   :class="sidebarCollapsed ? 'is-hidden' : ''"
                 >
-                  {{ user.email }}
+                  Настройки
                 </span>
               </NuxtLink>
+
+              <hr class="my-xs border-hairline" />
+
+              <a
+                href="https://t.me/quar_io_chat"
+                target="_blank"
+                rel="noopener"
+                class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors duration-200 ease-out hover:bg-hairline-soft hover:text-ink"
+                :title="sidebarCollapsed ? 'Поддержка' : undefined"
+              >
+                <Icon name="lucide:life-buoy" class="h-4 w-4 shrink-0 text-steel" />
+                <span
+                  class="dashboard-fade-label text-body-sm"
+                  :class="sidebarCollapsed ? 'is-hidden' : ''"
+                >
+                  Поддержка
+                </span>
+              </a>
             </div>
           </div>
         </div>
@@ -245,21 +260,28 @@ watch(() => route.fullPath, () => {
             </template>
           </nav>
           <div v-if="currentTenant || user" class="dashboard-sidebar-footer">
-            <div v-if="currentTenant" class="dashboard-sidebar-footer-row">
-              <Icon name="lucide:building-2" class="h-4 w-4 shrink-0 text-steel" />
-              <span class="truncate text-body-sm-md text-charcoal">{{ currentTenant.name }}</span>
-            </div>
             <NuxtLink
-              v-if="user"
               to="/dashboard/settings"
               class="dashboard-sidebar-footer-row rounded-md transition-colors"
               :class="isActive('/dashboard/settings')
                 ? 'bg-primary text-on-primary'
                 : 'text-charcoal hover:bg-hairline-soft hover:text-ink'"
             >
-              <Icon name="lucide:user-round" class="h-4 w-4 shrink-0" />
-              <span class="truncate text-body-sm">{{ user.email }}</span>
+              <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
+              <span class="truncate text-body-sm">Настройки</span>
             </NuxtLink>
+
+            <hr class="my-xs border-hairline" />
+
+            <a
+              href="https://t.me/quar_io_chat"
+              target="_blank"
+              rel="noopener"
+              class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors hover:bg-hairline-soft hover:text-ink"
+            >
+              <Icon name="lucide:life-buoy" class="h-4 w-4 shrink-0 text-steel" />
+              <span class="truncate text-body-sm">Поддержка</span>
+            </a>
           </div>
         </div>
       </div>
@@ -342,7 +364,9 @@ watch(() => route.fullPath, () => {
   overflow: hidden;
 }
 
-/* Footer: tenant + user, прижаты к низу shell. Разделитель сверху. */
+/* Footer: «Настройки» + вспомогательные ссылки, прижаты к низу shell.
+ * Без верхнего бордера — отделение от навигации идёт через flex-1 на <nav>
+ * (футер сам по себе зрительно отделяется отступом). */
 .dashboard-sidebar-footer {
   display: flex;
   flex-direction: column;
@@ -350,7 +374,6 @@ watch(() => route.fullPath, () => {
   flex-shrink: 0;
   padding-top: 8px;
   margin-top: 8px;
-  border-top: 1px solid var(--color-hairline);
 }
 
 .dashboard-sidebar-footer-row {

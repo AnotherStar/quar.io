@@ -621,13 +621,14 @@ function isGenerationAbortError(error: any) {
 
           <div
             v-if="shareOpen"
-            class="absolute right-0 top-full z-30 mt-2 w-[420px] rounded-lg border border-hairline bg-canvas p-md shadow-modal"
+            v-keep-in-viewport
+            class="popover-menu absolute right-0 top-full z-30 mt-2 w-[420px] rounded-xl p-md"
           >
             <!-- Status header -->
             <div class="flex items-center justify-between gap-md">
               <div>
-                <p class="text-caption text-steel uppercase tracking-wide">Статус</p>
-                <div class="mt-1 flex items-center gap-2">
+                <p class="text-caption-bold uppercase tracking-wide text-steel">Статус</p>
+                <div class="mt-1.5 flex items-center gap-2">
                   <UiBadge :variant="instr.status === 'PUBLISHED' ? 'tag-green' : instr.status === 'ARCHIVED' ? 'tag-orange' : 'tag-gray'">
                     {{ instr.status === 'PUBLISHED' ? 'Опубликована' : instr.status === 'ARCHIVED' ? 'В архиве' : 'Черновик' }}
                   </UiBadge>
@@ -642,7 +643,7 @@ function isGenerationAbortError(error: any) {
               </UiButton>
             </div>
 
-            <hr class="my-md border-hairline">
+            <hr class="my-md border-hairline-soft">
 
             <!-- URL editor -->
             <UiInput
@@ -656,7 +657,7 @@ function isGenerationAbortError(error: any) {
             <!-- Public link: copy + QR download. Self-contained, see UiCopyableUrl. -->
             <UiCopyableUrl class="mt-sm" :url="fullPublicUrl" :qr-filename="`${currentTenant?.slug}-${slug}`" />
 
-            <hr class="my-md border-hairline">
+            <hr class="my-md border-hairline-soft">
 
             <!-- Штрих-код товара — нужен для авто-привязки свободного QR. -->
             <UiInput
@@ -666,7 +667,7 @@ function isGenerationAbortError(error: any) {
               hint="По этому коду свободный QR привяжется к инструкции"
             />
 
-            <hr class="my-md border-hairline">
+            <hr class="my-md border-hairline-soft">
 
             <!-- Publish action -->
             <UiButton

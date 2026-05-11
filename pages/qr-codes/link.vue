@@ -1,14 +1,19 @@
 <script setup lang="ts">
-// Mobile-first full-screen linker.
-// User points the camera at a QR sticker and a product barcode (in any
-// order). Each successful detection captures a frame and "throws" the
-// thumbnail into a corner — top-left for the QR, top-right for the
-// barcode. Once both are captured we hit /api/public/short/<shortId>/bind.
+// Раздел dashboard'а: QR-активатор. Пользователь наводит камеру на
+// QR-наклейку и штрихкод товара (в любом порядке). Каждое удачное
+// распознавание делает thumbnail-кадр и «улетает» в угол — QR в верхний
+// левый, ШК в верхний правый. После обоих захватов вызывается
+// /api/public/short/<shortId>/bind.
 //
-// The page may be opened with ?qr=<shortId> (from /code/[uuid] redirect),
-// in which case the QR side is pre-filled with a placeholder image and
-// only the barcode is being scanned.
-definePageMeta({ layout: 'blank', middleware: 'auth' })
+// Страница встроена в dashboard-layout. На мобильной версии sidebar
+// скрыт (виден только бургер-toggle), поэтому камерная панель занимает
+// почти весь экран — то же поведение, что было у прошлого fullscreen-
+// варианта. Короткая инструкция и QR-handoff («открыть на телефоне»)
+// вынесены в модалку «Как работает активация».
+//
+// Может быть открыт с ?qr=<shortId> (редирект из /code/[uuid]) — в этом
+// случае QR-слот предзаполнен плейсхолдером и сканируется только ШК.
+definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 import type { QrPrintRunEntry } from '~~/shared/schemas/qrCode'
 
@@ -101,6 +106,38 @@ watch([showPicker, debouncedSearch], async ([open]) => {
   } finally {
     pickerLoading.value = false
   }
+})
+
+// ─── Help modal: «Как работает активация» ──────────────────────────────
+// Открывается из header-кнопки рядом с заголовком. Внутри — короткая
+// инструкция в 3 шага и QR-код, по которому открыть этот же раздел
+// на телефоне (handoff). QR генерируется лениво при первом открытии
+// модалки, чтобы не тянуть библиотеку qrcode, если справка не нужна.
+const showHelp = ref(false)
+const handoffQrDataUrl = ref<string | null>(null)
+const handoffUrl = ref<string>('')
+const handoffLoading = ref(false)
+
+async function generateHandoffQr() {
+  if (!import.meta.client || handoffQrDataUrl.value || handoffLoading.value) return
+  handoffLoading.value = true
+  try {
+    handoffUrl.value = `${window.location.origin}/qr-codes/link`
+    const QRCode = await import('qrcode')
+    handoffQrDataUrl.value = await QRCode.toDataURL(handoffUrl.value, {
+      width: 360,
+      margin: 1,
+      color: { dark: '#0c0c0c', light: '#ffffff' }
+    })
+  } catch (e) {
+    console.warn('[linker] failed to render handoff QR', e)
+  } finally {
+    handoffLoading.value = false
+  }
+}
+
+watch(showHelp, (open) => {
+  if (open) generateHandoffQr()
 })
 
 // ─── Lifecycle ─────────────────────────────────────────────────────────
@@ -510,14 +547,6 @@ async function continueAfterSuccess() {
   await startScanner()
 }
 
-async function exitLinker() {
-  stopScanner()
-  // router.back() can bounce back here when arrival was via /code/<uuid>
-  // (the dispatcher redirects unbound QRs back to the linker), so we
-  // navigate explicitly to a safe destination.
-  await navigateTo('/dashboard/qr-codes')
-}
-
 function reset() {
   qrShortId.value = initialQr
   qrThumbnail.value = initialQr ? '/images/qr-code.png' : null
@@ -539,8 +568,27 @@ const hint = computed(() => {
 </script>
 
 <template>
-  <div class="linker">
-    <!-- Full-screen camera background -->
+  <div>
+    <PageHeader icon="lucide:arrow-left-right" title="Активация QR-кодов">
+      <template #actions>
+        <UiButton
+          variant="secondary"
+          aria-label="Как работает активация"
+          @click="showHelp = true"
+        >
+          <Icon name="lucide:circle-help" class="h-4 w-4" />
+          <span class="hidden sm:inline">Как работает активация</span>
+        </UiButton>
+      </template>
+    </PageHeader>
+
+    <!-- Активатор-карточка. На десктопе занимает ~ширину контента и
+         высоту вьюпорта минус header + paddings; на мобиле сайдбар
+         скрыт, поэтому карточка занимает почти всё доступное место.
+         .linker-* стили теперь относительны самой карточке (была
+         position: fixed; inset: 0). -->
+    <div class="mt-sm linker">
+    <!-- Camera background -->
     <video
       ref="videoRef"
       class="linker-video"
@@ -561,22 +609,15 @@ const hint = computed(() => {
       <div class="linker-frame-corner br" />
     </div>
 
-    <!-- Top bar -->
-    <header class="linker-top">
-      <button class="linker-icon-btn" aria-label="Закрыть" @click="exitLinker">
-        <Icon name="lucide:x" class="h-5 w-5" />
-      </button>
-      <div class="linker-title">Связка QR и товара</div>
-      <button
-        v-if="qrShortId || barcodeValue"
-        class="linker-icon-btn"
-        aria-label="Сбросить"
-        @click="reset"
-      >
-        <Icon name="lucide:refresh-ccw" class="h-5 w-5" />
-      </button>
-      <div v-else class="w-10" />
-    </header>
+    <!-- Reset, появляется когда уже что-то захвачено -->
+    <button
+      v-if="qrShortId || barcodeValue"
+      class="linker-icon-btn linker-reset"
+      aria-label="Сбросить"
+      @click="reset"
+    >
+      <Icon name="lucide:refresh-ccw" class="h-5 w-5" />
+    </button>
 
     <!-- QR slot (top-left): captured thumbnail or placeholder -->
     <div v-if="qrThumbnail" class="linker-thumb tl">
@@ -801,13 +842,102 @@ const hint = computed(() => {
         </div>
       </template>
     </UiModal>
+    </div>
+
+    <!-- Help-модалка: «Как работает активация» — 3 шага + handoff QR
+         для запуска того же flow на смартфоне. -->
+    <UiModal v-model:open="showHelp" size="md">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <Icon name="lucide:circle-help" class="h-5 w-5 text-navy opacity-50" />
+          <h2 class="text-h4 text-navy">Как работает активация</h2>
+        </div>
+      </template>
+
+      <div class="space-y-lg">
+        <p class="text-body text-charcoal">
+          Активация привязывает свободный QR-код с упаковки к конкретной
+          инструкции в один проход на смартфоне или планшете — последовательно
+          наводите камеру на QR-наклейку и штрихкод товара.
+        </p>
+
+        <ol class="help-steps">
+          <li>
+            <span class="help-step-num">1</span>
+            <div>
+              <p class="text-body-md text-ink">Откройте на телефоне</p>
+              <p class="text-body-sm text-steel">Отсканируйте QR-код справа любым приложением «Камера».</p>
+            </div>
+          </li>
+          <li>
+            <span class="help-step-num">2</span>
+            <div>
+              <p class="text-body-md text-ink">Камеру — на QR-наклейку</p>
+              <p class="text-body-sm text-steel">Превью улетит в верхний-левый угол.</p>
+            </div>
+          </li>
+          <li>
+            <span class="help-step-num">3</span>
+            <div>
+              <p class="text-body-md text-ink">Затем — на штрихкод товара</p>
+              <p class="text-body-sm text-steel">Связка создаётся автоматически после двух удачных захватов.</p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="help-qr">
+          <div class="help-qr-frame">
+            <img
+              v-if="handoffQrDataUrl"
+              :src="handoffQrDataUrl"
+              alt="QR для открытия активации на телефоне"
+              width="200"
+              height="200"
+            >
+            <div v-else class="help-qr-placeholder">
+              <Icon name="lucide:loader-2" class="h-6 w-6 animate-spin text-steel" />
+            </div>
+          </div>
+          <div class="help-qr-copy">
+            <p class="text-caption-bold uppercase tracking-wide text-steel">Открыть на телефоне</p>
+            <p class="mt-1 text-body-sm text-charcoal">
+              Сканируйте этот QR-код камерой смартфона — раздел откроется в
+              том же аккаунте.
+            </p>
+            <p v-if="handoffUrl" class="mt-2 break-all font-mono text-caption text-steel">{{ handoffUrl }}</p>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end">
+          <UiButton variant="primary" @click="showHelp = false">Понятно</UiButton>
+        </div>
+      </template>
+    </UiModal>
   </div>
 </template>
 
 <style scoped>
+/* Камера-активатор: карточка внутри dashboard-content, не fullscreen.
+ * Высота = высота small viewport'а минус всё, что над/под карточкой:
+ * 12px dashboard-content padding-top + 64px PageHeader + 12px mt-sm
+ * + 24px dashboard-content padding-bottom = 112px, плюс
+ * env(safe-area-inset-bottom) под home-indicator iOS.
+ *
+ * Берём именно svh (а не dvh): body / html в global.css ограничены
+ * 100svh, и если карточка ориентируется на dvh, она «выпирает» за body
+ * когда URL-бар Safari скрывается (dvh > svh) — отсюда был вертикальный
+ * скролл всей страницы.
+ *
+ * На мобиле sidebar скрыт — карточка занимает почти весь экран, тот же
+ * эффект, что у прежнего fullscreen-варианта. Все дочерние .linker-*
+ * остаются absolute-позиционированными относительно этой карточки. */
 .linker {
-  position: fixed;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  height: calc(100svh - 112px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+  border-radius: 16px;
   background: #000;
   color: #fff;
   overflow: hidden;
@@ -832,26 +962,6 @@ const hint = computed(() => {
     linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 25%, transparent 70%, rgba(0, 0, 0, 0.6) 100%);
 }
 
-.linker-top {
-  position: absolute;
-  top: env(safe-area-inset-top, 0);
-  left: 0;
-  right: 0;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  z-index: 10;
-}
-
-.linker-title {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
 .linker-icon-btn {
   width: 40px;
   height: 40px;
@@ -866,6 +976,15 @@ const hint = computed(() => {
 }
 .linker-icon-btn:hover {
   background: rgba(0, 0, 0, 0.65);
+}
+
+/* Reset — нижний правый угол, чтобы не пересекаться с тумба-плашками
+ * сверху (tl/tr). Появляется только когда что-то уже захвачено. */
+.linker-reset {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
 }
 
 .linker-frame {
@@ -928,11 +1047,11 @@ const hint = computed(() => {
   z-index: 5;
 }
 .linker-thumb.tl {
-  top: calc(env(safe-area-inset-top, 0) + 64px);
+  top: 16px;
   left: 16px;
 }
 .linker-thumb.tr {
-  top: calc(env(safe-area-inset-top, 0) + 64px);
+  top: 16px;
   right: 16px;
 }
 .linker-thumb img {
@@ -1006,7 +1125,7 @@ const hint = computed(() => {
 
 .linker-hint {
   position: absolute;
-  bottom: calc(env(safe-area-inset-bottom, 0) + 32px);
+  bottom: 24px;
   left: 16px;
   right: 16px;
   text-align: center;
@@ -1124,4 +1243,78 @@ const hint = computed(() => {
 }
 
 .hidden { display: none; }
+
+/* ─── Help modal: «Как работает активация» ──────────────────────────── */
+.help-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.help-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.help-step-num {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.help-qr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+/* На мобиле / планшете прячем «Открыть на телефоне» — пользователь уже
+ * там, handoff-QR ему не нужен. Детектируем через touch-only pointer:
+ * сюда попадают iOS/Android-смартфоны и планшеты в touch-режиме и не
+ * попадают MacBook'и с трекпадом, даже если у них есть тач-экран. */
+@media (hover: none) and (pointer: coarse) {
+  .help-qr { display: none; }
+}
+.help-qr-frame {
+  width: 168px;
+  height: 168px;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+.help-qr-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.help-qr-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+.help-qr-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+@media (max-width: 480px) {
+  .help-qr { flex-direction: column; align-items: stretch; }
+  .help-qr-frame { width: 100%; height: auto; aspect-ratio: 1 / 1; max-width: 220px; margin: 0 auto; }
+}
 </style>

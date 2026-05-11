@@ -13,16 +13,21 @@
     /* Для standalone-режима фон viewport должен совпадать с canvas,
      * чтобы при rubber-band-прокрутке не светилась чёрная полоса. */
     background: var(--color-canvas);
-    /* iOS Safari/standalone: высота 100% от реального viewport — без -webkit-fill-available
-     * на iOS 15.4+ работает и обычная svh, держим оба варианта. */
-    min-height: 100vh;
+    /* iOS Safari: 100svh — small viewport (с видимыми хром-барами). 100vh
+     * под капотом = large viewport и приводит к скроллу-фантому даже на
+     * пустых страницах. svh достаточно: контент свыше 100svh всё равно
+     * растягивает html нативно. */
     min-height: 100svh;
   }
   body {
     @apply bg-canvas text-ink font-sans;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
-    min-height: 100vh;
-    min-height: 100svh;
+    /* Без min-height: body занимает столько, сколько есть контента. Если
+     * страница короче вьюпорта — фон под ней даёт html (он покрыт
+     * background: var(--color-canvas) выше). Раньше body имел
+     * min-height: 100vh — на iOS Safari 100vh = large viewport (без
+     * URL-бара), и body растягивался выше видимой области, давая
+     * паразитный вертикальный скролл даже у пустых страниц. */
     /* Без этого iOS даёт синюю подсветку при тапе — на standalone-PWA
      * выглядит особенно неаккуратно. Safe-area опциональна через утилиты
      * .safe-* ниже, чтобы не ломать существующие full-bleed-секции. */
@@ -352,3 +357,57 @@ ul[data-type='taskList'] li[data-checked='true'] > div {
   pointer-events: none;
 }
 .tiptap.resize-cursor { cursor: col-resize; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Popover menu — общий стиль выпадающих панелей dashboard'а: дропдауны
+ * тулбара редактора (.popover-menu в EditorToolbar.vue), Share popover на
+ * странице редактирования инструкции и т.д. Эффект «матового стекла»:
+ * полупрозрачный surface + backdrop-blur + лёгкая тень.
+ *
+ * Geometry-классы (w-*, p-*, rounded-*, absolute, top-*, left-*) выставляет
+ * caller — этот класс отвечает только за фон / тень / blur. translate3d
+ * принудительно создаёт GPU-слой (без него Safari игнорирует
+ * backdrop-filter на элементах внутри уже отрисованного transform-контекста)
+ * и одновременно подхватывает сдвиг от директивы `v-keep-in-viewport`:
+ * она выставляет --keep-shift-x / --keep-shift-y, если попап торчит за
+ * границу окна.
+ * ─────────────────────────────────────────────────────────────────────── */
+.popover-menu {
+  background: rgba(235, 234, 232, 0.88);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  transform: translate3d(var(--keep-shift-x, 0), var(--keep-shift-y, 0), 0);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.12);
+}
+
+/* Утилитарный класс — навешивай вместе с `v-keep-in-viewport` на элементы,
+ * у которых нет своего transform-контекста (например, fixed-тултипы). */
+.keep-in-viewport-shift {
+  transform: translate3d(var(--keep-shift-x, 0), var(--keep-shift-y, 0), 0);
+}
+
+/* Универсальный пункт списка внутри .popover-menu — текстовая кнопка с
+ * иконкой слева, выравнивание по левому краю, лёгкая подсветка на hover. */
+.popover-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--color-charcoal);
+  text-align: left;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.popover-item:hover:not(:disabled) {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  box-shadow: 0 1px 2px 0 rgba(15, 15, 15, 0.04);
+}
+.popover-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -109,10 +109,19 @@ function togglePopover(name: 'table' | 'safety' | 'headings' | 'sections' | 'mod
   if (name === 'highlight') showHighlight.value = true
 }
 
-/** Закрытие dropdown'ов при клике снаружи тулбара. */
+/** Закрытие dropdown'ов при клике снаружи тулбара. Проверяем ВСЕ
+ * флаги попап'ов — если добавляешь новый, не забудь дописать сюда (или
+ * перепиши условие как `if (anyMenuOpen())`). */
 const toolbarRef = ref<HTMLElement | null>(null)
 onClickOutside(toolbarRef, () => {
-  if (showHeadings.value || showSafety.value || showTable.value) closeMenus()
+  if (
+    showHeadings.value
+    || showSafety.value
+    || showTable.value
+    || showSectionsMenu.value
+    || showModulesMenu.value
+    || showHighlight.value
+  ) closeMenus()
 })
 
 function insertTable() {
@@ -320,7 +329,7 @@ function canInsertTable() {
             <Icon name="lucide:chevron-down" class="h-3 w-3" />
           </button>
         </UiTooltip>
-        <div v-if="showHighlight" class="popover-menu absolute left-0 top-full z-50 mt-2 w-48 rounded-lg p-1">
+        <div v-if="showHighlight" v-keep-in-viewport class="popover-menu absolute left-0 top-full z-50 mt-2 w-48 rounded-lg p-1">
           <button
             v-for="c in HIGHLIGHT_COLORS"
             :key="c.key"
@@ -387,7 +396,7 @@ function canInsertTable() {
           <Icon name="lucide:chevron-down" class="h-3 w-3" />
         </button>
       </UiTooltip>
-      <div v-if="showTable" class="popover-menu absolute left-0 top-full z-50 mt-2 rounded-lg p-2">
+      <div v-if="showTable" v-keep-in-viewport class="popover-menu absolute left-0 top-full z-50 mt-2 rounded-lg p-2">
         <!-- Размер-picker для вставки новой таблицы (только если не внутри). -->
         <div v-if="!isActive('table')" class="p-1" @mouseleave="clearTableHover">
           <div class="mb-2 px-1 text-caption-bold uppercase tracking-wide text-steel">
@@ -452,7 +461,7 @@ function canInsertTable() {
           <Icon name="lucide:chevron-down" class="h-3 w-3" />
         </button>
       </UiTooltip>
-      <div v-if="showSafety" class="popover-menu absolute left-0 top-full z-50 mt-2 w-44 rounded-lg p-1">
+      <div v-if="showSafety" v-keep-in-viewport class="popover-menu absolute left-0 top-full z-50 mt-2 w-44 rounded-lg p-1">
         <button type="button" class="popover-item" @click="editor.chain().focus().setSafetyBlock('info').run(); showSafety = false">
           <Icon name="lucide:info" class="h-4 w-4 text-link" /> Информация
         </button>
@@ -476,7 +485,7 @@ function canInsertTable() {
             <Icon name="lucide:chevron-down" class="h-3 w-3" />
           </button>
         </UiTooltip>
-        <div v-if="showSectionsMenu" class="popover-menu absolute left-0 top-full z-50 mt-2 w-64 max-h-[320px] overflow-y-auto rounded-lg p-1">
+        <div v-if="showSectionsMenu" v-keep-in-viewport class="popover-menu absolute left-0 top-full z-50 mt-2 w-64 max-h-[320px] overflow-y-auto rounded-lg p-1">
           <button
             v-for="s in sectionsList"
             :key="s.id"
@@ -504,7 +513,7 @@ function canInsertTable() {
             <Icon name="lucide:chevron-down" class="h-3 w-3" />
           </button>
         </UiTooltip>
-        <div v-if="showModulesMenu" class="popover-menu absolute left-0 top-full z-50 mt-2 w-64 max-h-[320px] overflow-y-auto rounded-lg p-1">
+        <div v-if="showModulesMenu" v-keep-in-viewport class="popover-menu absolute left-0 top-full z-50 mt-2 w-64 max-h-[320px] overflow-y-auto rounded-lg p-1">
           <button
             v-for="m in modulesList"
             :key="m.id"
@@ -558,39 +567,8 @@ function canInsertTable() {
   background: var(--color-surface);
 }
 
-/* Popover-меню (Таблица, Блок безопасности) — единый стиль с тулбаром:
- * полупрозрачный surface + backdrop-blur, без border, мягкая тень снизу.
- *
- * Прозрачность ОПУЩЕНА до 0.88 (раньше 0.92 — текст под меню был чётко
- * виден), плюс transform: translateZ(0) форсирует GPU-layer — без этого
- * Vue scoped CSS блокировал backdrop-filter в WebKit. */
-.popover-menu {
-  background: rgba(235, 234, 232, 0.88);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  transform: translateZ(0);
-  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.12);
-}
-
-.popover-item {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.4;
-  color: var(--color-charcoal);
-  text-align: left;
-  transition: background-color 120ms ease, color 120ms ease;
-}
-
-.popover-item:hover {
-  background: var(--color-canvas);
-  color: var(--color-ink);
-  box-shadow: rgba(15, 15, 15, 0.04) 0px 1px 2px 0px;
-}
+/* .popover-menu / .popover-item — общий стиль popover'ов dashboard'а
+ * (вынесены в assets/css/global.css, потому что используются вне этого
+ * компонента — Share popover на странице edit и т.д.). */
 </style>
 

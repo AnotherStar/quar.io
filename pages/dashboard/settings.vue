@@ -1,9 +1,47 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
+/**
+ * Раздел «Настройки». Два таба:
+ *   - settings — профиль, компания, юридический профиль, брендинг
+ *   - billing  — тариф и оплата (бывший /dashboard/billing)
+ *
+ * Активный таб берётся из ?tab= в URL и пишется обратно через router.replace,
+ * чтобы deep-link и refresh страницы сохраняли выбор. Старый маршрут
+ * /dashboard/billing редиректит сюда с ?tab=billing.
+ */
+
 const api = useApi()
 const { currentTenant, currentRole, user, refresh } = useAuthState()
+const route = useRoute()
+const router = useRouter()
 
+type SettingsTab = 'settings' | 'billing'
+
+const tab = ref<SettingsTab>(route.query.tab === 'billing' ? 'billing' : 'settings')
+
+const tabItems: Array<{ value: SettingsTab; label: string }> = [
+  { value: 'settings', label: 'Настройки' },
+  { value: 'billing', label: 'Тариф' }
+]
+
+watch(tab, (next) => {
+  const query = { ...route.query }
+  if (next === 'settings') delete query.tab
+  else query.tab = next
+  router.replace({ query })
+})
+
+// Если кто-то открыл ?tab=foo — нормализуем в дефолтный без перезагрузки.
+watch(
+  () => route.query.tab,
+  (q) => {
+    const next: SettingsTab = q === 'billing' ? 'billing' : 'settings'
+    if (next !== tab.value) tab.value = next
+  }
+)
+
+// ── Settings tab ─────────────────────────────────────────────────────────
 const logoInput = ref<HTMLInputElement | null>(null)
 const uploadingLogo = ref(false)
 const removingLogo = ref(false)
@@ -152,142 +190,253 @@ async function saveLegalProfile() {
     legalSaving.value = false
   }
 }
+
+// ── Billing tab ──────────────────────────────────────────────────────────
+const billingKey = computed(() => `billing-state-${currentTenant.value?.id ?? 'none'}`)
+const { data: billingData, refresh: refreshBilling } = await useAsyncData(
+  billingKey,
+  () => api<any>('/api/billing/state'),
+  {
+    watch: [() => currentTenant.value?.id]
+  }
+)
+
+const activatingTrial = ref(false)
+const trialError = ref<string | null>(null)
+
+async function startTrial() {
+  if (!confirm('Активировать триал на 30 дней? Доступны все Plus-функции, лимит инструкций (3) сохраняется.')) return
+  activatingTrial.value = true
+  trialError.value = null
+  try {
+    await api('/api/billing/trial', { method: 'POST' })
+    await Promise.all([refreshBilling(), refresh()])
+  } catch (e: any) {
+    trialError.value = e?.data?.statusMessage ?? 'Ошибка'
+  } finally {
+    activatingTrial.value = false
+  }
+}
+
+const trialBlocked = computed(() =>
+  !!billingData.value?.trial?.trialUsedAt
+  || (billingData.value?.plan !== 'free' && billingData.value?.status === 'active')
+)
 </script>
 
 <template>
   <div>
     <PageHeader icon="lucide:settings" title="Настройки" />
+
     <div class="mt-sm space-y-xl">
-    <div class="rounded-lg bg-surface p-xl">
-      <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-            <Icon name="lucide:user-round" class="h-5 w-5 text-navy opacity-50" />
-            <h3 class="text-h4 text-navy">Профиль</h3>
-          </div>
-          <p class="mt-md text-body text-charcoal">Email: {{ user?.email }}</p>
-          <p class="text-body text-charcoal">Имя: {{ user?.name ?? '—' }}</p>
-        </div>
-        <UiButton variant="secondary" :loading="loggingOut" @click="logout">
-          <Icon name="lucide:log-out" class="h-4 w-4" />
-          Выйти из аккаунта
-        </UiButton>
+      <div class="flex items-center justify-between gap-md">
+        <UiSegmentedTabs v-model="tab" :tabs="tabItems" />
       </div>
-    </div>
 
-    <div class="rounded-lg bg-surface p-xl">
-      <div class="flex items-center gap-3">
-        <Icon name="lucide:building-2" class="h-5 w-5 text-navy opacity-50" />
-        <h3 class="text-h4 text-navy">Компания</h3>
-      </div>
-      <p class="mt-md text-body text-charcoal">{{ currentTenant?.name }} · /{{ currentTenant?.slug }}</p>
-    </div>
-
-    <div class="rounded-lg bg-surface p-xl">
-      <div class="flex flex-col gap-lg">
-        <div>
-          <div class="flex items-center gap-3">
-            <Icon name="lucide:shield-check" class="h-5 w-5 text-navy opacity-50" />
-            <h3 class="text-h4 text-navy">Юридический профиль оператора</h3>
-          </div>
-          <p class="mt-sm text-body-sm text-steel">
-            Эти реквизиты показываются покупателю на публичных QR-формах. quar.io указывается как техническая платформа.
-          </p>
-        </div>
-
-        <div class="grid gap-md md:grid-cols-2">
-          <UiInput v-model="legalForm.legalName" label="Полное наименование / ИП" placeholder="ООО «Компания»" :disabled="!canManageCompany" />
-          <UiInput v-model="legalForm.pdEmail" type="email" label="Email для обращений по персональным данным" placeholder="privacy@company.ru" :disabled="!canManageCompany" />
-          <UiInput v-model="legalForm.inn" label="ИНН" :disabled="!canManageCompany" />
-          <UiInput v-model="legalForm.ogrn" label="ОГРН / ОГРНИП" :disabled="!canManageCompany" />
-          <UiInput v-model="legalForm.policyUrl" type="url" label="Ссылка на политику обработки персональных данных" placeholder="https://company.ru/privacy" :disabled="!canManageCompany" />
-          <UiInput v-model="legalForm.address" label="Юридический адрес" :disabled="!canManageCompany" />
-        </div>
-
-        <label class="flex items-start gap-2 text-body-sm text-charcoal">
-          <input v-model="publishDefaultDocuments" type="checkbox" class="mt-1 h-4 w-4 rounded border-hairline-strong" :disabled="!canManageCompany">
-          <span>Опубликовать новые типовые версии согласий и cookie-уведомления после сохранения</span>
-        </label>
-
-        <div class="flex flex-wrap items-center gap-sm">
-          <UiButton :loading="legalSaving" :disabled="!canManageCompany" @click="saveLegalProfile">
-            <Icon name="lucide:shield-check" class="h-4 w-4" />
-            Сохранить юридический профиль
-          </UiButton>
-          <span class="text-caption text-steel">Активных документов: {{ legalData?.documents.length ?? 0 }}</span>
-        </div>
-
-        <UiAlert v-if="legalError" kind="error">{{ legalError }}</UiAlert>
-        <UiAlert v-else-if="legalSaved" kind="success">Юридические настройки сохранены.</UiAlert>
-        <UiAlert v-else-if="!canManageCompany" kind="warning">Изменять юридический профиль может только владелец.</UiAlert>
-      </div>
-    </div>
-
-    <div class="rounded-lg bg-surface p-xl">
-      <div class="flex flex-col gap-lg md:flex-row md:items-start md:justify-between">
-        <div>
-          <div class="flex items-center gap-3">
-            <Icon name="lucide:image" class="h-5 w-5 text-navy opacity-50" />
-            <h3 class="text-h4 text-navy">Брендинг</h3>
-          </div>
-          <p class="mt-md text-body text-charcoal">Логотип компании</p>
-          <p class="mt-1 text-caption text-steel">PNG, JPG, WebP или SVG до 5 МБ.</p>
-        </div>
-
-        <div class="w-full max-w-sm space-y-md">
-          <div class="flex min-h-24 items-center justify-center rounded-md bg-canvas p-md">
-            <img
-              v-if="logoUrl"
-              :src="logoUrl"
-              alt=""
-              class="max-h-16 max-w-full object-contain"
-            >
-            <div v-else class="flex items-center gap-2 text-body-sm text-steel">
-              <Icon name="lucide:image" class="h-4 w-4" />
-              Логотип не загружен
+      <Transition name="tab-content" mode="out-in">
+        <!-- ── Tab: Настройки ────────────────────────────────────────── -->
+        <div v-if="tab === 'settings'" key="settings" class="space-y-xl">
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
+              <div>
+                <div class="flex items-center gap-3">
+                  <Icon name="lucide:user-round" class="h-5 w-5 text-navy opacity-50" />
+                  <h3 class="text-h4 text-navy">Профиль</h3>
+                </div>
+                <p class="mt-md text-body text-charcoal">Email: {{ user?.email }}</p>
+                <p class="text-body text-charcoal">Имя: {{ user?.name ?? '—' }}</p>
+              </div>
+              <UiButton variant="secondary" :loading="loggingOut" @click="logout">
+                <Icon name="lucide:log-out" class="h-4 w-4" />
+                Выйти из аккаунта
+              </UiButton>
             </div>
           </div>
 
-          <input
-            ref="logoInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            :disabled="!canManageCompany || uploadingLogo"
-            @change="onLogoSelected"
-          >
-
-          <div class="flex flex-wrap gap-sm">
-            <UiButton
-              variant="secondary"
-              :loading="uploadingLogo"
-              :disabled="!canManageCompany || removingLogo"
-              @click="pickLogo"
-            >
-              <Icon name="lucide:upload" class="h-4 w-4" />
-              {{ logoUrl ? 'Заменить' : 'Загрузить' }}
-            </UiButton>
-            <UiButton
-              v-if="logoUrl"
-              variant="ghost"
-              :loading="removingLogo"
-              :disabled="!canManageCompany || uploadingLogo"
-              @click="removeLogo"
-            >
-              <Icon name="lucide:trash-2" class="h-4 w-4" />
-              Удалить
-            </UiButton>
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:building-2" class="h-5 w-5 text-navy opacity-50" />
+              <h3 class="text-h4 text-navy">Компания</h3>
+            </div>
+            <p class="mt-md text-body text-charcoal">{{ currentTenant?.name }} · /{{ currentTenant?.slug }}</p>
           </div>
 
-          <div v-if="uploadingLogo" class="h-1.5 overflow-hidden rounded-full bg-surface">
-            <div class="h-full rounded-full bg-primary transition-all" :style="{ width: `${logoProgress}%` }" />
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex flex-col gap-lg">
+              <div>
+                <div class="flex items-center gap-3">
+                  <Icon name="lucide:shield-check" class="h-5 w-5 text-navy opacity-50" />
+                  <h3 class="text-h4 text-navy">Юридический профиль оператора</h3>
+                </div>
+                <p class="mt-sm text-body-sm text-steel">
+                  Эти реквизиты показываются покупателю на публичных QR-формах. quar.io указывается как техническая платформа.
+                </p>
+              </div>
+
+              <div class="grid gap-md md:grid-cols-2">
+                <UiInput v-model="legalForm.legalName" label="Полное наименование / ИП" placeholder="ООО «Компания»" :disabled="!canManageCompany" />
+                <UiInput v-model="legalForm.pdEmail" type="email" label="Email для обращений по персональным данным" placeholder="privacy@company.ru" :disabled="!canManageCompany" />
+                <UiInput v-model="legalForm.inn" label="ИНН" :disabled="!canManageCompany" />
+                <UiInput v-model="legalForm.ogrn" label="ОГРН / ОГРНИП" :disabled="!canManageCompany" />
+                <UiInput v-model="legalForm.policyUrl" type="url" label="Ссылка на политику обработки персональных данных" placeholder="https://company.ru/privacy" :disabled="!canManageCompany" />
+                <UiInput v-model="legalForm.address" label="Юридический адрес" :disabled="!canManageCompany" />
+              </div>
+
+              <label class="flex items-start gap-2 text-body-sm text-charcoal">
+                <input v-model="publishDefaultDocuments" type="checkbox" class="mt-1 h-4 w-4 rounded border-hairline-strong" :disabled="!canManageCompany">
+                <span>Опубликовать новые типовые версии согласий и cookie-уведомления после сохранения</span>
+              </label>
+
+              <div class="flex flex-wrap items-center gap-sm">
+                <UiButton :loading="legalSaving" :disabled="!canManageCompany" @click="saveLegalProfile">
+                  <Icon name="lucide:shield-check" class="h-4 w-4" />
+                  Сохранить юридический профиль
+                </UiButton>
+                <span class="text-caption text-steel">Активных документов: {{ legalData?.documents.length ?? 0 }}</span>
+              </div>
+
+              <UiAlert v-if="legalError" kind="error">{{ legalError }}</UiAlert>
+              <UiAlert v-else-if="legalSaved" kind="success">Юридические настройки сохранены.</UiAlert>
+              <UiAlert v-else-if="!canManageCompany" kind="warning">Изменять юридический профиль может только владелец.</UiAlert>
+            </div>
           </div>
-          <UiAlert v-if="logoError" kind="error">{{ logoError }}</UiAlert>
-          <UiAlert v-else-if="logoSaved" kind="success">Настройки сохранены.</UiAlert>
-          <UiAlert v-else-if="!canManageCompany" kind="warning">Изменять настройки компании может только владелец.</UiAlert>
+
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex flex-col gap-lg md:flex-row md:items-start md:justify-between">
+              <div>
+                <div class="flex items-center gap-3">
+                  <Icon name="lucide:image" class="h-5 w-5 text-navy opacity-50" />
+                  <h3 class="text-h4 text-navy">Брендинг</h3>
+                </div>
+                <p class="mt-md text-body text-charcoal">Логотип компании</p>
+                <p class="mt-1 text-caption text-steel">PNG, JPG, WebP или SVG до 5 МБ.</p>
+              </div>
+
+              <div class="w-full max-w-sm space-y-md">
+                <div class="flex min-h-24 items-center justify-center rounded-md bg-canvas p-md">
+                  <img
+                    v-if="logoUrl"
+                    :src="logoUrl"
+                    alt=""
+                    class="max-h-16 max-w-full object-contain"
+                  >
+                  <div v-else class="flex items-center gap-2 text-body-sm text-steel">
+                    <Icon name="lucide:image" class="h-4 w-4" />
+                    Логотип не загружен
+                  </div>
+                </div>
+
+                <input
+                  ref="logoInput"
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  :disabled="!canManageCompany || uploadingLogo"
+                  @change="onLogoSelected"
+                >
+
+                <div class="flex flex-wrap gap-sm">
+                  <UiButton
+                    variant="secondary"
+                    :loading="uploadingLogo"
+                    :disabled="!canManageCompany || removingLogo"
+                    @click="pickLogo"
+                  >
+                    <Icon name="lucide:upload" class="h-4 w-4" />
+                    {{ logoUrl ? 'Заменить' : 'Загрузить' }}
+                  </UiButton>
+                  <UiButton
+                    v-if="logoUrl"
+                    variant="ghost"
+                    :loading="removingLogo"
+                    :disabled="!canManageCompany || uploadingLogo"
+                    @click="removeLogo"
+                  >
+                    <Icon name="lucide:trash-2" class="h-4 w-4" />
+                    Удалить
+                  </UiButton>
+                </div>
+
+                <div v-if="uploadingLogo" class="h-1.5 overflow-hidden rounded-full bg-surface">
+                  <div class="h-full rounded-full bg-primary transition-all" :style="{ width: `${logoProgress}%` }" />
+                </div>
+                <UiAlert v-if="logoError" kind="error">{{ logoError }}</UiAlert>
+                <UiAlert v-else-if="logoSaved" kind="success">Настройки сохранены.</UiAlert>
+                <UiAlert v-else-if="!canManageCompany" kind="warning">Изменять настройки компании может только владелец.</UiAlert>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <!-- ── Tab: Тариф ─────────────────────────────────────────────── -->
+        <div v-else-if="tab === 'billing'" key="billing" class="space-y-xl">
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex items-start justify-between gap-md">
+              <div>
+                <p class="text-caption-bold text-steel uppercase tracking-wide">Текущий тариф</p>
+                <p class="mt-2 text-h2 capitalize text-navy">{{ billingData?.plan }}</p>
+                <div class="mt-2 flex items-center gap-2">
+                  <UiBadge v-if="billingData?.status === 'trialing'" variant="tag-orange">TRIAL</UiBadge>
+                  <UiBadge v-else-if="billingData?.status === 'active' && billingData?.plan !== 'free'" variant="tag-green">ACTIVE</UiBadge>
+                  <UiBadge v-else variant="tag-gray">{{ billingData?.status }}</UiBadge>
+                </div>
+              </div>
+              <div v-if="billingData?.trial?.isTrialing" class="text-right">
+                <p class="text-caption-bold text-steel uppercase tracking-wide">Триал заканчивается через</p>
+                <p class="mt-2 text-h3 text-navy">{{ billingData.trial.daysLeft }} дн.</p>
+                <p class="mt-0.5 text-caption text-steel">{{ new Date(billingData.currentPeriodEnd).toLocaleDateString() }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="billingData?.trial?.isTrialing" class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:gift" class="h-5 w-5 text-navy opacity-50" />
+              <h3 class="text-h4 text-navy">Что включено в триале</h3>
+            </div>
+            <ul class="mt-md space-y-1 text-body-sm text-charcoal">
+              <li>✓ Кастомные секции</li>
+              <li>✓ Модули (warranty-registration, ...)</li>
+              <li>✓ Approval workflow</li>
+              <li>✓ Расширенная аналитика (1 год)</li>
+              <li class="text-steel">⚠️ Лимит инструкций — 3, чтобы по окончании триала ничего не пропало</li>
+            </ul>
+            <p class="mt-md text-caption text-steel">
+              После окончания триала платные функции отключатся. Кастомные секции и модули останутся в БД,
+              но перестанут отображаться на публичных страницах до подключения платного пакета.
+              Сами инструкции продолжат работать.
+            </p>
+          </div>
+
+          <div v-else-if="!trialBlocked" class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:sparkles" class="h-5 w-5 text-navy opacity-50" />
+              <h3 class="text-h4 text-navy">Запустить триал Plus на 30 дней</h3>
+            </div>
+            <p class="mt-sm text-body text-slate">
+              Все функции Plus — кастомные секции, модули, workflow одобрения. Лимит инструкций
+              остаётся 3, чтобы по окончании триала ничего не пропало.
+            </p>
+            <UiAlert v-if="trialError" kind="error" class="mt-md">{{ trialError }}</UiAlert>
+            <UiButton class="mt-md" :loading="activatingTrial" @click="startTrial">Активировать триал</UiButton>
+          </div>
+
+          <div v-else-if="billingData?.trial?.trialUsedAt" class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:check-circle-2" class="h-5 w-5 text-navy opacity-50" />
+              <h3 class="text-h4 text-navy">Триал уже использован</h3>
+            </div>
+            <p class="mt-sm text-body text-slate">
+              Триал был активирован {{ new Date(billingData.trial.trialUsedAt).toLocaleDateString() }}.
+              Для постоянного доступа к платным функциям подключите оплату.
+            </p>
+          </div>
+
+          <UiAlert kind="info" title="Биллинг ещё не подключён">
+            Реальная оплата (Stripe / ЮKassa) — в TODO. Сейчас доступен только триал.
+          </UiAlert>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>

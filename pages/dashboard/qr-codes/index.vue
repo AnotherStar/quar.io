@@ -35,8 +35,8 @@ interface QrStats {
 const api = useApi()
 const { currentTenant } = useAuthState()
 
-type StatusFilter = 'all' | 'bound' | 'unbound' | 'printed' | 'unprinted'
-const status = ref<StatusFilter>('all')
+type StatusFilter = 'bound' | 'unbound'
+const status = ref<StatusFilter>('bound')
 const search = ref('')
 const debouncedSearch = ref('')
 let searchDebounce: ReturnType<typeof setTimeout> | null = null
@@ -46,12 +46,15 @@ watch(search, (v) => {
 })
 
 const countToCreate = ref(100)
-const sizeMm = ref(40)
-const designLabel = ref('')
 const creating = ref(false)
-const printing = ref(false)
 const createError = ref<string | null>(null)
-const printError = ref<string | null>(null)
+
+// Модалка генерации новых QR. Открывается из кнопки «+ Создать» в header'е.
+const createModalOpen = ref(false)
+function openCreateModal() {
+  createError.value = null
+  createModalOpen.value = true
+}
 
 const selected = ref<Set<string>>(new Set())
 
@@ -94,39 +97,11 @@ async function createBatch() {
   try {
     await api('/api/qr-codes', { method: 'POST', body: { count: Number(countToCreate.value) } })
     await refresh()
+    createModalOpen.value = false
   } catch (e: any) {
     createError.value = e?.data?.statusMessage ?? 'Не удалось создать QR-коды'
   } finally {
     creating.value = false
-  }
-}
-
-async function printSelected() {
-  if (printing.value || !selected.value.size) return
-  if (!designLabel.value.trim()) {
-    printError.value = 'Укажите название дизайна, чтобы отметить тираж'
-    return
-  }
-  printing.value = true
-  printError.value = null
-  try {
-    // 1. Mark as printed
-    await api('/api/qr-codes/print-run', {
-      method: 'POST',
-      body: { ids: [...selected.value], designLabel: designLabel.value.trim() }
-    })
-    // 2. Trigger PDF download
-    const params = new URLSearchParams({
-      sizeMm: String(sizeMm.value),
-      ids: [...selected.value].join(',')
-    })
-    if (import.meta.client) window.location.href = `/api/qr-codes/export?${params.toString()}`
-    selected.value = new Set()
-    await refresh()
-  } catch (e: any) {
-    printError.value = e?.data?.statusMessage ?? 'Не удалось напечатать пачку'
-  } finally {
-    printing.value = false
   }
 }
 
@@ -149,113 +124,43 @@ function lastDesign(code: QrCodeRow) {
   <div>
     <PageHeader icon="lucide:qr-code" title="QR-коды">
       <template #actions>
-        <UiButton variant="primary" to="/qr-codes/link">
-          <Icon name="lucide:scan-line" class="h-4 w-4" />
-          Привязать на телефоне
+        <UiButton variant="primary" @click="openCreateModal">
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          Создать
         </UiButton>
       </template>
     </PageHeader>
 
     <div class="mt-sm space-y-xl">
 
-    <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
-
-    <div class="grid gap-md md:grid-cols-5">
-      <div class="rounded-lg bg-surface p-xl">
-        <p class="text-caption-bold text-steel uppercase tracking-wide">Всего</p>
-        <p class="mt-2 text-h3 text-navy">{{ stats.total }}</p>
-      </div>
-      <div class="rounded-lg bg-surface p-xl">
-        <p class="text-caption-bold text-steel uppercase tracking-wide">Свободные</p>
-        <p class="mt-2 text-h3 text-navy">{{ stats.unbound }}</p>
-      </div>
-      <div class="rounded-lg bg-surface p-xl">
-        <p class="text-caption-bold text-steel uppercase tracking-wide">Привязанные</p>
-        <p class="mt-2 text-h3 text-navy">{{ stats.bound }}</p>
-      </div>
-      <div class="rounded-lg bg-surface p-xl">
-        <p class="text-caption-bold text-steel uppercase tracking-wide">Напечатанные</p>
-        <p class="mt-2 text-h3 text-navy">{{ stats.printed }}</p>
-      </div>
-      <div class="rounded-lg bg-surface p-xl">
-        <p class="text-caption-bold text-steel uppercase tracking-wide">Без печати</p>
-        <p class="mt-2 text-h3 text-navy">{{ stats.unprinted }}</p>
-      </div>
-    </div>
-
-    <div class="rounded-lg bg-surface p-xl">
-      <form class="grid gap-md md:grid-cols-[1fr_auto] md:items-end" @submit.prevent="createBatch">
-        <UiInput
-          v-model="countToCreate"
-          label="Сколько QR создать"
-          type="number"
-          hint="От 1 до 5000 за раз. Это просто записи в БД — размер выберете при печати."
-        />
-        <UiButton type="submit" :loading="creating" @click="createBatch">
-          <Icon name="lucide:plus" class="h-4 w-4" />
-          Сгенерировать
-        </UiButton>
-      </form>
-    </div>
-
-    <div class="rounded-lg bg-surface p-xl">
-      <div class="grid gap-md md:grid-cols-[1fr_1fr_auto] md:items-end">
-        <UiInput
-          v-model="designLabel"
-          label="Дизайн стикеров"
-          placeholder="Например: Чёрные круглые 30мм, осень-2026"
-          hint="Любой текст — пометка для истории печати"
-        />
-        <UiInput
-          v-model="sizeMm"
-          label="Размер QR в PDF, мм"
-          type="number"
-          hint="20–100"
-        />
-        <UiButton
-          variant="primary"
-          :loading="printing"
-          :disabled="!selected.size || !designLabel.trim()"
-          @click="printSelected"
-        >
-          <Icon name="lucide:printer" class="h-4 w-4" />
-          Напечатать выбранные ({{ selected.size }})
-        </UiButton>
-      </div>
-      <UiAlert v-if="printError" class="mt-md" kind="error">{{ printError }}</UiAlert>
-    </div>
-
     <div class="flex flex-wrap items-center justify-between gap-md">
-      <!-- Pill-tabs (5 опций) — соответствуют segmented-control стилю из
-           инструкций, но без анимированного indicator: на 5 неравных по длине
-           надписях он съезжал бы. Активный — bg-canvas + shadow-subtle. -->
-      <div class="flex h-10 items-center gap-1 rounded-lg bg-surface p-1" role="tablist">
-        <button
-          v-for="opt in [
-            { v: 'all', label: `Все · ${stats.total}` },
-            { v: 'unbound', label: `Свободные · ${stats.unbound}` },
-            { v: 'bound', label: `Привязанные · ${stats.bound}` },
-            { v: 'unprinted', label: `Без печати · ${stats.unprinted}` },
-            { v: 'printed', label: `Напечатанные · ${stats.printed}` }
-          ]"
-          :key="opt.v"
-          type="button"
-          role="tab"
-          :aria-selected="status === opt.v"
-          :class="['flex h-8 items-center rounded-md px-md text-body-sm-md transition-colors',
-            status === opt.v ? 'bg-canvas text-ink shadow-subtle' : 'text-stone hover:text-ink']"
-          @click="status = opt.v as StatusFilter"
+      <!-- Pill-tabs: Привязанные (по умолчанию) / Свободные. -->
+      <UiSegmentedTabs
+        v-model="status"
+        :tabs="[
+          { value: 'bound', label: 'Привязанные', count: stats.bound },
+          { value: 'unbound', label: 'Свободные', count: stats.unbound }
+        ]"
+      />
+      <div class="relative w-full md:max-w-sm">
+        <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Поиск по shortId, названию, ШК…"
+          class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
         >
-          {{ opt.label }}
-        </button>
       </div>
-      <UiInput v-model="search" placeholder="Поиск по shortId, названию, ШК…" class="w-full md:w-72" />
     </div>
 
     <div>
-      <div v-if="pending" class="py-md text-body text-steel">Загружаю QR-коды…</div>
-
-      <table v-else-if="codes.length" class="w-full">
+      <!-- Хедер таблицы рендерится всегда, чтобы при обновлении (фильтр /
+           поиск / refresh) контент не «прыгал». Tbody обёрнут в Transition
+           c key=status — при смене pill-таба содержимое уезжает влево, новое
+           приезжает справа (тот же tab-content transition, что в /dashboard/
+           instructions). Состояние pending и пустой результат показываются
+           как одна строка <tr colspan="7"> внутри того же tbody. -->
+      <table class="w-full">
         <thead>
           <tr class="border-b border-hairline text-caption text-steel uppercase">
             <th class="w-8 pb-sm">
@@ -263,6 +168,7 @@ function lastDesign(code: QrCodeRow) {
                 type="checkbox"
                 :checked="allSelected"
                 :indeterminate.prop="someSelected"
+                :disabled="pending || !codes.length"
                 aria-label="Выбрать все"
                 @change="toggleAll"
               >
@@ -275,9 +181,24 @@ function lastDesign(code: QrCodeRow) {
             <th class="w-10 pb-sm" />
           </tr>
         </thead>
-        <tbody>
+        <Transition name="tab-content" mode="out-in">
+        <tbody :key="status">
+          <tr v-if="pending">
+            <td :colspan="7" class="py-xl">
+              <div class="flex items-center justify-center gap-2 text-body-sm text-steel">
+                <Icon name="lucide:loader-2" class="h-4 w-4 animate-spin" />
+                Загружаю QR-коды…
+              </div>
+            </td>
+          </tr>
+          <tr v-else-if="!codes.length">
+            <td :colspan="7" class="py-xl text-center text-body-sm text-steel">
+              Пока нет QR-кодов в выбранном фильтре.
+            </td>
+          </tr>
           <tr
             v-for="code in codes"
+            v-else
             :key="code.id"
             class="border-b border-hairline-soft"
           >
@@ -325,16 +246,61 @@ function lastDesign(code: QrCodeRow) {
             </td>
           </tr>
         </tbody>
+        </Transition>
       </table>
 
-      <p v-else class="py-md text-body text-steel">
-        Пока нет QR-кодов в выбранном фильтре.
-      </p>
-
-      <p v-if="codes.length" class="mt-md text-caption text-steel">
+      <p v-if="!pending && codes.length" class="mt-md text-caption text-steel">
         Показано {{ codes.length }} из {{ totalShown }}
       </p>
     </div>
     </div>
+
+    <!-- Модалка генерации QR. Open'ится из «+ Создать» в header'е. Создаёт
+         пачку записей в БД, размер стикера выбирается отдельно при печати. -->
+    <UiModal
+      :open="createModalOpen"
+      size="sm"
+      :close-on-backdrop="!creating"
+      :close-on-esc="!creating"
+      @update:open="(v) => (createModalOpen = v)"
+    >
+      <template #header>
+        <div class="flex items-center gap-3">
+          <Icon name="lucide:qr-code" class="h-5 w-5 text-navy opacity-50" />
+          <h2 class="text-h4 text-navy">Создать QR-коды</h2>
+        </div>
+      </template>
+
+      <div class="space-y-md">
+        <UiInput
+          v-model="countToCreate"
+          label="Сколько QR создать"
+          type="number"
+          hint="От 1 до 5000 за раз. Это просто записи в БД — размер выберете при печати."
+        />
+        <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
+      </div>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-md">
+          <UiButton
+            variant="secondary"
+            :disabled="creating"
+            @click="createModalOpen = false"
+          >
+            Отмена
+          </UiButton>
+          <UiButton
+            variant="primary"
+            :loading="creating"
+            :disabled="creating || Number(countToCreate) < 1"
+            @click="createBatch"
+          >
+            <Icon name="lucide:plus" class="h-4 w-4" />
+            Сгенерировать
+          </UiButton>
+        </div>
+      </template>
+    </UiModal>
   </div>
 </template>

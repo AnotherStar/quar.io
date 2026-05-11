@@ -4,8 +4,18 @@
  *
  * Используется в dashboard-страницах как левая часть working-row
  * (рядом с поиском и actions). Активный таб выделяется белой плашкой
- * `bg-canvas + shadow-subtle`, которая плавно (200 ms) едет между
- * позициями через `translateX`.
+ * `bg-canvas + shadow-subtle`, которая плавно (500 ms) едет между
+ * позициями.
+ *
+ * Размеры табов берутся из их содержимого (whitespace-nowrap), поэтому
+ * длинные надписи вроде «Напечатанные» не переносятся на вторую строку.
+ * Индикатор позиционируется по offsetLeft/offsetWidth активной кнопки —
+ * измерения пересчитываются через ResizeObserver, при изменении modelValue
+ * и при изменении набора tabs.
+ *
+ * Если общая ширина не помещается в parent — контейнер скроллится по X
+ * (полоса прокрутки скрыта), индикатор всё равно остаётся под активным
+ * табом.
  *
  * Generic <T extends string> привязывает modelValue к union'у значений
  * табов, чтобы вызывающая страница имела типовую безопасность вида
@@ -27,40 +37,97 @@ const emit = defineEmits<{
   'update:modelValue': [value: T]
 }>()
 
-const activeIndex = computed(() =>
-  Math.max(0, props.tabs.findIndex((t) => t.value === props.modelValue))
+const containerRef = ref<HTMLElement | null>(null)
+const buttonRefs = ref<HTMLButtonElement[]>([])
+
+interface Indicator { left: number; width: number; ready: boolean }
+const indicator = reactive<Indicator>({ left: 0, width: 0, ready: false })
+
+function setButtonRef(el: Element | ComponentPublicInstance | null, index: number) {
+  if (el instanceof HTMLButtonElement) buttonRefs.value[index] = el
+}
+
+function measure() {
+  if (!containerRef.value) return
+  const activeIndex = props.tabs.findIndex((t) => t.value === props.modelValue)
+  const button = buttonRefs.value[activeIndex < 0 ? 0 : activeIndex]
+  if (!button) return
+  indicator.left = button.offsetLeft
+  indicator.width = button.offsetWidth
+  indicator.ready = true
+}
+
+let ro: ResizeObserver | null = null
+
+onMounted(() => {
+  measure()
+  // Пересчитываем при изменении геометрии (resize окна, font-load,
+  // изменение ширины кнопок при обновлении counts).
+  if (typeof ResizeObserver !== 'undefined' && containerRef.value) {
+    ro = new ResizeObserver(measure)
+    ro.observe(containerRef.value)
+    for (const btn of buttonRefs.value) if (btn) ro.observe(btn)
+  }
+})
+
+onBeforeUnmount(() => {
+  ro?.disconnect()
+  ro = null
+})
+
+watch(
+  [() => props.modelValue, () => props.tabs.length],
+  async () => {
+    await nextTick()
+    measure()
+  }
 )
 </script>
 
 <template>
   <div
-    class="relative inline-grid h-10 rounded-lg bg-surface p-1"
+    ref="containerRef"
     role="tablist"
-    :style="{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }"
+    class="ui-segmented-tabs relative inline-flex h-10 max-w-full items-stretch overflow-x-auto rounded-lg bg-surface p-1"
   >
-    <!-- Floating indicator: translateX(N * 100%) переносит плашку на
-         ширину одной колонки — совпадает с шириной одного таба, потому
-         что grid делит ширину поровну на N колонок. -->
+    <!-- Floating indicator. left/width читаются из активной <button>;
+         transition даёт «езду» между позициями. opacity скрывает индикатор
+         до первого замера (избегаем скачка от 0,0 к реальной позиции). -->
     <span
       aria-hidden="true"
-      class="absolute inset-y-1 left-1 rounded-md bg-canvas shadow-sm transition-transform duration-500 ease-out"
+      class="pointer-events-none absolute top-1 bottom-1 rounded-md bg-canvas shadow-sm transition-all duration-500 ease-out"
       :style="{
-        width: `calc((100% - 8px) / ${tabs.length})`,
-        transform: `translateX(${activeIndex * 100}%)`
+        left: `${indicator.left}px`,
+        width: `${indicator.width}px`,
+        opacity: indicator.ready ? 1 : 0
       }"
     />
     <button
-      v-for="t in tabs"
+      v-for="(t, i) in tabs"
       :key="t.value"
+      :ref="(el) => setButtonRef(el, i)"
       type="button"
       role="tab"
       :aria-selected="t.value === modelValue"
-      :class="['relative z-10 flex items-center justify-center gap-1 rounded-md px-md text-body-sm-md transition-colors',
-        t.value === modelValue ? 'text-ink' : 'text-stone hover:text-ink']"
+      :class="[
+        'relative z-10 inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-md text-body-sm-md transition-colors',
+        t.value === modelValue ? 'text-ink' : 'text-stone hover:text-ink'
+      ]"
       @click="emit('update:modelValue', t.value)"
     >
       <span>{{ t.label }}</span>
-      <span v-if="t.count !== undefined" class="text-stone font-bold">·&nbsp;{{ t.count }}</span>
+      <span v-if="t.count !== undefined" class="font-bold text-stone">·&nbsp;{{ t.count }}</span>
     </button>
   </div>
 </template>
+
+<style scoped>
+/* Скрываем полосу прокрутки, оставляя возможность скроллить горизонтально
+ * на мобильных, если все табы не помещаются. */
+.ui-segmented-tabs {
+  scrollbar-width: none;
+}
+.ui-segmented-tabs::-webkit-scrollbar {
+  display: none;
+}
+</style>
