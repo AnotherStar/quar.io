@@ -1,29 +1,31 @@
-// Aggregated analytics for the dashboard view of one instruction.
-// Reads denormalized Visit rows + recent per-visit timeline. ViewEvent stays
-// the source of truth for raw drill-down and block-level stats.
+// Tenant-wide analytics overview. Aggregates Visit rows across every
+// instruction the current tenant owns. Bot visits are excluded by default.
 import { requireTenant } from '~~/server/utils/tenant'
 import { prisma } from '~~/server/utils/prisma'
 import dayjs from 'dayjs'
 
 export default defineEventHandler(async (event) => {
   const { tenant } = await requireTenant(event)
-  const id = getRouterParam(event, 'id')!
-  const instr = await prisma.instruction.findFirst({ where: { id, tenantId: tenant.id }, select: { id: true } })
-  if (!instr) throw createError({ statusCode: 404 })
+  const q = getQuery(event)
+  const days = Math.min(365, Math.max(1, Number(q.days ?? 30)))
+  const since = dayjs().subtract(days, 'day').toDate()
 
-  const since = dayjs().subtract(30, 'day').toDate()
-  const where = { instructionId: id, startedAt: { gte: since }, isBot: false }
+  const where = {
+    isBot: false,
+    startedAt: { gte: since },
+    instruction: { tenantId: tenant.id }
+  }
 
   const [
     totals,
+    uniqueSessions,
     byCountry,
     byDevice,
     byEntrySource,
     byUtmSource,
-    feedbackByKind,
     goalsByCode,
-    byDay,
-    recentVisits
+    topInstructions,
+    byDay
   ] = await Promise.all([
     prisma.visit.aggregate({
       where,
@@ -31,6 +33,7 @@ export default defineEventHandler(async (event) => {
       _avg: { maxScrollDepth: true, totalDurationMs: true },
       _sum: { pageViews: true }
     }),
+    prisma.visit.groupBy({ by: ['sessionId'], where }).then((r) => r.length),
     prisma.visit.groupBy({ by: ['country'], where, _count: { _all: true } }),
     prisma.visit.groupBy({ by: ['deviceType'], where, _count: { _all: true } }),
     prisma.visit.groupBy({ by: ['entrySource'], where, _count: { _all: true } }),
@@ -39,73 +42,56 @@ export default defineEventHandler(async (event) => {
       where: { ...where, utmSource: { not: null } },
       _count: { _all: true }
     }),
-    prisma.blockFeedback.groupBy({
-      by: ['kind'],
-      where: { instructionId: id, createdAt: { gte: since } },
-      _count: { _all: true }
-    }),
     prisma.$queryRaw<Array<{ code: string; count: bigint }>>`
       SELECT g."code", COUNT(*)::bigint AS count
       FROM "VisitGoal" g
       JOIN "Visit" v ON v."id" = g."visitId"
-      WHERE v."instructionId" = ${id}
+      JOIN "Instruction" i ON i."id" = v."instructionId"
+      WHERE i."tenantId" = ${tenant.id}
         AND v."startedAt" >= ${since}
         AND v."isBot" = false
       GROUP BY g."code"
       ORDER BY count DESC
     `,
+    prisma.$queryRaw<Array<{
+      id: string
+      slug: string
+      title: string
+      visits: bigint
+      pageViews: bigint
+      avgDurationMs: number
+    }>>`
+      SELECT i."id", i."slug", i."title",
+             COUNT(v.id)::bigint AS visits,
+             SUM(v."pageViews")::bigint AS "pageViews",
+             AVG(v."totalDurationMs")::float AS "avgDurationMs"
+      FROM "Visit" v
+      JOIN "Instruction" i ON i."id" = v."instructionId"
+      WHERE i."tenantId" = ${tenant.id}
+        AND v."startedAt" >= ${since}
+        AND v."isBot" = false
+      GROUP BY i."id", i."slug", i."title"
+      ORDER BY visits DESC
+      LIMIT 10
+    `,
     prisma.$queryRaw<Array<{ day: Date; visits: bigint; pageViews: bigint }>>`
-      SELECT date_trunc('day', "startedAt") AS day,
+      SELECT date_trunc('day', v."startedAt") AS day,
              COUNT(*)::bigint AS visits,
-             SUM("pageViews")::bigint AS "pageViews"
-      FROM "Visit"
-      WHERE "instructionId" = ${id}
-        AND "startedAt" >= ${since}
-        AND "isBot" = false
+             SUM(v."pageViews")::bigint AS "pageViews"
+      FROM "Visit" v
+      JOIN "Instruction" i ON i."id" = v."instructionId"
+      WHERE i."tenantId" = ${tenant.id}
+        AND v."startedAt" >= ${since}
+        AND v."isBot" = false
       GROUP BY 1
       ORDER BY 1
-    `,
-    prisma.visit.findMany({
-      where,
-      orderBy: { startedAt: 'desc' },
-      take: 50,
-      select: {
-        id: true,
-        startedAt: true,
-        endedAt: true,
-        totalDurationMs: true,
-        maxScrollDepth: true,
-        pageViews: true,
-        blocksViewed: true,
-        country: true,
-        region: true,
-        city: true,
-        deviceType: true,
-        os: true,
-        browser: true,
-        referrer: true,
-        entrySource: true,
-        entryQrShortId: true,
-        utmSource: true,
-        utmMedium: true,
-        utmCampaign: true,
-        language: true,
-        timezone: true,
-        isReturning: true,
-        goals: { select: { code: true, meta: true, createdAt: true } }
-      }
-    })
+    `
   ])
 
-  const visits = totals._count._all
-  const uniqueSessions = await prisma.visit
-    .groupBy({ by: ['sessionId'], where })
-    .then((r) => r.length)
-
   return {
-    range: { from: since, to: new Date() },
+    range: { from: since, to: new Date(), days },
     totals: {
-      visits,
+      visits: totals._count._all,
       uniqueSessions,
       pageViews: Number(totals._sum.pageViews ?? 0),
       avgScrollDepth: Math.round(totals._avg.maxScrollDepth ?? 0),
@@ -115,13 +101,19 @@ export default defineEventHandler(async (event) => {
     byDevice: byDevice.map((r) => ({ deviceType: r.deviceType ?? 'unknown', count: r._count._all })),
     byEntrySource: byEntrySource.map((r) => ({ source: r.entrySource ?? 'unknown', count: r._count._all })),
     byUtmSource: byUtmSource.map((r) => ({ utmSource: r.utmSource ?? 'unknown', count: r._count._all })),
-    feedbackByKind: feedbackByKind.map((r) => ({ kind: r.kind, count: r._count._all })),
     goalsByCode: goalsByCode.map((r) => ({ code: r.code, count: Number(r.count) })),
+    topInstructions: topInstructions.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      visits: Number(r.visits),
+      pageViews: Number(r.pageViews),
+      avgDurationMs: Math.round(r.avgDurationMs ?? 0)
+    })),
     byDay: byDay.map((r) => ({
       day: r.day,
       visits: Number(r.visits),
       pageViews: Number(r.pageViews)
-    })),
-    recentVisits
+    }))
   }
 })

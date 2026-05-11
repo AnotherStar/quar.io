@@ -17,6 +17,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "user:reset-password": "tsx scripts/reset-password.ts",
+    "user:promote-admin": "tsx scripts/promote-admin.ts",
     "wiki:generate": "npm run generate --prefix wiki-gen",
     "wiki:dry-run": "npm run dry-run --prefix wiki-gen",
     "wiki:update": "npm run update --prefix wiki-gen --",

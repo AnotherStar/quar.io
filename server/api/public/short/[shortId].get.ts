@@ -2,6 +2,17 @@ import { loadPublicByShortId } from '~~/server/utils/publicResolve'
 import { getSessionUser } from '~~/server/utils/auth'
 import { prisma } from '~~/server/utils/prisma'
 
+// Set when the visitor lands via a QR short-link. The public-page beacon
+// reads it on first event to attribute the visit as entrySource='qr'.
+// Short TTL — only needs to survive the immediate redirect + first flush.
+function markEntryAsQr(event: any, shortId: string) {
+  setCookie(event, 'mo_entry', JSON.stringify({ qr: shortId, ts: Date.now() }), {
+    path: '/',
+    maxAge: 120,
+    sameSite: 'lax'
+  })
+}
+
 export default defineEventHandler(async (event) => {
   const shortId = getRouterParam(event, 'shortId')!
   const qrCode = await prisma.activationQrCode.findUnique({
@@ -25,6 +36,7 @@ export default defineEventHandler(async (event) => {
 
   if (qrCode) {
     if (qrCode.instructionId && qrCode.instruction?.status === 'PUBLISHED') {
+      markEntryAsQr(event, shortId)
       const user = await getSessionUser(event)
       const membership = user
         ? await prisma.membership.findUnique({
@@ -67,5 +79,6 @@ export default defineEventHandler(async (event) => {
 
   const data = await loadPublicByShortId(shortId)
   if (!data) throw createError({ statusCode: 404 })
+  markEntryAsQr(event, shortId)
   return { kind: 'instruction', ...data }
 })

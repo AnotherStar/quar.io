@@ -5,6 +5,8 @@
 import { prisma } from '~~/server/utils/prisma'
 import { effectiveFeatures, planAllowsModule } from '~~/server/utils/plan'
 import { isModuleAttachedToPublished } from '~~/server/utils/moduleAttached'
+import { recordGoalForVisit } from '~~/server/utils/visit'
+import { SystemGoal } from '~~/shared/schemas/goals'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -81,5 +83,14 @@ export default defineEventHandler(async (event) => {
       }
     })
   })
+
+  await recordGoalForVisit({
+    instructionId: body.instructionId,
+    versionId: body.versionId,
+    sessionId: body.sessionId,
+    code: SystemGoal.WARRANTY_SUBMITTED,
+    meta: { registrationId: reg.id }
+  })
+
   return { ok: true, id: reg.id }
 })

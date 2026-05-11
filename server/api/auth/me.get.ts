@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     orderBy: { createdAt: 'asc' }
   })
   return {
-    user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
+    user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, isAdmin: user.isAdmin },
     memberships: memberships.map((m) => ({
       role: m.role,
       tenant: {

@@ -11,8 +11,9 @@ const { user } = useAuthState()
           <span class="text-h5 text-ink">quar.io</span>
         </NuxtLink>
         <nav class="hidden items-center gap-6 md:flex">
-          <NuxtLink to="/pricing" class="text-body-sm-md text-charcoal hover:text-ink">Пакеты</NuxtLink>
-          <NuxtLink to="/#features" class="text-body-sm-md text-charcoal hover:text-ink">Возможности</NuxtLink>
+          <NuxtLink to="/#why" class="text-body-sm-md text-charcoal hover:text-ink">Почему quar.io?</NuxtLink>
+          <NuxtLink to="/#how" class="text-body-sm-md text-charcoal hover:text-ink">Как это работает</NuxtLink>
+          <NuxtLink to="/#pricing" class="text-body-sm-md text-charcoal hover:text-ink">Тарифы</NuxtLink>
         </nav>
         <div class="flex items-center gap-3">
           <template v-if="user">
@@ -20,7 +21,7 @@ const { user } = useAuthState()
           </template>
           <template v-else>
             <UiButton to="/auth/login" variant="ghost" size="sm">Войти</UiButton>
-            <UiButton to="/auth/register" variant="primary" size="sm">Начать триал</UiButton>
+            <UiButton to="/auth/register" variant="primary" size="sm">Попробовать бесплатно</UiButton>
           </template>
         </div>
       </div>
@@ -38,10 +39,10 @@ const { user } = useAuthState()
             <span class="text-body-sm text-steel">© {{ new Date().getFullYear() }} quar.io</span>
           </div>
           <div class="flex gap-5 text-body-sm text-steel">
-            <NuxtLink to="/pricing">Пакеты</NuxtLink>
-            <NuxtLink to="/about">О нас</NuxtLink>
-            <NuxtLink to="/terms">Условия</NuxtLink>
-            <NuxtLink to="/privacy">Конфиденциальность</NuxtLink>
+            <NuxtLink to="/#why">Почему quar.io?</NuxtLink>
+            <NuxtLink to="/#how">Как это работает</NuxtLink>
+            <NuxtLink to="/#pricing">Тарифы</NuxtLink>
+            <NuxtLink to="/alt-3">Alt-3</NuxtLink>
           </div>
         </div>
       </div>

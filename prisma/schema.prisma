@@ -22,6 +22,9 @@ model User {
   name         String?
   avatarUrl    String?
   emailVerifiedAt DateTime?
+  // Глобальный суперпользователь платформы. Не tenant-scoped: даёт доступ
+  // к /dashboard/admin/* и admin-API. Включается вручную через seed/SQL.
+  isAdmin      Boolean      @default(false)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -281,6 +284,7 @@ model Instruction {
   moduleAttachments InstructionModuleAttachment[]
   sectionAttachments InstructionSectionAttachment[]
   viewEvents        ViewEvent[]
+  visits            Visit[]
   blockFeedback     BlockFeedback[]
   warrantyRegistrations WarrantyRegistration[]
   feedbackSubmissions   FeedbackSubmission[]
@@ -487,6 +491,83 @@ model ViewEvent {
   @@index([instructionId, createdAt])
   @@index([instructionId, type])
   @@index([sessionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-visit aggregate. One row per (sessionId, instructionId, versionId).
+// Built up from ViewEvent stream by the beacon endpoint; lets the dashboard
+// query "list visits" without aggregating raw events at read time.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Visit {
+  id               String    @id @default(cuid())
+  instructionId    String
+  instruction      Instruction @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  // Empty string when the public renderer has no published version pinned.
+  // Stored as non-null so the (sessionId, instructionId, versionId) unique
+  // key behaves consistently in Postgres (NULLs would compare unequal).
+  versionId        String    @default("")
+  sessionId        String
+
+  startedAt        DateTime  @default(now())
+  lastEventAt      DateTime  @default(now())
+  endedAt          DateTime?
+  totalDurationMs  Int       @default(0)
+  activeDurationMs Int       @default(0)
+  maxScrollDepth   Int       @default(0)
+  pageViews        Int       @default(0)
+  blocksViewed     String[]  @default([])
+
+  ipHash           String?
+  ipPrefix         String?
+  isReturning      Boolean   @default(false)
+  isBot            Boolean   @default(false)
+
+  country          String?
+  region           String?
+  city             String?
+  deviceType       String?
+  os               String?
+  browser          String?
+
+  referrer         String?
+  entrySource      String?
+  entryQrShortId   String?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  utmContent       String?
+  utmTerm          String?
+
+  language         String?
+  timezone         String?
+  screenWidth      Int?
+  screenHeight     Int?
+  viewportWidth    Int?
+  viewportHeight   Int?
+  devicePixelRatio Float?
+
+  goals            VisitGoal[]
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([sessionId, instructionId, versionId])
+  @@index([instructionId, startedAt])
+  @@index([instructionId, entrySource])
+  @@index([sessionId])
+}
+
+model VisitGoal {
+  id        String   @id @default(cuid())
+  visitId   String
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  code      String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([visitId])
+  @@index([code, createdAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

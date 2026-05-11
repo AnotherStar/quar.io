@@ -14,6 +14,7 @@ const mobileMenuOpen = ref(false)
 // «Модули» из core-nav.
 const coreItems = [
   { to: '/dashboard', label: 'Обзор', icon: 'lucide:layout-dashboard', exact: true },
+  { to: '/dashboard/analytics', label: 'Аналитика', icon: 'lucide:bar-chart-3' },
   { to: '/dashboard/instructions', label: 'Инструкции', icon: 'lucide:file-text' },
   { to: '/dashboard/sections', label: 'Секции', icon: 'lucide:blocks' },
   { to: '/dashboard/modules', label: 'Модули', icon: 'lucide:puzzle', exact: true },
@@ -43,6 +44,15 @@ const moduleNavItems = computed(() => {
     .filter((m) => modulesData.value?.modules.find((api) => api.code === m.manifest.code)?.tenantConfig?.enabled)
     .map((m) => ({ ...m.dashboardNavItem!, code: m.manifest.code }))
 })
+
+// Admin-only пункт меню. Виден только пользователям с глобальным флагом
+// isAdmin — обычные пользователи его не должны видеть вообще, поэтому
+// рендерим через v-if, а не просто disable.
+const adminNavItems = computed(() =>
+  user.value?.isAdmin
+    ? [{ to: '/dashboard/admin', label: 'Админ', icon: 'lucide:shield-check' }]
+    : []
+)
 
 const isActive = (to: string, exact?: boolean) =>
   exact ? route.path === to : route.path.startsWith(to)
@@ -162,6 +172,26 @@ watch(() => route.fullPath, () => {
                   >{{ i.label }}</span>
                 </NuxtLink>
               </template>
+
+              <template v-if="adminNavItems.length">
+                <hr class="my-sm border-hairline-soft" />
+                <NuxtLink
+                  v-for="i in adminNavItems"
+                  :key="i.to"
+                  :to="i.to"
+                  :title="sidebarCollapsed ? i.label : undefined"
+                  :class="[
+                    'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
+                    isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                  ]"
+                >
+                  <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+                  <span
+                    class="dashboard-fade-label truncate"
+                    :class="sidebarCollapsed ? 'is-hidden' : ''"
+                  >{{ i.label }}</span>
+                </NuxtLink>
+              </template>
             </nav>
 
             <!-- Footer: «Настройки» + вспомогательные ссылки, прижаты к низу
@@ -247,6 +277,21 @@ watch(() => route.fullPath, () => {
               <hr class="my-sm border-hairline-soft" />
               <NuxtLink
                 v-for="i in moduleNavItems"
+                :key="i.to"
+                :to="i.to"
+                :class="[
+                  'flex h-10 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
+                  isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                ]"
+              >
+                <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+                <span class="truncate">{{ i.label }}</span>
+              </NuxtLink>
+            </template>
+            <template v-if="adminNavItems.length">
+              <hr class="my-sm border-hairline-soft" />
+              <NuxtLink
+                v-for="i in adminNavItems"
                 :key="i.to"
                 :to="i.to"
                 :class="[

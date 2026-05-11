@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
           tabindex="-1"
           :class="['my-xl w-full rounded-2xl bg-surface shadow-mockup outline-none', sizeClass]"
         >
-          <header class="flex items-start justify-between gap-md border-b border-hairline-soft px-lg py-md">
+          <header class="flex items-start justify-between gap-md px-lg py-md">
             <slot name="header">
               <h2 v-if="title" :id="titleId" class="text-h4 text-navy">{{ title }}</h2>
             </slot>
@@ -98,7 +98,7 @@ onBeforeUnmount(() => {
             </button>
           </header>
 
-          <div class="px-lg py-md">
+          <div class="m-md rounded-xl bg-canvas p-lg">
             <slot />
           </div>
 

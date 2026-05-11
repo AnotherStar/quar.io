@@ -85,3 +85,14 @@ export async function requireUser(event: H3Event) {
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   return user
 }
+
+// Глобальный гард для admin-only endpoints. Не привязан к tenant'у —
+// открывает доступ к данным по всей платформе. Используется только в
+// /server/api/admin/*.
+export async function requireAdmin(event: H3Event) {
+  const user = await requireUser(event)
+  if (!(user as any).isAdmin) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  }
+  return user
+}
