@@ -8,23 +8,33 @@ const alt = computed(() => (props.node.attrs.alt as string) || '')
 const widthPx = computed(() => (props.node.attrs.width as number | null) ?? null)
 const intrinsicWidth = computed(() => (props.node.attrs.intrinsicWidth as number | null) ?? null)
 const intrinsicHeight = computed(() => (props.node.attrs.intrinsicHeight as number | null) ?? null)
-const align = computed(() => (props.node.attrs.align as 'left' | 'center' | 'right') || 'center')
+const align = computed(() => (props.node.attrs.align as 'left' | 'center' | 'right') || 'left')
 
 const wrapperRef = ref<HTMLElement | null>(null)
 const imgRef = ref<HTMLImageElement | null>(null)
 const isDragging = ref(false)
 const isHovered = ref(false)
+const isToolbarHovered = ref(false)
 const editable = computed(() => props.editor?.isEditable !== false)
 
+// NodeViewWrapper — block с text-align, inner wrapperRef — inline-block.
+// Так выравнивание левее/центр/правее работает без flex-конфликтов.
 const alignClass = computed(() =>
-  align.value === 'left' ? 'mr-auto' : align.value === 'right' ? 'ml-auto' : 'mx-auto'
+  align.value === 'left' ? 'text-left' : align.value === 'right' ? 'text-right' : 'text-center'
 )
 
-const showToolbar = computed(() => editable.value && (isHovered.value || isDragging.value))
+// Hover-triggered тулбар. Учитываем hover как на изображении, так и на
+// самом тулбаре — иначе зазор 4px между ними «съедает» hover-state и
+// меню пропадает при переходе курсора с image на toolbar.
+const showToolbar = computed(
+  () => editable.value && (isHovered.value || isToolbarHovered.value || isDragging.value)
+)
+
 const aspectRatio = computed(() => {
   if (!intrinsicWidth.value || !intrinsicHeight.value) return null
   return `${intrinsicWidth.value} / ${intrinsicHeight.value}`
 })
+
 const wrapperStyle = computed(() => ({
   ...(widthPx.value
     ? { width: `${widthPx.value}px` }
@@ -33,6 +43,7 @@ const wrapperStyle = computed(() => ({
       : {}),
   ...(aspectRatio.value ? { aspectRatio: aspectRatio.value } : {})
 }))
+
 const imageStyle = computed(() => {
   if (widthPx.value || aspectRatio.value) return { width: '100%', height: 'auto' }
   return { width: 'auto' }
@@ -69,50 +80,81 @@ function setPreset(percent: number) {
 }
 function resetWidth() { props.updateAttributes({ width: null }) }
 
-// Tailwind classes for toolbar buttons
-const tbBtn = 'inline-flex h-7 w-7 items-center justify-center rounded-sm transition-colors'
-const tbBtnIdle = 'text-charcoal hover:bg-surface'
-const tbBtnActive = 'bg-ink-deep text-white'
-const tbDivider = 'mx-0.5 h-4 w-px bg-hairline'
+// Стили кнопок тулбара картинки — единые с EditorToolbar:
+// active = белая плашка + subtle shadow, idle = charcoal + hairline-soft hover.
+function btnClass(active: boolean) {
+  return [
+    'inline-flex h-8 min-w-[32px] items-center justify-center gap-1 rounded-md px-1.5 text-body-sm-md transition-colors',
+    active ? 'bg-canvas text-ink shadow-subtle' : 'text-charcoal hover:bg-hairline-soft'
+  ]
+}
 </script>
 
 <template>
   <NodeViewWrapper
-    class="my-4 not-prose flex"
-    :class="[alignClass]"
+    class="my-4 not-prose"
+    :class="alignClass"
     data-type="resizable-image"
   >
     <div
       ref="wrapperRef"
-      class="relative inline-block max-w-full overflow-hidden rounded-md bg-surface"
+      class="relative inline-block max-w-full rounded-md bg-surface text-left align-top"
       :style="wrapperStyle"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
     >
-      <!-- Floating toolbar — sits ABOVE the image (no overlap), centered horizontally -->
+      <!-- Floating toolbar — над картинкой, центр по горизонтали.
+           Геометрия и поведение совпадают с .toolbar-group в EditorToolbar:
+           bg-surface, rounded-lg, p-1, h-8 кнопки с rounded-md. -->
       <div
         v-if="showToolbar"
         contenteditable="false"
-        class="absolute bottom-full left-1/2 z-10 mb-1 flex -translate-x-1/2 items-center gap-0.5 rounded-md border border-hairline bg-canvas px-1 py-1 shadow-card whitespace-nowrap"
+        class="absolute bottom-full left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-lg bg-surface p-1 whitespace-nowrap"
         @mousedown.prevent
+        @mouseenter="isToolbarHovered = true"
+        @mouseleave="isToolbarHovered = false"
       >
-        <button type="button" :class="[tbBtn, align === 'left' ? tbBtnActive : tbBtnIdle]" title="Слева" @click="setAlign('left')">
-          <Icon name="lucide:align-left" class="h-4 w-4" />
-        </button>
-        <button type="button" :class="[tbBtn, align === 'center' ? tbBtnActive : tbBtnIdle]" title="По центру" @click="setAlign('center')">
-          <Icon name="lucide:align-center" class="h-4 w-4" />
-        </button>
-        <button type="button" :class="[tbBtn, align === 'right' ? tbBtnActive : tbBtnIdle]" title="Справа" @click="setAlign('right')">
-          <Icon name="lucide:align-right" class="h-4 w-4" />
-        </button>
-        <span :class="tbDivider" />
-        <button type="button" :class="[tbBtn, tbBtnIdle, 'text-caption']" title="25% ширины" @click="setPreset(25)">¼</button>
-        <button type="button" :class="[tbBtn, tbBtnIdle, 'text-caption']" title="50% ширины" @click="setPreset(50)">½</button>
-        <button type="button" :class="[tbBtn, tbBtnIdle, 'text-caption']" title="100% ширины" @click="setPreset(100)">1×</button>
-        <span :class="tbDivider" />
-        <button type="button" :class="[tbBtn, tbBtnIdle]" title="Сбросить размер" @click="resetWidth">
-          <Icon name="lucide:rotate-ccw" class="h-4 w-4" />
-        </button>
+        <UiTooltip text="По левому краю">
+          <button type="button" :class="btnClass(align === 'left')" @click="setAlign('left')">
+            <Icon name="lucide:align-left" class="h-4 w-4" />
+          </button>
+        </UiTooltip>
+        <UiTooltip text="По центру">
+          <button type="button" :class="btnClass(align === 'center')" @click="setAlign('center')">
+            <Icon name="lucide:align-center" class="h-4 w-4" />
+          </button>
+        </UiTooltip>
+        <UiTooltip text="По правому краю">
+          <button type="button" :class="btnClass(align === 'right')" @click="setAlign('right')">
+            <Icon name="lucide:align-right" class="h-4 w-4" />
+          </button>
+        </UiTooltip>
+
+        <span class="mx-1 h-5 w-px bg-hairline" />
+
+        <UiTooltip text="25% ширины">
+          <button type="button" :class="btnClass(false)" @click="setPreset(25)">
+            <span class="text-caption-bold">25%</span>
+          </button>
+        </UiTooltip>
+        <UiTooltip text="50% ширины">
+          <button type="button" :class="btnClass(false)" @click="setPreset(50)">
+            <span class="text-caption-bold">50%</span>
+          </button>
+        </UiTooltip>
+        <UiTooltip text="100% ширины">
+          <button type="button" :class="btnClass(false)" @click="setPreset(100)">
+            <span class="text-caption-bold">100%</span>
+          </button>
+        </UiTooltip>
+
+        <span class="mx-1 h-5 w-px bg-hairline" />
+
+        <UiTooltip text="Сбросить размер">
+          <button type="button" :class="btnClass(false)" @click="resetWidth">
+            <Icon name="lucide:rotate-ccw" class="h-4 w-4" />
+          </button>
+        </UiTooltip>
       </div>
 
       <img
@@ -126,23 +168,15 @@ const tbDivider = 'mx-0.5 h-4 w-px bg-hairline'
         draggable="false"
       >
 
-      <!-- Resize handle in bottom-right corner -->
+      <!-- Resize handle: при наведении или перетаскивании. -->
       <span
         v-if="editable && (isHovered || isDragging)"
         contenteditable="false"
         class="absolute -bottom-1 -right-1 grid h-6 w-6 cursor-se-resize place-items-center rounded-sm border border-hairline bg-canvas text-steel shadow-subtle hover:text-ink"
-        title="Перетащить, чтобы изменить размер"
         @pointerdown="startResize"
       >
         <Icon name="lucide:move-diagonal-2" class="h-3.5 w-3.5" />
       </span>
-
-      <!-- Subtle frame when selected -->
-      <div
-        v-if="editable && selected"
-        contenteditable="false"
-        class="pointer-events-none absolute inset-0 rounded-md ring-2 ring-primary/60"
-      />
     </div>
   </NodeViewWrapper>
 </template>

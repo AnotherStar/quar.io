@@ -401,6 +401,22 @@ function createPlugin() {
       view.dom.addEventListener('mouseleave', onMouseLeave)
       handle.addEventListener('mouseleave', onMouseLeave)
 
+      // Handle position рассчитывается от viewport через getBoundingClientRect,
+      // поэтому при скролле страницы блок уезжает, а fixed-handle остаётся
+      // на старом месте. Слушаем scroll и пересчитываем позицию под текущий
+      // hoveredEl. Capture:true — чтобы ловить и скролл вложенных контейнеров.
+      const onWindowScroll = () => {
+        if (!hoveredEl || hoveredPos < 0) return
+        // Если блок ушёл из viewport — прячем; иначе позиционируем заново.
+        const rect = hoveredEl.getBoundingClientRect()
+        if (rect.bottom < 0 || rect.top > window.innerHeight) {
+          hideHandle()
+          return
+        }
+        showHandle(hoveredEl, hoveredPos)
+      }
+      window.addEventListener('scroll', onWindowScroll, { capture: true, passive: true })
+
       // ── + button: insert paragraph after current block ─────────────────
       handle.querySelector('.mo-block-handle__add')?.addEventListener('click', () => {
         if (hoveredPos < 0) return
@@ -549,6 +565,7 @@ function createPlugin() {
           view.dom.removeEventListener('mouseleave', onMouseLeave)
           view.dom.removeEventListener('dragover', onDragOver, { capture: true } as any)
           view.dom.removeEventListener('drop', onDrop, { capture: true } as any)
+          window.removeEventListener('scroll', onWindowScroll, { capture: true } as any)
           handle.remove()
           dropLine.remove()
         }

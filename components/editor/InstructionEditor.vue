@@ -16,6 +16,7 @@ import { SafetyBlock } from './extensions/SafetyBlock'
 import { SectionRef } from './extensions/SectionRef'
 import { ModuleRef } from './extensions/ModuleRef'
 import { ResizableImage } from './extensions/ResizableImage'
+import { Highlight } from './extensions/Highlight'
 import { Columns, Column } from './extensions/Columns'
 import { BlockDragHandle } from './extensions/BlockDragHandle'
 import SlashMenu from './SlashMenu.vue'
@@ -54,8 +55,13 @@ const editor = useEditor({
     TaskList,
     TaskItem.configure({ nested: true }),
     Youtube.configure({ controls: true, nocookie: true, width: 720, height: 405 }),
-    TextAlign.configure({ types: ['heading', 'paragraph'], alignments: ['left', 'center', 'right', 'justify'] }),
+    TextAlign.configure({
+      types: ['heading', 'paragraph'],
+      alignments: ['left', 'center', 'right', 'justify'],
+      defaultAlignment: 'left'
+    }),
     SafetyBlock,
+    Highlight,
     ...(props.disableSectionRefs ? [] : [SectionRef, ModuleRef]),
     Columns,
     Column,
@@ -160,6 +166,14 @@ defineExpose({
 }
 @keyframes mo-gapcursor-blink {
   to { opacity: 0; }
+}
+
+/* ProseMirror рисует широкую default-outline на выбранных atom-узлах
+ * (image, sectionRef, moduleRef, safetyBlock) — широкая синяя плашка вокруг.
+ * Подавляем: у наших NodeView'ев есть свой компактный ring-primary
+ * индикатор внутри. */
+.tiptap .ProseMirror-selectednode {
+  outline: none;
 }
 /* Task-list styles live in global.css — the editor and public renderer
  * share the same DOM and need identical look. */

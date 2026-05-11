@@ -22,8 +22,8 @@ export const ResizableImage = Image.extend({
         renderHTML: (attrs) => (attrs.width ? { style: `width: ${attrs.width}px; max-width: 100%; height: auto` } : {})
       },
       align: {
-        default: 'center',
-        parseHTML: (el) => el.getAttribute('data-align') || 'center',
+        default: 'left',
+        parseHTML: (el) => el.getAttribute('data-align') || 'left',
         renderHTML: (attrs) => ({ 'data-align': attrs.align })
       },
       intrinsicWidth: {
