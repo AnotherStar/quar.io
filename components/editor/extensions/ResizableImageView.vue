@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
+import ImageMagicModal from './ImageMagicModal.vue'
 
 const props = defineProps(nodeViewProps)
 
@@ -80,6 +81,23 @@ function setPreset(percent: number) {
 }
 function resetWidth() { props.updateAttributes({ width: null }) }
 
+// ИИ-палочка: открывает модалку, в которой можно сгенерировать варианты
+// картинки по промпту и выбрать один — он заменит src текущего узла.
+const magicOpen = ref(false)
+function openMagic() {
+  magicOpen.value = true
+}
+function applyMagic(url: string) {
+  // Сбрасываем width / intrinsic dimensions — у нового изображения они
+  // другие, иначе оно будет растянуто/обрезано.
+  props.updateAttributes({
+    src: url,
+    width: null,
+    intrinsicWidth: null,
+    intrinsicHeight: null
+  })
+}
+
 // Стили кнопок тулбара картинки — единые с EditorToolbar:
 // active = белая плашка + subtle shadow, idle = charcoal + hairline-soft hover.
 function btnClass(active: boolean) {
@@ -155,6 +173,14 @@ function btnClass(active: boolean) {
             <Icon name="lucide:rotate-ccw" class="h-4 w-4" />
           </button>
         </UiTooltip>
+
+        <span class="mx-1 h-5 w-px bg-hairline" />
+
+        <UiTooltip text="ИИ-редактирование">
+          <button type="button" :class="btnClass(false)" @click="openMagic">
+            <Icon name="lucide:wand-2" class="h-4 w-4" />
+          </button>
+        </UiTooltip>
       </div>
 
       <img
@@ -178,5 +204,11 @@ function btnClass(active: boolean) {
         <Icon name="lucide:move-diagonal-2" class="h-3.5 w-3.5" />
       </span>
     </div>
+
+    <ImageMagicModal
+      v-model:open="magicOpen"
+      :source-url="src"
+      @pick="applyMagic"
+    />
   </NodeViewWrapper>
 </template>

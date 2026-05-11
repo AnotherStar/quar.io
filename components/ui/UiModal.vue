@@ -73,7 +73,7 @@ onBeforeUnmount(() => {
     >
       <div
         v-if="open"
-        class="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-ink/40 p-md backdrop-blur-sm"
+        class="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-ink/30 p-md backdrop-blur-md"
         @click.self="onBackdrop"
       >
         <section
@@ -82,15 +82,15 @@ onBeforeUnmount(() => {
           aria-modal="true"
           :aria-labelledby="title ? titleId : undefined"
           tabindex="-1"
-          :class="['my-xl w-full rounded-lg border border-hairline bg-canvas shadow-modal outline-none', sizeClass]"
+          :class="['my-xl w-full rounded-2xl bg-surface shadow-mockup outline-none', sizeClass]"
         >
-          <header class="flex items-start justify-between gap-md border-b border-hairline px-lg py-md">
+          <header class="flex items-start justify-between gap-md border-b border-hairline-soft px-lg py-md">
             <slot name="header">
-              <h2 v-if="title" :id="titleId" class="text-h4 text-ink">{{ title }}</h2>
+              <h2 v-if="title" :id="titleId" class="text-h4 text-navy">{{ title }}</h2>
             </slot>
             <button
               type="button"
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-md text-steel hover:bg-surface hover:text-ink"
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-md text-steel transition-colors hover:bg-hairline-soft hover:text-ink"
               aria-label="Закрыть"
               @click="close"
             >
@@ -102,7 +102,7 @@ onBeforeUnmount(() => {
             <slot />
           </div>
 
-          <footer v-if="$slots.footer" class="border-t border-hairline px-lg py-md">
+          <footer v-if="$slots.footer" class="border-t border-hairline-soft px-lg py-md">
             <slot name="footer" />
           </footer>
         </section>
