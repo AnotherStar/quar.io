@@ -176,14 +176,12 @@ function onPointerCancel(event: PointerEvent) {
                 </div>
 
                 <div v-else-if="slide.realIndex === 1" class="grid h-full place-items-center">
-                  <div class="w-full max-w-2xl rounded-2xl bg-canvas p-xl shadow-subtle">
-                    <p class="text-caption-bold uppercase text-steel">Помощь внутри инструкции</p>
-                    <div class="mt-lg space-y-sm">
-                      <div class="max-w-[80%] rounded-xl bg-surface p-md text-body-sm text-charcoal">Не понимаю, какой стороной поставить направляющую.</div>
-                      <div class="ml-auto max-w-[82%] rounded-xl bg-primary p-md text-body-sm text-white">Проверьте, чтобы стрелка на детали смотрела к центру. Я добавил схему к шагу 4.</div>
-                    </div>
-                    <button class="mt-lg h-11 rounded-lg bg-surface px-lg text-body-sm-md text-charcoal">Написать продавцу</button>
-                  </div>
+                  <img
+                    src="/landing/negative-1.png"
+                    alt="Инструкция с открытым чатом поддержки для работы с вопросом покупателя"
+                    class="w-full max-w-3xl rounded-2xl shadow-card"
+                    draggable="false"
+                  >
                 </div>
 
                 <div v-else class="grid h-full place-items-center">
