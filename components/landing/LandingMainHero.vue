@@ -1,5 +1,5 @@
 <template>
-  <section class="overflow-hidden bg-canvas">
+  <section class="relative bg-surface">
     <div class="container-page pb-section-lg pt-section-lg text-center md:pb-hero md:pt-hero">
       <h1 class="mx-auto max-w-5xl text-[40px] font-semibold leading-[1.08] text-navy md:text-[58px]">
         quar.io превращает инструкцию в канал для
@@ -15,8 +15,12 @@
           Попробовать бесплатно
           <Icon name="lucide:arrow-right" class="h-5 w-5" />
         </UiButton>
-        <UiButton to="#cases" variant="secondary" size="lg">Посмотреть кейсы</UiButton>
       </div>
+    </div>
+    <div class="absolute bottom-0 left-1/2 w-full -translate-x-1/2 translate-y-1/2 px-md">
+      <h2 class="mx-auto w-fit rounded-2xl bg-canvas px-xl py-md text-center text-h2 text-navy shadow-2xl">
+        QUAR — больше чем QR
+      </h2>
     </div>
   </section>
 </template>

@@ -32,6 +32,9 @@ const transitionEnabled = ref(false)
 const dragOffset = ref(0)
 const dragStartX = ref(0)
 const isDragging = ref(false)
+const compareReady = ref(false)
+const compareHovered = ref(false)
+let compareReadyTimer: ReturnType<typeof setTimeout> | undefined
 
 onMounted(() => {
   requestAnimationFrame(() => {
@@ -45,6 +48,21 @@ const active = computed(() => {
   if (slideIndex.value === 0) return cases.length - 1
   if (slideIndex.value === cases.length + 1) return 0
   return slideIndex.value - 1
+})
+
+watch(active, (value) => {
+  compareHovered.value = false
+  compareReady.value = false
+  if (compareReadyTimer) clearTimeout(compareReadyTimer)
+  if (value === 2) {
+    compareReadyTimer = setTimeout(() => {
+      compareReady.value = true
+    }, 460)
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  if (compareReadyTimer) clearTimeout(compareReadyTimer)
 })
 
 const trackStyle = computed(() => ({
@@ -112,18 +130,23 @@ function onPointerCancel(event: PointerEvent) {
   dragOffset.value = 0
   ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
 }
+
+function activateCompare() {
+  if (!compareReady.value) return
+  compareHovered.value = true
+}
+
+function resetCompare() {
+  compareHovered.value = false
+}
 </script>
 
 <template>
-  <section id="cases" class="border-y border-hairline bg-canvas">
+  <section id="cases" class="bg-canvas">
     <div class="container-page py-section-lg">
-      <div>
-        <h2 class="mx-auto max-w-3xl text-center text-h2 text-navy">QUAR — больше чем QR:</h2>
-      </div>
-
       <div
         ref="viewport"
-        class="mt-section overflow-hidden bg-canvas"
+        class="overflow-hidden bg-canvas"
         @pointerdown="onPointerDown"
         @pointermove="onPointerMove"
         @pointerup="onPointerUp"
@@ -141,7 +164,7 @@ function onPointerCancel(event: PointerEvent) {
             :aria-hidden="slide.realIndex !== active"
           >
             <div class="grid lg:grid-cols-2">
-              <div class="border-b border-hairline py-xl pr-xl md:py-2xl md:pr-2xl lg:border-b-0 lg:border-r">
+              <div class="border-b border-hairline py-xl pr-xl md:py-2xl md:pr-2xl lg:border-b-0">
                 <h3 class="text-h2 text-navy">
                   <template v-if="slide.realIndex === 0">
                     Теперь это
@@ -155,37 +178,34 @@ function onPointerCancel(event: PointerEvent) {
               </div>
 
               <div class="min-h-[420px] bg-transparent p-lg md:p-2xl">
-                <div v-if="slide.realIndex === 0" class="grid h-full gap-lg md:grid-cols-[1fr_0.82fr]">
-                  <div class="rounded-xl bg-canvas p-xl shadow-subtle">
-                    <p class="text-caption-bold uppercase text-steel">Инструкция</p>
-                    <div class="mt-lg rounded-lg bg-surface p-lg">
-                      <p class="text-h5 text-ink">Шаг 3. Нанесите клей</p>
-                      <p class="mt-sm text-body text-slate">Тонкий слой по периметру. Отступ от края — 5 мм.</p>
-                    </div>
-                    <div class="mt-lg rounded-lg bg-tint-yellow p-lg">
-                      <p class="text-body-sm-md text-warning">Важно</p>
-                      <p class="mt-sm text-body text-slate">Не применять ниже +5°C.</p>
-                    </div>
-                  </div>
-                  <div class="rounded-xl bg-primary/10 p-xl text-center">
-                    <p class="text-body-sm-md text-primary">Только для вас</p>
-                    <p class="mt-sm text-[52px] font-semibold text-primary">-15%</p>
-                    <p class="mt-sm text-body text-slate">На следующий тюбик герметика напрямую.</p>
-                    <button class="mt-xl h-12 rounded-lg bg-primary px-lg text-body-sm-md text-white">Заказать за 340 ₽</button>
-                  </div>
+                <div v-if="slide.realIndex === 0" class="h-full">
+                  <img
+                    src="/landing/feature-1.png"
+                    alt="Инструкция с оффером для повторной покупки после продажи"
+                    class="h-full w-full rounded-2xl object-cover shadow-card"
+                    draggable="false"
+                  >
                 </div>
 
-                <div v-else-if="slide.realIndex === 1" class="grid h-full place-items-center">
+                <div v-else-if="slide.realIndex === 1" class="h-full">
                   <img
                     src="/landing/negative-1.png"
                     alt="Инструкция с открытым чатом поддержки для работы с вопросом покупателя"
-                    class="w-full max-w-3xl rounded-2xl shadow-card"
+                    class="h-full w-full rounded-2xl object-cover shadow-card"
                     draggable="false"
                   >
                 </div>
 
                 <div v-else class="grid h-full place-items-center">
-                  <div class="case-compare case-compare-frame group relative w-full max-w-3xl overflow-hidden rounded-2xl bg-canvas">
+                  <div
+                    :class="[
+                      'case-compare case-compare-frame relative w-full max-w-3xl overflow-hidden rounded-2xl bg-canvas',
+                      compareHovered && slide.realIndex === active ? 'case-compare-active' : ''
+                    ]"
+                    @pointerenter="activateCompare"
+                    @pointermove="activateCompare"
+                    @pointerleave="resetCompare"
+                  >
                     <div class="case-compare-media relative aspect-square bg-surface">
                       <img
                         src="/landing/vel-before.png"
@@ -254,11 +274,11 @@ function onPointerCancel(event: PointerEvent) {
   transition: left 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.case-compare:hover .case-compare-after {
+.case-compare-active .case-compare-after {
   clip-path: polygon(10% 0, 100% 0, 100% 100%, 10% 100%);
 }
 
-.case-compare:hover .case-compare-divider {
+.case-compare-active .case-compare-divider {
   left: 10%;
 }
 </style>

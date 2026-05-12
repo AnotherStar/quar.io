@@ -12,6 +12,7 @@ const { user } = useAuthState()
         </NuxtLink>
         <nav class="hidden items-center gap-6 md:flex">
           <NuxtLink to="/#why" class="text-body-sm-md text-charcoal hover:text-ink">Почему quar.io?</NuxtLink>
+          <NuxtLink to="/#trust" class="text-body-sm-md text-charcoal hover:text-ink">Нам доверяют</NuxtLink>
           <NuxtLink to="/#how" class="text-body-sm-md text-charcoal hover:text-ink">Как это работает</NuxtLink>
           <NuxtLink to="/#pricing" class="text-body-sm-md text-charcoal hover:text-ink">Тарифы</NuxtLink>
         </nav>
@@ -40,6 +41,7 @@ const { user } = useAuthState()
           </div>
           <div class="flex gap-5 text-body-sm text-steel">
             <NuxtLink to="/#why">Почему quar.io?</NuxtLink>
+            <NuxtLink to="/#trust">Нам доверяют</NuxtLink>
             <NuxtLink to="/#how">Как это работает</NuxtLink>
             <NuxtLink to="/#pricing">Тарифы</NuxtLink>
             <NuxtLink to="/alt-3">Alt-3</NuxtLink>

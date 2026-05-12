@@ -12,22 +12,22 @@ const benefits = [
 </script>
 
 <template>
-  <section id="why" class="bg-canvas">
+  <section id="why" class="bg-[#342f29]">
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
-        <p class="text-caption-bold uppercase text-steel">Почему quar.io?</p>
-        <h2 class="mt-3 text-h2 text-navy">Инструкция становится рабочим каналом, а не PDF на всякий случай.</h2>
-        <p class="mt-md text-h5 font-medium leading-[1.55] text-slate">
+        <p class="text-caption-bold uppercase text-[#c9bba5]">Почему quar.io?</p>
+        <h2 class="mt-3 text-h2 text-[#fffaf2]">Инструкция становится рабочим каналом, а не PDF на всякий случай.</h2>
+        <p class="mt-md text-h5 font-medium leading-[1.55] text-[#d8cdbd]">
           Главные сценарии продукта собраны вокруг одного момента: покупатель уже получил товар и готов взаимодействовать.
         </p>
       </div>
 
       <div class="mt-section grid gap-x-2xl gap-y-3xl md:grid-cols-2 lg:grid-cols-4">
         <article v-for="item in benefits" :key="item.title" class="grid grid-cols-[28px_1fr] gap-md">
-          <Icon :name="item.icon" class="mt-1 h-5 w-5 text-success" />
+          <Icon :name="item.icon" class="mt-1 h-5 w-5 text-[#d8b46a]" />
           <div>
-            <h3 class="text-h5 text-navy">{{ item.title }}</h3>
-            <p class="mt-sm text-body text-slate">{{ item.copy }}</p>
+            <h3 class="text-h5 text-[#fffaf2]">{{ item.title }}</h3>
+            <p class="mt-sm text-body text-[#c9bba5]">{{ item.copy }}</p>
           </div>
         </article>
       </div>
