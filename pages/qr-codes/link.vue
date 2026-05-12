@@ -11,8 +11,9 @@
 // варианта. Короткая инструкция и QR-handoff («открыть на телефоне»)
 // вынесены в модалку «Как работает активация».
 //
-// Может быть открыт с ?qr=<shortId> (редирект из /code/[uuid]) — в этом
-// случае QR-слот предзаполнен плейсхолдером и сканируется только ШК.
+// Может быть открыт с ?qr=<shortId> (редирект из публичной страницы
+// /s/[shortId] для своего QR, который ещё не привязан к инструкции) — в
+// этом случае QR-слот предзаполнен плейсхолдером и сканируется только ШК.
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 import type { QrPrintRunEntry } from '~~/shared/schemas/qrCode'
@@ -42,6 +43,28 @@ const scanning = ref(false)
 // ZXing controls; created lazily inside startScanner so the library is only
 // loaded on this page (~150KB gz).
 let scannerControls: { stop(): void } | null = null
+
+// ZXing.MultiFormatReader логирует console.warn на КАЖДОМ кадре, где ничего
+// не распозналось — это десятки сообщений в секунду «NotFoundException2» и
+// «Could not create a Canvas element». Эти исключения штатные (просто на
+// кадре нет штрихкода), но забивают консоль и мешают видеть реальные
+// проблемы. Глушим их только на время работы сканера, исходный console.warn
+// восстанавливается в stopScanner.
+let originalConsoleWarn: typeof console.warn | null = null
+function silenceZxingWarnings() {
+  if (originalConsoleWarn) return
+  originalConsoleWarn = console.warn
+  console.warn = (...args: any[]) => {
+    const first = args[0]
+    if (typeof first === 'string' && first.includes('MultiFormatReader')) return
+    originalConsoleWarn?.(...args)
+  }
+}
+function restoreConsoleWarn() {
+  if (!originalConsoleWarn) return
+  console.warn = originalConsoleWarn
+  originalConsoleWarn = null
+}
 
 // ─── Linking state ─────────────────────────────────────────────────────
 const qrId = ref<string | null>(null)
@@ -217,6 +240,7 @@ async function startScanner() {
 
     const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 100 })
 
+    silenceZxingWarnings()
     scannerControls = await reader.decodeFromConstraints(
       { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
       videoRef.value,
@@ -248,6 +272,7 @@ function stopScanner() {
   scanning.value = false
   scannerControls?.stop()
   scannerControls = null
+  restoreConsoleWarn()
 }
 
 function captureFrame(): string | null {
@@ -272,7 +297,7 @@ function vibrate(pattern: number | number[]) {
 }
 
 async function onQrDetected(rawValue: string) {
-  // Accept either the absolute /code/<id> URL or the bare short id
+  // Accept the absolute /s/<id> URL or the bare short id.
   const shortId = extractShortId(rawValue)
   if (!shortId) return
 
@@ -389,8 +414,8 @@ async function onBarcodeDetected(rawValue: string) {
 function extractShortId(raw: string): string | null {
   const trimmed = raw.trim()
   if (!trimmed) return null
-  // Match /code/<id> or /s/<id> or just a bare token
-  const match = trimmed.match(/(?:\/(?:code|s)\/)([A-Za-z0-9_-]+)/)
+  // Match /s/<id> or just a bare token
+  const match = trimmed.match(/\/s\/([A-Za-z0-9_-]+)/)
   if (match) return match[1]
   if (/^[A-Za-z0-9_-]{4,}$/.test(trimmed)) return trimmed
   return null
@@ -1003,36 +1028,45 @@ const hint = computed(() => {
   border-radius: 24px;
 }
 
+/* L-уголки рамки. border-radius намеренно совпадает с радиусом внешнего
+ * пунктирного контура (.linker-frame::before — 24px), иначе уголки выглядят
+ * почти прямыми внутри ощутимо скруглённой рамки и рамка визуально
+ * «расходится». Скругление применяется только к той стороне уголка,
+ * которая совпадает с углом рамки, остальные углы — нулевые. */
 .linker-frame-corner {
   position: absolute;
   width: 40px;
   height: 40px;
   border: 4px solid #fff;
-  border-radius: 6px;
+  border-radius: 0;
 }
 .linker-frame-corner.tl {
   top: calc(50% - min(35vw, 35vh));
   left: calc(50% - min(35vw, 35vh));
   border-right: 0;
   border-bottom: 0;
+  border-top-left-radius: 24px;
 }
 .linker-frame-corner.tr {
   top: calc(50% - min(35vw, 35vh));
   right: calc(50% - min(35vw, 35vh));
   border-left: 0;
   border-bottom: 0;
+  border-top-right-radius: 24px;
 }
 .linker-frame-corner.bl {
   bottom: calc(50% - min(35vw, 35vh));
   left: calc(50% - min(35vw, 35vh));
   border-right: 0;
   border-top: 0;
+  border-bottom-left-radius: 24px;
 }
 .linker-frame-corner.br {
   bottom: calc(50% - min(35vw, 35vh));
   right: calc(50% - min(35vw, 35vh));
   border-left: 0;
   border-top: 0;
+  border-bottom-right-radius: 24px;
 }
 
 .linker-thumb {

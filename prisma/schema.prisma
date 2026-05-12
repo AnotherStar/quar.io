@@ -92,6 +92,7 @@ model Tenant {
   mediaAssets         MediaAsset[]
   productGroups       ProductGroup[]
   activationQrCodes   ActivationQrCode[]
+  printBatches        PrintBatch[]
   legalProfile        TenantLegalProfile?
   legalDocuments      LegalDocumentVersion[]
   consentEvents       ConsentEvent[]
@@ -325,6 +326,44 @@ model ActivationQrCode {
   @@index([tenantId, createdAt])
   @@index([tenantId, instructionId])
   @@index([tenantId, firstPrintedAt])
+}
+
+// Print batch — единичный тираж QR-стикеров (или другого формата печати),
+// который пользователь подготовил из админки. Тираж — это снапшот выбранного
+// шаблона + список QR-кодов, попавших в pdf. PDF сохраняется в S3 и доступен
+// для повторного скачивания, поэтому templateSnapshot фиксирует версию
+// шаблона, по которой собиралось pdf — даже если код шаблона в репо изменится,
+// исторический тираж останется воспроизводимым.
+enum PrintBatchStatus {
+  GENERATING
+  READY
+  FAILED
+}
+
+model PrintBatch {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdById      String?
+
+  // Шаблон, по которому был собран тираж. templateCode — стабильный
+  // идентификатор из print-templates/registry.ts; templateSnapshot — копия
+  // manifest'а (имя, размер, версия) на момент создания.
+  templateCode     String
+  templateSnapshot Json
+
+  count            Int
+  qrCodeIds        String[]                // ActivationQrCode.id, попавшие в тираж
+
+  status           PrintBatchStatus @default(GENERATING)
+  pdfStorageKey    String?
+  pdfSizeBytes     Int?
+  error            String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([tenantId, createdAt])
 }
 
 // Immutable snapshot. Created on publish or explicit "save version".

@@ -22,7 +22,8 @@ const coreItems = [
   // Идёт сразу под «QR-коды»: вспомогательный flow для активации свободных
   // QR со сканированием на телефоне. Иконка — две встречные стрелки
   // (передача / привязка QR к инструкции).
-  { to: '/qr-codes/link', label: 'Активация', icon: 'lucide:arrow-left-right' }
+  { to: '/qr-codes/link', label: 'Активация', icon: 'lucide:arrow-left-right' },
+  { to: '/dashboard/print', label: 'Печать', icon: 'lucide:printer' }
   // «Тариф и оплата» — теперь вкладка внутри /dashboard/settings?tab=billing.
 ]
 

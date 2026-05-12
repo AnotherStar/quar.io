@@ -107,7 +107,7 @@ async function createBatch() {
 
 function shortUrl(code: QrCodeRow) {
   const appUrl = useRuntimeConfig().public.appUrl.replace(/\/$/, '')
-  return `${appUrl}/code/${code.shortId}`
+  return `${appUrl}/s/${code.shortId}`
 }
 
 function fmtDate(iso: string | null | undefined) {
@@ -212,7 +212,7 @@ function lastDesign(code: QrCodeRow) {
             </td>
             <td class="py-sm">
               <a :href="shortUrl(code)" target="_blank" rel="noopener" class="text-body-sm-md text-link hover:underline">
-                /code/{{ code.shortId }}
+                /s/{{ code.shortId }}
               </a>
             </td>
             <td class="py-sm">

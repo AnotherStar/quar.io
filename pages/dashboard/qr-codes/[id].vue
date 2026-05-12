@@ -69,7 +69,7 @@ watch([showRebind, debouncedSearch], async ([open]) => {
 const shortUrl = computed(() => {
   if (!code.value) return ''
   const appUrl = useRuntimeConfig().public.appUrl.replace(/\/$/, '')
-  return `${appUrl}/code/${code.value.shortId}`
+  return `${appUrl}/s/${code.value.shortId}`
 })
 
 const qrSvg = ref<string | null>(null)
@@ -163,7 +163,7 @@ function copy(text: string) {
       </button>
       <div class="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 class="text-h2 text-ink">QR /code/{{ code.shortId }}</h1>
+          <h1 class="text-h2 text-ink">QR /s/{{ code.shortId }}</h1>
           <p class="mt-1 text-body text-slate">
             Создан {{ new Date(code.createdAt).toLocaleDateString() }} · Обновлён {{ new Date(code.updatedAt).toLocaleDateString() }}
           </p>

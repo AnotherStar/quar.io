@@ -73,7 +73,11 @@ export default defineEventHandler(async (event) => {
         boundAt: qrCode.boundAt
       },
       tenant: qrCode.tenant,
-      canBind: !!membership && membership.role !== 'VIEWER'
+      canBind: !!membership && membership.role !== 'VIEWER',
+      // Нужен клиенту, чтобы отличить «незалогинен» от «залогинен, но
+      // этот QR из чужого tenant'а». Первому показываем «ШК не привязан»,
+      // второму — «Это не ваш ШК».
+      viewerAuthenticated: !!user
     }
   }
 
