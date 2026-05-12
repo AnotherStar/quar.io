@@ -19,6 +19,5 @@ useHead({
     <LandingShotOrderFlow />
     <LandingPricingPlans />
     <LandingTwoScenarios />
-    <LandingClosingCta />
   </div>
 </template>

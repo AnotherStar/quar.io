@@ -1,9 +1,27 @@
 <script setup lang="ts">
 const stats = [
-  { value: '120+', label: 'инструкций в пилотах' },
-  { value: '38%', label: 'средняя доля вопросов по сложным шагам' },
-  { value: '12%', label: 'переходов к повторному заказу в демо-сценарии' }
+  { target: 120, suffix: '+', label: 'инструкций в пилотах' },
+  { target: 38, suffix: '%', label: 'средняя доля вопросов по сложным шагам' },
+  { target: 12, suffix: '%', label: 'переходов к повторному заказу в демо-сценарии' }
 ]
+
+const displayed = ref<number[]>(stats.map(() => 0))
+const statsRoot = ref<HTMLElement | null>(null)
+let countersStarted = false
+
+function runCounters() {
+  if (countersStarted) return
+  countersStarted = true
+  const duration = 1400
+  const startTime = performance.now()
+  function frame(now: number) {
+    const progress = Math.min(1, (now - startTime) / duration)
+    const eased = 1 - Math.pow(1 - progress, 3)
+    displayed.value = stats.map(stat => Math.round(stat.target * eased))
+    if (progress < 1) requestAnimationFrame(frame)
+  }
+  requestAnimationFrame(frame)
+}
 
 const testimonials = [
   { name: 'Анна', initials: 'АК', avatarTone: 'bg-tint-rose text-brand-pink-deep', company: 'бренд товаров для дома', role: 'операционный директор', quote: 'Раньше вопросы жили в отзывах. Теперь видим, где человек застрял, и можем исправить инструкцию до следующей партии.' },
@@ -53,30 +71,45 @@ function runMarquee(timestamp: number) {
   marqueeFrame = requestAnimationFrame(runMarquee)
 }
 
+let statsObserver: IntersectionObserver | undefined
+
 onMounted(() => {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (reduced) {
+    displayed.value = stats.map(s => s.target)
+  } else if (statsRoot.value) {
+    statsObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          runCounters()
+          statsObserver?.disconnect()
+        }
+      }
+    }, { threshold: 0.4 })
+    statsObserver.observe(statsRoot.value)
+  }
+
+  if (reduced) return
   marqueeFrame = requestAnimationFrame(runMarquee)
 })
 
 onBeforeUnmount(() => {
   if (marqueeFrame) cancelAnimationFrame(marqueeFrame)
+  statsObserver?.disconnect()
 })
 </script>
 
 <template>
-  <section id="trust" class="trust-section bg-[linear-gradient(180deg,var(--color-brand-navy-deep)_0%,var(--color-brand-navy)_30%,var(--color-brand-navy-mid)_58%,var(--color-canvas)_100%)]">
+  <section id="trust" class="trust-section bg-[linear-gradient(180deg,var(--color-surface)_0%,var(--color-surface)_45%,var(--color-canvas)_100%)] text-ink">
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
-        <p class="text-caption-bold uppercase text-white/55">Почему нам доверяют</p>
-        <h2 class="mt-3 text-h2 text-white">Пока это рыба: сюда поставим реальные цифры, логотипы и отзывы.</h2>
-        <p class="mt-md text-h5 font-medium leading-[1.55] text-white/70">
-          Блок уже подготовлен под social proof: метрики, короткие цитаты и карточки клиентов.
-        </p>
+        <p class="text-caption-bold uppercase text-steel">Почему нам доверяют</p>
       </div>
 
-      <div class="mt-section grid divide-y divide-hairline rounded-2xl border border-hairline bg-canvas md:grid-cols-3 md:divide-x md:divide-y-0">
-        <div v-for="stat in stats" :key="stat.value" class="p-xl text-center">
-          <p class="text-[54px] font-semibold leading-none text-primary">{{ stat.value }}</p>
+      <div ref="statsRoot" class="mt-section grid divide-y divide-hairline rounded-2xl border border-hairline bg-canvas md:grid-cols-3 md:divide-x md:divide-y-0">
+        <div v-for="(stat, i) in stats" :key="stat.label" class="p-xl text-center">
+          <p class="stat-num text-[54px] font-semibold leading-none text-primary">{{ displayed[i] }}{{ stat.suffix }}</p>
           <p class="mt-sm text-body-sm-md text-steel">{{ stat.label }}</p>
         </div>
       </div>
@@ -121,3 +154,10 @@ onBeforeUnmount(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.stat-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+</style>

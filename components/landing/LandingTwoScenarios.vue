@@ -10,8 +10,8 @@ const scenarios = [
     href: '/auth/register'
   },
   {
-    icon: 'lucide:monitor',
-    tone: 'orange' as const,
+    icon: 'lucide:store',
+    tone: 'warning' as const,
     title: 'Продаю через маркетплейс',
     body: 'Wildberries, Ozon, Яндекс Маркет — после покупки клиент никак не связан с вами, а вы платите за это 30-50% комиссии с каждого заказа. У вас нет возможности повторно продать товар или рассказать о новинках.',
     solution: 'quar.io: QR в коробке — клиент попадает к вам напрямую. Повторная покупка без комиссии. Данные клиента у вас.',
@@ -20,43 +20,39 @@ const scenarios = [
   }
 ]
 
-const iconBg = {
+const iconTone = {
   primary: 'bg-primary/10 text-primary',
-  orange: 'bg-tint-peach text-brand-orange'
+  warning: 'bg-warning/10 text-warning'
 }
 </script>
 
 <template>
-  <section class="bg-surface">
-    <div class="container-page py-section-lg">
-      <div class="max-w-3xl">
-        <LandingShotKicker label="Для кого" tone="pill" />
-        <h2 class="mt-lg text-h2 text-navy">Два сценария — одно решение</h2>
+  <section class="bg-[linear-gradient(180deg,var(--color-surface-soft)_0%,var(--color-canvas)_100%)]">
+    <div class="container-page pb-hero pt-section-lg">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="text-caption-bold uppercase text-steel">Для кого</p>
+        <h2 class="mt-3 text-h2 text-navy">Два сценария — одно решение</h2>
+        <p class="mt-md text-h5 font-medium leading-[1.55] text-slate">
+          Один QR в коробке закрывает обе боли: сложный товар без понятной инструкции и потерю клиента после маркетплейса.
+        </p>
       </div>
 
-      <div class="mt-section grid gap-md md:grid-cols-2">
-        <article
-          v-for="scenario in scenarios"
-          :key="scenario.title"
-          class="flex flex-col rounded-2xl border border-hairline bg-canvas p-2xl"
-        >
-          <div :class="['grid h-12 w-12 place-items-center rounded-xl', iconBg[scenario.tone]]">
-            <Icon :name="scenario.icon" class="h-6 w-6" />
+      <div class="mt-section grid gap-2xl md:grid-cols-2">
+        <article v-for="scenario in scenarios" :key="scenario.title">
+          <div class="flex items-center gap-md">
+            <div :class="['grid h-12 w-12 shrink-0 place-items-center rounded-xl', iconTone[scenario.tone]]">
+              <Icon :name="scenario.icon" class="h-6 w-6" />
+            </div>
+            <h3 class="text-h4 text-navy">{{ scenario.title }}</h3>
           </div>
-          <h3 class="mt-lg text-h4 text-navy">{{ scenario.title }}</h3>
-          <p class="mt-md text-body leading-relaxed text-slate">{{ scenario.body }}</p>
-
-          <div class="mt-lg rounded-r-lg border-l-2 border-primary bg-primary/5 px-md py-md">
-            <p class="text-caption-bold uppercase text-primary">Решение</p>
-            <p class="mt-2 text-body leading-relaxed text-charcoal">{{ scenario.solution }}</p>
-          </div>
-
-          <div class="mt-xl">
-            <UiButton :to="scenario.href" variant="primary">
-              {{ scenario.cta }}
-              <Icon name="lucide:arrow-right" class="h-4 w-4" />
-            </UiButton>
-          </div>
+          <p class="mt-md max-w-[560px] text-body leading-relaxed text-slate">{{ scenario.body }}</p>
+          <p class="mt-lg max-w-[560px] border-l-2 border-primary pl-md text-body font-medium leading-relaxed text-ink">
+            {{ scenario.solution }}
+          </p>
+          <UiButton :to="scenario.href" class="mt-xl" variant="primary">
+            {{ scenario.cta }}
+            <Icon name="lucide:arrow-right" class="h-4 w-4" />
+          </UiButton>
         </article>
       </div>
     </div>

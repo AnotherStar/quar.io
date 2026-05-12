@@ -33,13 +33,13 @@ const plans = [
         <p class="mt-md text-h5 font-medium text-slate">Первый месяц нужен, чтобы проверить сценарий на реальных товарах и первых вопросах покупателей.</p>
       </div>
 
-      <div class="mt-section grid gap-md lg:grid-cols-3">
+      <div class="pricing-grid mt-section grid gap-md lg:grid-cols-3">
         <article
           v-for="plan in plans"
           :key="plan.name"
           :class="[
-            'rounded-2xl border p-xl shadow-subtle',
-            plan.dark ? 'border-navy bg-navy text-white' : 'border-hairline bg-canvas text-ink'
+            'pricing-card rounded-2xl p-xl shadow-card',
+            plan.dark ? 'bg-navy text-white' : 'bg-canvas text-ink'
           ]"
         >
           <h3 :class="['text-h4', plan.dark ? 'text-white' : 'text-navy']">{{ plan.name }}</h3>
@@ -63,3 +63,55 @@ const plans = [
     </div>
   </section>
 </template>
+
+<style scoped>
+@supports (animation-timeline: view()) {
+  .pricing-card {
+    animation: pricing-fade-in linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 35%;
+  }
+
+  @media (min-width: 1024px) {
+    .pricing-grid {
+      view-timeline-name: --pricing-grid;
+    }
+
+    .pricing-card {
+      animation-timeline: --pricing-grid;
+    }
+
+    .pricing-card:nth-child(1) {
+      animation-range: cover 0% cover 28%;
+    }
+
+    .pricing-card:nth-child(2) {
+      animation-range: cover 10% cover 38%;
+    }
+
+    .pricing-card:nth-child(3) {
+      animation-range: cover 20% cover 48%;
+    }
+  }
+}
+
+@keyframes pricing-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+</style>

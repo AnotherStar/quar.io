@@ -58,7 +58,7 @@ const flagColor: Record<'success' | 'warning' | 'error', string> = {
 </script>
 
 <template>
-  <section class="bg-navy-deep">
+  <section class="bg-navy-deep text-white">
     <div class="container-page py-section-lg">
       <div class="grid items-end gap-2xl lg:grid-cols-2">
         <div>

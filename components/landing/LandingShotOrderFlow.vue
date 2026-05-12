@@ -33,14 +33,14 @@ const steps = [
 </script>
 
 <template>
-  <section id="how" data-section="shot-order-flow" class="border-b border-hairline bg-canvas">
+  <section id="how" data-section="shot-order-flow" class="bg-canvas">
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-[900px] text-center">
         <LandingShotKicker label="Как работает" tone="pill" />
-        <h2 class="mt-lg text-h2 text-navy">От коробки до повторного заказа</h2>
+        <h2 class="mt-lg text-h2 text-navy">Ваш путь от идеи к продажи</h2>
         <p class="mx-auto mt-md max-w-[900px] text-h5 font-medium leading-[1.55] text-slate">
-          Не обязательно делать инструкцию. Можно сразу предложить скидку на следующий заказ —
-          покупатель сканирует QR и видит оффер.
+          Не обязательно делать техническую инструкцию. Можно сразу предложить скидку на следующий заказ —
+          покупатель сканирует QR и видит ваше предложение.
         </p>
       </div>
 
@@ -49,7 +49,7 @@ const steps = [
           <div class="timeline-rail">
             <div class="timeline-marker">01</div>
           </div>
-          <div class="pb-3xl">
+          <div class="pb-section-lg">
             <h3 class="flex min-h-12 items-center text-h4 text-navy">{{ steps[0].title }}</h3>
             <p class="mt-md max-w-[640px] text-h5 font-medium leading-[1.55] text-slate">{{ steps[0].copy }}</p>
             <ul class="mt-lg grid gap-sm text-body-sm-md text-charcoal">
@@ -60,7 +60,7 @@ const steps = [
             </ul>
           </div>
 
-          <div class="pb-3xl lg:col-start-3 lg:row-start-1">
+          <div class="pb-section-lg lg:col-start-3 lg:row-start-1">
             <img
               src="/landing/step-1.png"
               alt="Мобильная инструкция рядом с товаром"
@@ -85,7 +85,7 @@ const steps = [
           <div class="timeline-rail">
             <div class="timeline-marker">{{ String(index + 2).padStart(2, '0') }}</div>
           </div>
-          <div class="pb-3xl">
+          <div class="pb-section-lg">
             <h3 class="flex min-h-12 items-center text-h4 text-navy">{{ step.title }}</h3>
             <p v-if="step.copy" class="mt-md max-w-[640px] text-h5 font-medium leading-[1.55] text-slate">{{ step.copy }}</p>
             <ul v-if="step.bullets" class="mt-lg grid gap-sm text-body-sm-md text-charcoal">
@@ -96,7 +96,7 @@ const steps = [
             </ul>
           </div>
 
-          <div v-if="step.image" class="pb-3xl lg:col-start-3 lg:row-start-1">
+          <div v-if="step.image" class="pb-section-lg lg:col-start-3 lg:row-start-1">
             <img
               :src="step.image"
               :alt="step.imageAlt"
@@ -141,6 +141,34 @@ const steps = [
   bottom: calc(100% - var(--timeline-marker-size) / 2);
 }
 
+@supports (animation-timeline: view()) {
+  .timeline-step > div:not(.timeline-rail) {
+    animation: timeline-fade-in linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 35%;
+  }
+}
+
+@keyframes timeline-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-step > div:not(.timeline-rail) {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .timeline-marker {
   position: relative;
   z-index: 1;
@@ -155,5 +183,17 @@ const steps = [
   font-weight: 700;
   line-height: 1;
   box-shadow: rgba(15, 15, 15, 0.08) 0 4px 12px 0;
+}
+
+@media (min-width: 1024px) {
+  .timeline-marker {
+    position: sticky;
+    top: 96px;
+  }
+
+  .timeline-step:last-child .timeline-marker {
+    position: relative;
+    top: auto;
+  }
 }
 </style>
