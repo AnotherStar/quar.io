@@ -4,7 +4,7 @@ const { user } = useAuthState()
 
 <template>
   <div class="min-h-screen bg-canvas">
-    <header class="sticky top-0 z-30 border-b border-hairline bg-canvas/95 backdrop-blur">
+    <header class="sticky top-0 z-30 border-b border-hairline bg-canvas/80 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-canvas/70">
       <div class="container-page flex h-16 items-center justify-between">
         <NuxtLink to="/" class="flex items-center gap-2">
           <img src="/icons/icon-192.png" alt="" width="40" height="40" class="h-10 w-10 rounded-md" />

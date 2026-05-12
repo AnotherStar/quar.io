@@ -130,7 +130,7 @@ const steps = [
   width: 4px;
   transform: translateX(-50%);
   border-radius: 9999px;
-  background: #b79b6d;
+  background: var(--color-primary);
 }
 
 .timeline-step:first-child .timeline-rail::before {
@@ -149,7 +149,7 @@ const steps = [
   height: var(--timeline-marker-size);
   place-items: center;
   border-radius: 9999px;
-  background: #b79b6d;
+  background: var(--color-primary);
   color: #fff;
   font-size: 18px;
   font-weight: 700;

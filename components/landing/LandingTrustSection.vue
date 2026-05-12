@@ -64,12 +64,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section id="trust" class="trust-section bg-[linear-gradient(180deg,#342f29_0%,#5f574d_28%,#c9c2b7_62%,var(--color-canvas)_100%)]">
+  <section id="trust" class="trust-section bg-[linear-gradient(180deg,var(--color-brand-navy-deep)_0%,var(--color-brand-navy)_30%,var(--color-brand-navy-mid)_58%,var(--color-canvas)_100%)]">
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
-        <p class="text-caption-bold uppercase text-[#c9bba5]">Почему нам доверяют</p>
-        <h2 class="mt-3 text-h2 text-[#fffaf2]">Пока это рыба: сюда поставим реальные цифры, логотипы и отзывы.</h2>
-        <p class="mt-md text-h5 font-medium leading-[1.55] text-[#e6dccb]">
+        <p class="text-caption-bold uppercase text-white/55">Почему нам доверяют</p>
+        <h2 class="mt-3 text-h2 text-white">Пока это рыба: сюда поставим реальные цифры, логотипы и отзывы.</h2>
+        <p class="mt-md text-h5 font-medium leading-[1.55] text-white/70">
           Блок уже подготовлен под social proof: метрики, короткие цитаты и карточки клиентов.
         </p>
       </div>

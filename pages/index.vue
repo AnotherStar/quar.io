@@ -18,6 +18,7 @@ useHead({
     <LandingTrustSection />
     <LandingShotOrderFlow />
     <LandingPricingPlans />
+    <LandingTwoScenarios />
     <LandingClosingCta />
   </div>
 </template>
