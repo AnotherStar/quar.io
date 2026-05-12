@@ -1,6 +1,6 @@
 <template>
   <section class="relative bg-surface">
-    <div class="container-page pb-section-lg pt-section-lg text-center md:pb-hero md:pt-hero">
+    <div class="container-page pb-[160px] pt-section-lg text-center md:pb-hero md:pt-hero">
       <h1 class="mx-auto max-w-5xl text-[40px] font-semibold leading-[1.08] text-navy md:text-[58px]">
         quar.io превращает инструкцию в канал для
         <span class="text-primary">обратной связи и дополнительных продаж</span>

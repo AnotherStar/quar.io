@@ -36,7 +36,7 @@ const steps = [
 
 <template>
   <section id="how" data-section="shot-order-flow" class="bg-canvas">
-    <div class="container-page py-section-lg">
+    <div class="container-page py-section-sm md:py-section-lg">
       <div class="mx-auto max-w-[900px] text-center">
         <LandingShotKicker label="Как работает" tone="pill" />
         <h2 class="mt-lg text-h2 text-navy">Ваш путь от идеи к продажи</h2>
@@ -47,13 +47,16 @@ const steps = [
       </div>
 
       <div class="mt-section">
-        <article class="timeline-step grid grid-cols-[48px_minmax(0,1fr)] gap-x-md lg:grid-cols-[48px_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-10">
+        <article class="timeline-step grid lg:grid-cols-[48px_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-10">
           <div class="timeline-rail">
             <div class="timeline-marker">01</div>
           </div>
-          <div class="pb-section-lg">
-            <h3 class="flex min-h-12 items-center text-h4 text-navy">{{ steps[0].title }}</h3>
-            <p class="mt-md max-w-[640px] text-h5 font-medium leading-[1.55] text-slate">{{ steps[0].copy }}</p>
+          <div class="pb-xl md:pb-section-lg">
+            <h3 class="flex min-h-12 items-center gap-md text-h4 text-navy">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-body-sm-md text-white lg:hidden">01</span>
+              <span>{{ steps[0].title }}</span>
+            </h3>
+            <p class="mt-md max-w-[640px] text-body font-medium leading-[1.55] text-slate md:text-h5">{{ steps[0].copy }}</p>
             <ul class="mt-2xl flex flex-col items-start gap-sm">
               <li v-for="bullet in steps[0].bullets" :key="bullet" class="inline-flex items-center rounded-full bg-surface px-md py-xs text-body-sm-md text-charcoal">
                 {{ bullet }}
@@ -71,7 +74,7 @@ const steps = [
           </div>
         </article>
 
-        <!-- <div class="timeline-step grid grid-cols-[48px_minmax(0,1fr)] gap-x-md lg:grid-cols-[48px_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-10">
+        <!-- <div class="timeline-step grid lg:grid-cols-[48px_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-10">
           <div class="timeline-rail" />
           <div class="col-span-1 flex justify-center pb-3xl lg:col-span-2 lg:col-start-2">
             <LandingMiniEditorPhone />
@@ -81,14 +84,17 @@ const steps = [
         <article
           v-for="(step, index) in steps.slice(1)"
           :key="step.label"
-          class="timeline-step grid grid-cols-[48px_minmax(0,1fr)] gap-x-md lg:grid-cols-[48px_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-10"
+          class="timeline-step grid lg:grid-cols-[48px_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-10"
         >
           <div class="timeline-rail">
             <div class="timeline-marker">{{ String(index + 2).padStart(2, '0') }}</div>
           </div>
-          <div class="pb-section-lg">
-            <h3 class="flex min-h-12 items-center text-h4 text-navy">{{ step.title }}</h3>
-            <p v-if="step.copy" class="mt-md max-w-[640px] text-h5 font-medium leading-[1.55] text-slate">{{ step.copy }}</p>
+          <div class="pb-xl md:pb-section-lg">
+            <h3 class="flex min-h-12 items-center gap-md text-h4 text-navy">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-body-sm-md text-white lg:hidden">{{ String(index + 2).padStart(2, '0') }}</span>
+              <span>{{ step.title }}</span>
+            </h3>
+            <p v-if="step.copy" class="mt-md max-w-[640px] text-body font-medium leading-[1.55] text-slate md:text-h5">{{ step.copy }}</p>
             <ul v-if="step.bullets" class="mt-2xl flex flex-col items-start gap-sm">
               <li v-for="bullet in step.bullets" :key="bullet" class="inline-flex items-center rounded-full bg-surface px-md py-xs text-body-sm-md text-charcoal">
                 {{ bullet }}
@@ -115,22 +121,30 @@ const steps = [
 <style scoped>
 .timeline-rail {
   --timeline-marker-size: 48px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-self: stretch;
+  display: none;
 }
 
-.timeline-rail::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 4px;
-  transform: translateX(-50%);
-  border-radius: 9999px;
-  background: var(--color-primary);
+@media (min-width: 1024px) {
+  .timeline-rail {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-self: stretch;
+  }
+}
+
+@media (min-width: 1024px) {
+  .timeline-rail::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background: var(--color-primary);
+  }
 }
 
 .timeline-step:first-child .timeline-rail::before {
@@ -142,10 +156,12 @@ const steps = [
 }
 
 @supports (animation-timeline: view()) {
-  .timeline-step > div:not(.timeline-rail) {
-    animation: timeline-fade-in linear both;
-    animation-timeline: view();
-    animation-range: cover 0% cover 35%;
+  @media (min-width: 1024px) {
+    .timeline-step > div:not(.timeline-rail) {
+      animation: timeline-fade-in linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 35%;
+    }
   }
 }
 

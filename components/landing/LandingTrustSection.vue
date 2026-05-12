@@ -142,7 +142,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="trust" class="trust-section bg-[linear-gradient(180deg,var(--color-surface)_0%,var(--color-surface)_45%,var(--color-canvas)_100%)] text-ink">
-    <div class="container-page py-section-lg">
+    <div class="container-page py-section-sm md:py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-caption-bold uppercase text-steel">Нам доверяют</p>
       </div>

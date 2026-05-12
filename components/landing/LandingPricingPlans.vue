@@ -31,7 +31,7 @@ const plans = [
         <p class="text-caption-bold uppercase text-steel">Тарифы</p>
       </div>
 
-      <div class="pricing-grid mt-section grid gap-md lg:grid-cols-3">
+      <div class="pricing-grid mt-section grid gap-2xl lg:grid-cols-3">
         <article
           v-for="plan in plans"
           :key="plan.name"

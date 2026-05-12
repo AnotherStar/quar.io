@@ -11,7 +11,7 @@ const { user } = useAuthState()
           <span class="text-h5 text-[#808080]">quar.io</span>
         </NuxtLink>
         <nav class="hidden items-center gap-6 md:flex">
-          <NuxtLink to="/#why" class="text-body-sm-md text-[#808080] hover:text-ink">Почему quar.io?</NuxtLink>
+          <NuxtLink to="/#why" class="text-body-sm-md text-[#808080] hover:text-ink">Почему quar.io</NuxtLink>
           <NuxtLink to="/#trust" class="text-body-sm-md text-[#808080] hover:text-ink">Нам доверяют</NuxtLink>
           <NuxtLink to="/#how" class="text-body-sm-md text-[#808080] hover:text-ink">Как это работает</NuxtLink>
           <NuxtLink to="/#pricing" class="text-body-sm-md text-[#808080] hover:text-ink">Тарифы</NuxtLink>
@@ -33,18 +33,17 @@ const { user } = useAuthState()
     </main>
 
     <footer>
-      <div class="container-page py-lg">
+      <div class="container-page pt-lg pb-[30px]">
         <div class="flex flex-col gap-sm md:flex-row md:items-center md:justify-between">
           <div class="flex items-center gap-2">
             <img src="/icons/icon-192.png" alt="" width="24" height="24" class="h-6 w-6 rounded" />
             <span class="text-body-sm text-steel">© {{ new Date().getFullYear() }} quar.io</span>
           </div>
           <div class="flex gap-md text-body-sm text-steel">
-            <NuxtLink to="/#why">Почему quar.io?</NuxtLink>
+            <NuxtLink to="/#why">Почему quar.io</NuxtLink>
             <NuxtLink to="/#trust">Нам доверяют</NuxtLink>
             <NuxtLink to="/#how">Как это работает</NuxtLink>
             <NuxtLink to="/#pricing">Тарифы</NuxtLink>
-            <NuxtLink to="/alt-3">Alt-3</NuxtLink>
           </div>
         </div>
       </div>

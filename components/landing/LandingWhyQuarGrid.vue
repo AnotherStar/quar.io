@@ -16,7 +16,7 @@ const benefits = [
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-caption-bold uppercase text-steel">Почему quar.io?</p>
-        <h2 class="mt-3 text-h2 text-navy text-balance">Инструкция становится не просто PDF-файлом, а инструментом для дополнительных продаж и работы с репутацией</h2>
+        <h2 class="mt-3 text-h3 text-navy text-balance md:text-h2">Инструкция становится не просто PDF-файлом, а инструментом для дополнительных продаж и работы с репутацией</h2>
         <p class="mt-md text-h5 font-medium leading-[1.55] text-slate text-balance">
           Покупатель открывает упаковку и в этот момент он максимально вовлечён в ваш товар: используйте это преимущество.
         </p>

@@ -28,13 +28,13 @@ const iconTone = {
 
 <template>
   <section class="bg-[linear-gradient(180deg,var(--color-surface-soft)_0%,var(--color-canvas)_100%)]">
-    <div class="container-page pb-hero pt-section-lg">
+    <div class="container-page pb-hero pt-section md:pt-section-lg">
       <div class="mx-auto max-w-3xl text-center">
         <h2 class="mt-3 text-h2 text-navy">Два сценария — одно решение</h2>
         <Icon name="lucide:split" class="mx-auto mt-lg h-12 w-12 rotate-180 text-primary" />
       </div>
 
-      <div class="mt-section grid gap-2xl md:grid-cols-2">
+      <div class="mt-xl grid gap-2xl md:mt-section md:grid-cols-2">
         <article
           v-for="scenario in scenarios"
           :key="scenario.title"
