@@ -45,7 +45,7 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         // viewport-fit=cover нужно для safe-area на iPhone с челкой/Dynamic Island
-        { name: 'viewport', content: 'width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=yes' },
+        { name: 'viewport', content: 'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover' },
         { name: 'description', content: 'SaaS-платформа для размещения и редактирования инструкций к товарам.' },
         { name: 'theme-color', content: '#0039df' },
         { name: 'color-scheme', content: 'light' },

@@ -10,6 +10,7 @@ import { requireTenant } from '~~/server/utils/tenant'
 import { prisma } from '~~/server/utils/prisma'
 import {
   SYSTEM_PROMPT,
+  SYSTEM_PROMPT_FROM_PROMPT,
   RESPONSE_SCHEMA,
   aiBlocksToTipTap,
   type AiBlock,
@@ -26,6 +27,16 @@ import {
 } from '~~/shared/openaiModels'
 
 const MAX_BYTES = 25 * 1024 * 1024
+const MAX_TOTAL_BYTES = 60 * 1024 * 1024
+const MAX_FILES = 10
+
+type InputFile = {
+  filename: string
+  mimeType: string
+  data: Buffer
+  isPdf: boolean
+  isImage: boolean
+}
 
 export default defineEventHandler(async (event) => {
   const { tenant } = await requireTenant(event, { minRole: 'EDITOR' })
@@ -36,31 +47,52 @@ export default defineEventHandler(async (event) => {
   if (!instr) throw createError({ statusCode: 404 })
 
   const parts = await readMultipartFormData(event)
-  const file = parts?.find((p) => p.name === 'file')
-  if (!file?.data || !file.filename) {
-    throw createError({ statusCode: 400, statusMessage: 'Файл не передан' })
+  const rawFiles = (parts ?? []).filter((p) => p.name === 'file' || p.name?.startsWith('file_'))
+  if (rawFiles.length > MAX_FILES) {
+    throw createError({ statusCode: 400, statusMessage: `Слишком много файлов (макс. ${MAX_FILES})` })
   }
-  if (file.data.length > MAX_BYTES) {
-    throw createError({ statusCode: 413, statusMessage: 'Файл слишком большой (макс. 25 МБ)' })
-  }
-  const providedImageLibrary = parseImageLibraryPart(parts?.find((p) => p.name === 'imageLibrary')?.data)
 
-  const isImage = (file.type ?? '').startsWith('image/')
-  const isPdf = (file.type ?? '') === 'application/pdf' || file.filename.toLowerCase().endsWith('.pdf')
-  if (!isImage && !isPdf) {
-    throw createError({ statusCode: 400, statusMessage: 'Поддерживаются только PDF и изображения' })
+  let totalBytes = 0
+  const files: InputFile[] = []
+  for (const part of rawFiles) {
+    if (!part.data?.length || !part.filename) {
+      throw createError({ statusCode: 400, statusMessage: 'Получен пустой файл' })
+    }
+    if (part.data.length > MAX_BYTES) {
+      throw createError({ statusCode: 413, statusMessage: `Файл ${part.filename} слишком большой (макс. 25 МБ)` })
+    }
+    totalBytes += part.data.length
+    if (totalBytes > MAX_TOTAL_BYTES) {
+      throw createError({ statusCode: 413, statusMessage: 'Суммарный размер файлов превышает 60 МБ' })
+    }
+    const mimeType = part.type ?? 'application/octet-stream'
+    const isImage = mimeType.startsWith('image/')
+    const isPdf = mimeType === 'application/pdf' || part.filename.toLowerCase().endsWith('.pdf')
+    if (!isImage && !isPdf) {
+      throw createError({ statusCode: 400, statusMessage: `Файл ${part.filename}: поддерживаются только PDF и изображения` })
+    }
+    files.push({ filename: part.filename, mimeType, data: part.data, isImage, isPdf })
   }
-  console.info('[generate-stream]', {
+
+  const userPromptPart = parts?.find((p) => p.name === 'userPrompt')
+  const userPrompt = userPromptPart?.data ? userPromptPart.data.toString('utf8').trim() : ''
+
+  // Need either at least one file OR a user prompt — otherwise there's
+  // nothing for the model to work from.
+  if (!files.length && !userPrompt) {
+    throw createError({ statusCode: 400, statusMessage: 'Прикрепите хотя бы один файл или опишите задачу в подсказке' })
+  }
+
+  const providedImageLibrary = parseImageLibraryPart(parts?.find((p) => p.name === 'imageLibrary')?.data)
+  const skipExtraction = parts?.find((p) => p.name === 'skipExtraction')?.data?.toString('utf8') === '1'
+
+  console.info('[generate-stream] start', {
     requestId,
-    stage: 'start',
     instructionId: id,
-    tenantId: tenant.id,
-    filename: file.filename,
-    mimeType: file.type,
-    sizeBytes: file.data.length,
-    isPdf,
-    isImage,
-    providedImages: providedImageLibrary.length
+    files: files.length,
+    promptChars: userPrompt.length,
+    providedImages: providedImageLibrary.length,
+    skipExtraction
   })
 
   // SSE response
@@ -88,72 +120,48 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── 1. Extract embedded PDF images and upload to S3 ──────────────────────
-  let imageLibrary: Array<{ index: number; url: string; page: number; width: number; height: number; hash?: string }> = providedImageLibrary
+  // Browser may pre-upload user-attached image files and pass them in
+  // providedImageLibrary so the AI can reference them by URL. We still need
+  // to extract images from PDFs (if any) unless the browser explicitly tells
+  // us to skip — which happens on round 2 after extraction has already run.
+  const imageLibrary: Array<{ index: number; url: string; page: number; width: number; height: number; hash?: string }> = providedImageLibrary
   let extractedImagesCount = 0
-  let failedImageUploads = 0
+  const failedImageUploads = 0
+  const pdfFiles = files.filter((f) => f.isPdf)
   if (providedImageLibrary.length) {
-    extractedImagesCount = providedImageLibrary.length
-    console.info('[generate-stream]', {
-      requestId,
-      stage: 'image-library-provided',
-      count: imageLibrary.length,
-      images: imageLibrary
-    })
     sse('progress', { stage: 'image-library-provided', count: imageLibrary.length })
-  } else if (isPdf) {
+  }
+  if (!skipExtraction && pdfFiles.length) {
     sse('progress', { stage: 'extracting-images' })
-    let extracted: Awaited<ReturnType<typeof extractImagesFromPdf>> = []
-    try {
-      extracted = await extractImagesFromPdf(file.data, {
-        onProgress: (progress) => {
-          throwIfAborted()
-          console.info('[generate-stream]', {
-            requestId,
-            stage: 'extracting-images-progress',
-            ...progress
-          })
-          sse('progress', { stage: 'extracting-images-progress', ...progress })
-        }
-      })
-      extractedImagesCount = extracted.length
-      console.info('[generate-stream]', {
-        requestId,
-        stage: 'images-extracted',
-        count: extracted.length,
-        images: extracted.map((img, index) => ({
-          index: index + 1,
-          page: img.page,
-          width: img.width,
-          height: img.height,
-          hash: img.hash
-        }))
-      })
-      sse('progress', { stage: 'images-extracted', count: extracted.length })
-    } catch (e: any) {
-      if (isAbortError(e)) throw e
-      console.error('[generate-stream]', {
-        requestId,
-        stage: 'images-extract-failed',
-        message: e?.message || String(e),
-        stack: e?.stack
-      })
-      sse('progress', { stage: 'images-extract-failed', message: e?.message || 'Не удалось извлечь изображения из PDF' })
+    type ExtractedImage = Awaited<ReturnType<typeof extractImagesFromPdf>>[number]
+    const extracted: ExtractedImage[] = []
+    for (const pdf of pdfFiles) {
+      try {
+        const result = await extractImagesFromPdf(pdf.data, {
+          onProgress: (progress) => {
+            throwIfAborted()
+            sse('progress', {
+              stage: 'extracting-images-progress',
+              file: pdf.filename,
+              pdfCount: pdfFiles.length,
+              ...progress
+            })
+          }
+        })
+        extracted.push(...result)
+      } catch (e: any) {
+        if (isAbortError(e)) throw e
+        console.error('[generate-stream] pdf extract failed', { requestId, file: pdf.filename, message: e?.message || String(e) })
+        sse('progress', { stage: 'images-extract-failed', file: pdf.filename, message: e?.message || 'Не удалось извлечь изображения из PDF' })
+      }
     }
+    extractedImagesCount = extracted.length
+    sse('progress', { stage: 'images-extracted', count: extracted.length })
 
     if (extracted.length) {
       for (const [index, img] of extracted.entries()) {
         throwIfAborted()
         const imageIndex = index + 1
-        console.info('[generate-stream]', {
-          requestId,
-          stage: 'extracted-image-ready-for-browser-upload',
-          index: imageIndex,
-          page: img.page,
-          width: img.width,
-          height: img.height,
-          hash: img.hash,
-          sizeBytes: img.buffer.length
-        })
         sse('extracted-image', {
           index: imageIndex,
           page: img.page,
@@ -166,11 +174,6 @@ export default defineEventHandler(async (event) => {
           dataUrl: `data:image/png;base64,${img.buffer.toString('base64')}`
         })
       }
-      console.info('[generate-stream]', {
-        requestId,
-        stage: 'browser-upload-required',
-        extractedImages: extracted.length
-      })
       sse('done', {
         browserUploadRequired: true,
         extractedImages: extracted.length,
@@ -184,15 +187,24 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── 2. Build prompt content ──────────────────────────────────────────────
-  const dataUrl = `data:${file.type ?? 'application/octet-stream'};base64,${file.data.toString('base64')}`
-  const userText = imageLibrary.length
-    ? buildUserPromptWithImages(imageLibrary)
-    : 'Сгенерируй инструкцию по этому файлу.'
-  console.info('[generate-stream]', {
-    requestId,
-    stage: 'prompt-built',
-    imageCountInPrompt: imageLibrary.length,
-    promptChars: userText.length
+  // Image files that the browser already uploaded to S3 are listed first in
+  // providedImageLibrary, in the same order they appear among image files.
+  // Reuse those URLs so we don't ship the bytes twice (once as data URL, once
+  // as a library URL) — big payloads were tripping "Connection error." in the
+  // OpenAI SDK.
+  const imageFilesInOrder = files.filter((f) => f.isImage)
+  const preUploadedImageUrls = providedImageLibrary.slice(0, imageFilesInOrder.length).map((e) => e.url)
+  // Split the image library into the two sources we know about:
+  //   - first N entries (where N = number of image files in this request) are
+  //     user-attached illustrations the browser pre-uploaded to S3
+  //   - the rest are extracted from PDFs in a previous round
+  const userImagesInLibrary = imageLibrary.slice(0, imageFilesInOrder.length)
+  const pdfExtractedInLibrary = imageLibrary.slice(imageFilesInOrder.length)
+  const userText = buildUserText({
+    pdfCount: pdfFiles.length,
+    userImagesInLibrary,
+    pdfExtractedInLibrary,
+    userPrompt
   })
 
   const cfg = useRuntimeConfig()
@@ -202,10 +214,20 @@ export default defineEventHandler(async (event) => {
   })
 
   const userContent: any[] = [{ type: 'input_text', text: userText }]
-  if (isImage) {
-    userContent.push({ type: 'input_image', image_url: dataUrl })
-  } else {
-    userContent.push({ type: 'input_file', filename: file.filename, file_data: dataUrl })
+  for (const f of files) {
+    if (f.isImage) {
+      const idx = imageFilesInOrder.indexOf(f)
+      const s3Url = preUploadedImageUrls[idx]
+      if (s3Url) {
+        userContent.push({ type: 'input_image', image_url: s3Url })
+      } else {
+        const dataUrl = `data:${f.mimeType};base64,${f.data.toString('base64')}`
+        userContent.push({ type: 'input_image', image_url: dataUrl })
+      }
+    } else {
+      const dataUrl = `data:${f.mimeType};base64,${f.data.toString('base64')}`
+      userContent.push({ type: 'input_file', filename: f.filename, file_data: dataUrl })
+    }
   }
 
   const extractor = new StreamingBlockExtractor()
@@ -220,7 +242,7 @@ export default defineEventHandler(async (event) => {
     const stream = await client.responses.create({
       model: INSTRUCTION_GENERATION_MODEL,
       input: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: files.length ? SYSTEM_PROMPT : SYSTEM_PROMPT_FROM_PROMPT },
         { role: 'user', content: userContent }
       ],
       text: {
@@ -234,10 +256,7 @@ export default defineEventHandler(async (event) => {
       const t = chunk?.type as string | undefined
       if (t === 'response.completed') {
         usage = normalizeResponseUsage(chunk.response?.usage, INSTRUCTION_GENERATION_MODEL)
-        if (usage) {
-          console.info('[generate-stream]', { requestId, stage: 'usage', usage })
-          sse('usage', usage)
-        }
+        if (usage) sse('usage', usage)
       }
       const delta: string | undefined = t === 'response.output_text.delta' ? chunk.delta : undefined
       if (!delta) continue
@@ -255,35 +274,13 @@ export default defineEventHandler(async (event) => {
         if (norm.type === 'image' && imageLibrary.length && !imageLibrary.some((i) => i.url === norm.url)) {
           returnedImageBlocks++
           droppedImageBlocks++
-          console.warn('[generate-stream]', {
-            requestId,
-            stage: 'image-block-dropped',
-            reason: 'url-not-in-library',
-            url: norm.url,
-            description: norm.description
-          })
           continue
         }
         if (norm.type === 'image') {
           returnedImageBlocks++
           acceptedImageBlocks++
-          const match = imageLibrary.find((i) => i.url === norm.url)
-          console.info('[generate-stream]', {
-            requestId,
-            stage: 'image-block-accepted',
-            imageIndex: match?.index,
-            page: match?.page,
-            url: norm.url,
-            description: norm.description
-          })
         }
         collectedBlocks.push(norm)
-        console.info('[generate-stream]', {
-          requestId,
-          stage: 'block',
-          blockIndex: collectedBlocks.length,
-          type: norm.type
-        })
         sse('block', norm)
       }
     }
@@ -330,17 +327,22 @@ export default defineEventHandler(async (event) => {
       droppedImageBlocks,
       usage
     }
-    console.info('[generate-stream]', { requestId, stage: 'done', ...summary })
+    console.info('[generate-stream] done', {
+      requestId,
+      blocks: summary.blocksCount,
+      images: { extracted: extractedImagesCount, accepted: acceptedImageBlocks, dropped: droppedImageBlocks },
+      tokens: usage?.totalTokens,
+      costUsd: usage?.estimatedCostUsd
+    })
     sse('done', summary)
   } catch (e: any) {
-    if (isAbortError(e)) {
-      console.info('[generate-stream]', { requestId, stage: 'aborted' })
-      return
-    }
-    console.error('[generate-stream]', {
+    if (isAbortError(e)) return
+    console.error('[generate-stream] error', {
       requestId,
-      stage: 'error',
-      message: e?.message || 'Ошибка генерации'
+      message: e?.message || 'Ошибка генерации',
+      status: e?.status,
+      code: e?.code,
+      cause: e?.cause?.message
     })
     sse('error', { message: e?.message || 'Ошибка генерации' })
   } finally {
@@ -348,26 +350,74 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-function buildUserPromptWithImages(library: Array<{ index: number; url: string; page: number; width: number; height: number }>) {
-  const lines = library
-    .map((it) => `- IMAGE_${it.index}: url=${it.url}  page=${it.page}  size=${it.width}x${it.height}`)
-    .join('\n')
-  return `Сгенерируй инструкцию по этому файлу.
+type LibEntry = { index: number; url: string; page: number; width: number; height: number }
 
-В оригинальном PDF есть извлечённые изображения. Мы уже загрузили их в S3. Доступные изображения:
+function buildUserText(opts: {
+  pdfCount: number
+  userImagesInLibrary: LibEntry[]
+  pdfExtractedInLibrary: LibEntry[]
+  userPrompt: string
+}) {
+  const { pdfCount, userImagesInLibrary, pdfExtractedInLibrary, userPrompt } = opts
+  const userImageCount = userImagesInLibrary.length
+  const fileCount = pdfCount + userImageCount
 
-${lines}
+  // Case A: no files at all — generate strictly from the user's prompt.
+  if (fileCount === 0) {
+    return `Создай инструкцию по описанию ниже. Файлов с исходниками нет — опирайся только на запрос пользователя и здравый смысл.
+
+Запрос пользователя:
+${userPrompt}`
+  }
+
+  // Case B: at least one file is attached. Build a human-readable sources line.
+  const sourceParts: string[] = []
+  if (pdfCount) sourceParts.push(pdfCount === 1 ? '1 PDF' : `${pdfCount} PDF-файлов`)
+  if (userImageCount) sourceParts.push(userImageCount === 1 ? '1 прикреплённая иллюстрация' : `${userImageCount} прикреплённых иллюстраций`)
+  const sourceText = sourceParts.join(' + ')
+
+  const intro = fileCount > 1
+    ? `Сгенерируй инструкцию по входным материалам (${sourceText}). Объедини информацию из всех источников в одну цельную инструкцию.`
+    : `Сгенерируй инструкцию по этому файлу (${sourceText}).`
+
+  const sections: string[] = [intro]
+
+  const totalLibrary = userImagesInLibrary.length + pdfExtractedInLibrary.length
+  if (totalLibrary) {
+    const libLines: string[] = []
+    for (const img of userImagesInLibrary) {
+      libLines.push(`- IMAGE_${img.index}: url=${img.url}  size=${img.width}x${img.height}  source=прикреплённая пользователем иллюстрация`)
+    }
+    for (const img of pdfExtractedInLibrary) {
+      libLines.push(`- IMAGE_${img.index}: url=${img.url}  page=${img.page}  size=${img.width}x${img.height}  source=извлечено из PDF`)
+    }
+
+    const sourceDescParts: string[] = []
+    if (pdfExtractedInLibrary.length) sourceDescParts.push('извлечённые из PDF')
+    if (userImagesInLibrary.length) sourceDescParts.push('прикреплённые пользователем')
+    const sourceDesc = sourceDescParts.join(' и ')
+
+    sections.push(`Доступные изображения (${sourceDesc}, уже загружены в S3):
+
+${libLines.join('\n')}
 
 Правила работы с изображениями:
-- Рассмотри каждое изображение из списка IMAGE_1...IMAGE_N как потенциальную часть исходной инструкции.
+- Рассмотри каждое изображение из списка IMAGE_1...IMAGE_N как потенциальную часть инструкции.
 - Если изображение относится к товару, шагу, схеме, комплектации, таблице, предупреждению или результату действия — вставь отдельный блок "image" с точным url из списка.
 - По возможности используй все содержательные изображения из списка. Не ограничивайся первым изображением.
-- Размещай image-блок рядом с ближайшим связанным текстом или сразу после раздела/шага с той же страницы PDF.
+- Размещай image-блок рядом с ближайшим связанным текстом или сразу после соответствующего раздела/шага.
 - Для каждого image-блока пиши короткий, конкретный description как alt-текст: что изображено и зачем это нужно пользователю.
 - Не выдумывай URL и не меняй URL даже на один символ.
 - Не используй один и тот же URL дважды, кроме случаев, когда одно и то же изображение явно нужно повторить в разных местах.
 - image_placeholder используй только для иллюстраций, которые упомянуты в тексте, но отсутствуют в списке доступных URL.
-- Если изображение явно декоративное, логотип, фон или не несёт инструктивного смысла — не вставляй его.`
+- Если изображение явно декоративное, логотип, фон или не несёт инструктивного смысла — не вставляй его.`)
+  }
+
+  if (userPrompt) {
+    sections.push(`Дополнительные требования от пользователя:\n${userPrompt}`)
+  }
+
+  return sections.join('\n\n')
 }
 
 function parseImageLibraryPart(data?: Buffer) {

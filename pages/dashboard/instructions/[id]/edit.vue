@@ -120,7 +120,6 @@ onClickOutside(shareRef, () => { shareOpen.value = false })
 // reliable than template refs through <ClientOnly>.
 const editorInstance = shallowRef<any>(null)
 function onEditorReady(ed: any) {
-  console.log('[gen] editor ready', !!ed)
   editorInstance.value = ed
 }
 
@@ -310,26 +309,16 @@ function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number) {
   return aStart < bEnd && bStart < aEnd
 }
 
-// Native <input type="file"> + <label> approach — most reliable across
-// browsers and avoids programmatic input.click() which is sometimes blocked.
-const fileInputRef = ref<HTMLInputElement | null>(null)
+const genModalOpen = ref(false)
 
-async function handleFileSelected(e: Event) {
-  console.log('[gen] handleFileSelected fired', e)
-  const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
-  console.log('[gen] file:', file?.name, file?.size, file?.type)
-  input.value = ''
-  if (!file) { console.log('[gen] no file picked'); return }
-  if (isStreaming.value) { console.log('[gen] already streaming, abort'); return }
+async function onGenerateSubmit(payload: { files: File[]; prompt: string }) {
+  if (!payload.files.length && !payload.prompt.trim()) return
+  if (isStreaming.value) return
   if (!isEditorEmpty()) {
-    if (!confirm('Содержимое будет заменено результатом ИИ. Продолжить?')) {
-      console.log('[gen] user cancelled overwrite')
-      return
-    }
+    if (!confirm('Содержимое будет заменено результатом ИИ. Продолжить?')) return
   }
-  console.log('[gen] starting stream')
-  await runStream(file)
+  genModalOpen.value = false
+  await runStream(payload.files, payload.prompt)
 }
 
 function isEditorEmpty(): boolean {
@@ -340,16 +329,18 @@ function isEditorEmpty(): boolean {
     (json.content.length === 1 && json.content[0].type === 'paragraph' && !json.content[0].content?.length)
 }
 
-async function runStream(file: File) {
-  console.log('[gen] runStream entered, getting editor')
+async function runStream(files: File[], userPrompt: string) {
   const ed = editorInstance.value
-  console.log('[gen] editor instance:', ed)
-  if (!ed) { console.warn('[gen] no editor instance — aborting'); return }
+  if (!ed) return
   const abortController = new AbortController()
   generationAbortController.value = abortController
   isCancellingGeneration.value = false
   streamError.value = null
-  generationStatus.value = 'Готовлю файл к чтению'
+  generationStatus.value = files.length === 0
+    ? 'Генерирую инструкцию по описанию'
+    : files.length > 1
+      ? `Готовлю ${files.length} файлов к чтению`
+      : 'Готовлю файл к чтению'
   generationUsage.value = null
   generationImages.value = { extracted: 0, uploaded: 0 }
   isStreaming.value = true
@@ -365,14 +356,55 @@ async function runStream(file: File) {
   let firstDonePayload: any = null
   let finalDonePayload: any = null
 
+  // ── Pre-upload user-attached image files to S3 so AI can reference them
+  // by URL. PDF-embedded images are extracted server-side and uploaded later.
+  type LibEntry = { index: number; url: string; page: number; width: number; height: number; hash?: string }
+  const userImageLibrary: LibEntry[] = []
+  const userImageFiles = files.filter((f) => !isPdfFile(f))
+  try {
+    for (const imageFile of userImageFiles) {
+      if (abortController.signal.aborted) throw createGenerationAbortError()
+      const userIndex = userImageLibrary.length + 1
+      generationStatus.value = userImageFiles.length > 1
+        ? `Загружаю иллюстрацию ${userIndex} из ${userImageFiles.length}`
+        : 'Загружаю иллюстрацию'
+      const dim = await readImageDimensions(imageFile)
+      const uploaded = await uploadFile(imageFile, undefined, { signal: abortController.signal })
+      userImageLibrary.push({
+        index: userIndex,
+        url: uploaded.url,
+        page: 0,
+        width: dim.width,
+        height: dim.height
+      })
+      imageDimensions.set(uploaded.url, { width: dim.width, height: dim.height })
+    }
+  } catch (e: any) {
+    if (isGenerationAbortError(e)) {
+      streamError.value = null
+      generationStatus.value = 'Процесс прерван'
+      isStreaming.value = false
+      isCancellingGeneration.value = false
+      generationAbortController.value = null
+      suppressAutosave = false
+      return
+    }
+    console.error('[gen] user image upload failed', e)
+    streamError.value = e?.message || 'Не удалось загрузить иллюстрации'
+    generationStatus.value = 'Ошибка загрузки иллюстраций'
+    isStreaming.value = false
+    isCancellingGeneration.value = false
+    generationAbortController.value = null
+    suppressAutosave = false
+    return
+  }
+
   const generationHandlers = {
     onMeta: (m: any) => {
-      console.log('[gen] meta', m)
       if (m.title) title.value = m.title
       if (m.description !== undefined) description.value = m.description
     },
     onBlock: (b: AiBlock) => {
-      console.log('[gen] block', b)
       const node = aiBlockToTipTapNode(b, imageDimensions)
       streamedNodes.push(node)
       appendNodeToEditor(ed, node)
@@ -380,30 +412,19 @@ async function runStream(file: File) {
       generationStatus.value = `Пишу инструкцию: ${streamedNodes.length} блоков`
     },
     onProgress: (payload: any) => {
-      console.log('[gen] progress', payload)
       updateGenerationStatus(payload)
     },
     onUsage: (payload: any) => {
-      console.log('[gen] usage', payload)
       generationUsage.value = payload
       generationStatus.value = `Посчитано: ${formatNumber(payload.totalTokens)} токенов`
     },
-    onError: (msg: string) => { console.error('[gen] error', msg); streamError.value = msg; generationStatus.value = 'Ошибка генерации' }
+    onError: (msg: string) => { streamError.value = msg; generationStatus.value = 'Ошибка генерации' }
   }
 
   try {
-    console.log('[gen] POSTing to /api/instructions/' + id + '/generate-stream')
-    await streamInstructionFromFile(id, file, {
+    await streamInstructionFromFile(id, files, {
       ...generationHandlers,
       onExtractedImage: async (payload) => {
-        console.log('[gen] extracted image for browser upload', {
-          index: payload.index,
-          page: payload.page,
-          width: payload.width,
-          height: payload.height,
-          hash: payload.hash,
-          sizeBytes: payload.sizeBytes
-        })
         generationStatus.value = `Загружаю изображение ${payload.index}`
         const file = await fileFromDataUrl(payload.dataUrl, payload.filename, payload.mimeType, abortController.signal)
         const uploaded = await uploadFile(file, undefined, { signal: abortController.signal })
@@ -411,46 +432,42 @@ async function runStream(file: File) {
         imageDimensions.set(uploaded.url, { width: payload.width, height: payload.height })
         generationImages.value.uploaded = browserUploadedImages.length
         generationStatus.value = `Загружено изображений: ${browserUploadedImages.length}`
-        console.log('[gen] browser image uploaded', {
-          index: payload.index,
-          page: payload.page,
-          url: uploaded.url,
-          assetId: uploaded.assetId
-        })
       },
       onDone: (payload) => {
         firstDonePayload = payload
-        console.log('[gen] done', { ...payload, browserUploadedImages })
       }
-    }, abortController.signal)
+    }, abortController.signal, {
+      userPrompt,
+      imageLibrary: userImageLibrary.length ? userImageLibrary : undefined
+    })
 
     if (firstDonePayload?.browserUploadRequired && browserUploadedImages.length) {
       if (abortController.signal.aborted) throw createGenerationAbortError()
-      const imageLibrary = browserUploadedImages.map((img) => ({
-        index: img.index,
-        url: img.url,
-        page: img.page,
-        width: img.width,
-        height: img.height,
-        hash: img.hash
-      }))
-      console.log('[gen] starting AI stream with browser-uploaded images', {
-        count: imageLibrary.length,
-        images: imageLibrary
-      })
-      generationStatus.value = `Запускаю ИИ с изображениями: ${imageLibrary.length}`
+      // Combine pre-uploaded user images with PDF-extracted images. Renumber
+      // indices so each library entry is uniquely identifiable in the prompt.
+      const combinedLibrary: LibEntry[] = [
+        ...userImageLibrary.map((img, i) => ({ ...img, index: i + 1 })),
+        ...browserUploadedImages.map((img, i) => ({
+          index: userImageLibrary.length + i + 1,
+          url: img.url,
+          page: img.page,
+          width: img.width,
+          height: img.height,
+          hash: img.hash
+        }))
+      ]
+      generationStatus.value = `Запускаю ИИ с изображениями: ${combinedLibrary.length}`
       await streamInstructionFromFile(
         id,
-        file,
+        files,
         {
           ...generationHandlers,
           onDone: (payload) => {
             finalDonePayload = payload
-            console.log('[gen] done with AI', { ...payload, browserUploadedImages })
           }
         },
         abortController.signal,
-        { imageLibrary }
+        { imageLibrary: combinedLibrary, userPrompt, skipExtraction: true }
       )
     } else {
       finalDonePayload = firstDonePayload
@@ -460,19 +477,17 @@ async function runStream(file: File) {
     // we have a consistent view (versions, etc).
     await refresh()
     draft.value = ed.getJSON()
-    console.log('[gen] final payload', finalDonePayload)
     if (generationUsage.value) {
       generationStatus.value = 'Генерация завершена'
     }
   } catch (e: any) {
     if (isGenerationAbortError(e)) {
-      console.log('[gen] aborted by user')
       streamError.value = null
       generationStatus.value = 'Процесс прерван'
       draft.value = ed.getJSON()
       return
     }
-    console.error('[gen] failed', e)
+    console.error('[gen] failed', e?.message || e)
     streamError.value = e?.message || 'Ошибка генерации'
     generationStatus.value = 'Ошибка генерации'
   } finally {
@@ -542,6 +557,27 @@ async function fileFromDataUrl(dataUrl: string, filename: string, mimeType: stri
   return new File([blob], filename, { type: mimeType || blob.type || 'application/octet-stream' })
 }
 
+function isPdfFile(file: File) {
+  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+}
+
+function readImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    if (!import.meta.client) { resolve({ width: 0, height: 0 }); return }
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve({ width: img.naturalWidth || 0, height: img.naturalHeight || 0 })
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve({ width: 0, height: 0 })
+    }
+    img.src = url
+  })
+}
+
 function createGenerationAbortError() {
   if (typeof DOMException !== 'undefined') return new DOMException('Generation aborted', 'AbortError')
   const error = new Error('Generation aborted')
@@ -583,29 +619,24 @@ function isGenerationAbortError(error: any) {
         </span>
 
         <!-- AI fill-from-file: primary blue gradient with subtle glow -->
-        <label
+        <button
+          type="button"
           :class="[
-            'group relative inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-[18px] text-body-sm-md font-medium text-white transition-all',
+            'group relative inline-flex h-10 items-center gap-2 rounded-lg px-[18px] text-body-sm-md font-medium text-white transition-all',
             'bg-gradient-to-r from-primary via-brand-purple to-brand-pink',
             'shadow-[0_2px_12px_-2px_rgba(12,63,233,0.45)]',
             'hover:shadow-[0_4px_20px_-2px_rgba(12,63,233,0.65)] hover:brightness-110',
-            isStreaming && 'pointer-events-none opacity-60'
+            'disabled:cursor-not-allowed disabled:opacity-60'
           ]"
+          :disabled="isStreaming"
+          @click="genModalOpen = true"
         >
           <Icon
             name="lucide:sparkles"
             class="h-4 w-4 transition-transform group-hover:scale-110"
           />
           Заполнить из файла
-          <input
-            ref="fileInputRef"
-            type="file"
-            accept="application/pdf,image/*"
-            class="hidden"
-            :disabled="isStreaming"
-            @change="handleFileSelected"
-          >
-        </label>
+        </button>
 
         <!-- Share popover: status, URL editing, publish, open, copy link -->
         <div ref="shareRef" class="relative">
@@ -718,6 +749,12 @@ function isGenerationAbortError(error: any) {
       </ClientOnly>
     </div>
     </template>
+
+    <GenerateFromFilesModal
+      v-model:open="genModalOpen"
+      :busy="isStreaming"
+      @submit="onGenerateSubmit"
+    />
 
     <Teleport to="body">
       <Transition

@@ -22,11 +22,13 @@ export interface StreamOptions {
     height: number
     hash?: string
   }>
+  userPrompt?: string
+  skipExtraction?: boolean
 }
 
 export async function streamInstructionFromFile(
   instructionId: string,
-  file: File,
+  files: File | File[],
   handlers: StreamHandlers,
   signal?: AbortSignal,
   options?: StreamOptions
@@ -36,10 +38,22 @@ export async function streamInstructionFromFile(
   const { currentTenant } = useAuthState()
   if (currentTenant.value?.id) headers['x-tenant-id'] = currentTenant.value.id
 
+  const fileList = Array.isArray(files) ? files : [files]
+  const promptText = options?.userPrompt?.trim() ?? ''
+  if (!fileList.length && !promptText) {
+    handlers.onError?.('Нужен хотя бы один файл или текст подсказки')
+    return
+  }
   const fd = new FormData()
-  fd.append('file', file)
+  fileList.forEach((f, i) => fd.append(`file_${i}`, f))
+  if (promptText) {
+    fd.append('userPrompt', promptText)
+  }
   if (options?.imageLibrary?.length) {
     fd.append('imageLibrary', JSON.stringify(options.imageLibrary))
+  }
+  if (options?.skipExtraction) {
+    fd.append('skipExtraction', '1')
   }
 
   const res = await fetch(`/api/instructions/${instructionId}/generate-stream`, {
@@ -83,7 +97,6 @@ async function handleEvent(raw: string, h: StreamHandlers) {
   if (!data) return
   let parsed: any
   try { parsed = JSON.parse(data) } catch { return }
-  console.debug('[gen:sse]', event, parsed)
   if (event === 'meta') h.onMeta?.(parsed)
   else if (event === 'block') h.onBlock?.(parsed)
   else if (event === 'progress') h.onProgress?.(parsed)

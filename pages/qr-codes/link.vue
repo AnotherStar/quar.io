@@ -296,6 +296,40 @@ function vibrate(pattern: number | number[]) {
   if (import.meta.client && navigator.vibrate) navigator.vibrate(pattern as number)
 }
 
+// Короткий beep на каждое успешное распознавание — даёт пользователю
+// аудио-фидбек дополнительно к вибрации (которая работает не на всех
+// устройствах). Используем Web Audio API без файла: один sine-oscillator
+// с быстрым attack/release, чтобы не было щелчка. AudioContext создаётся
+// лениво — обычно к моменту первого beep'а пользователь уже разрешил
+// камеру, что считается user-gesture и снимает autoplay-блокировку.
+let audioCtx: AudioContext | null = null
+function playBeep(freq = 880, durationMs = 90) {
+  if (!import.meta.client) return
+  try {
+    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext | undefined
+    if (!Ctx) return
+    if (!audioCtx) audioCtx = new Ctx()
+    if (audioCtx.state === 'suspended') void audioCtx.resume()
+
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
+    osc.type = 'sine'
+    osc.frequency.value = freq
+
+    const now = audioCtx.currentTime
+    const end = now + durationMs / 1000
+    gain.gain.setValueAtTime(0, now)
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.005)
+    gain.gain.linearRampToValueAtTime(0, end)
+
+    osc.connect(gain).connect(audioCtx.destination)
+    osc.start(now)
+    osc.stop(end)
+  } catch {
+    // AudioContext недоступен / заблокирован — просто молча, beep не критичен
+  }
+}
+
 async function onQrDetected(rawValue: string) {
   // Accept the absolute /s/<id> URL or the bare short id.
   const shortId = extractShortId(rawValue)
@@ -319,6 +353,7 @@ async function onQrDetected(rawValue: string) {
         instruction: data.instruction
       }
       status.value = 'bound-conflict'
+      playBeep()
       vibrate(40)
       return
     }
@@ -334,6 +369,7 @@ async function onQrDetected(rawValue: string) {
 
   qrShortId.value = shortId
   qrThumbnail.value = captureFrame()
+  playBeep()
   vibrate(40)
   await maybeAdvance()
 }
@@ -361,6 +397,7 @@ async function onQrReplaceDetected(rawValue: string) {
     tenantSlug: data.tenant.slug
   }
   status.value = 'replace-confirm'
+  playBeep()
   vibrate(40)
 }
 
@@ -399,6 +436,7 @@ async function onBarcodeDetected(rawValue: string) {
   barcodeValue.value = trimmed
   barcodeThumbnail.value = captureFrame()
   matchedInstruction.value = lookup.instruction
+  playBeep()
   vibrate(40)
 
   if (!lookup.instruction) {

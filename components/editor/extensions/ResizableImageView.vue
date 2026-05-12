@@ -18,6 +18,26 @@ const isHovered = ref(false)
 const isToolbarHovered = ref(false)
 const editable = computed(() => props.editor?.isEditable !== false)
 
+// Loading state — пока браузер тянет картинку по src, показываем плейсхолдер
+// поверх <img>. Срабатывает и при первом монтировании, и когда src меняется
+// (например, ИИ-замена через ImageMagicModal).
+const loaded = ref(false)
+const errored = ref(false)
+function onImgLoad() { loaded.value = true; errored.value = false }
+function onImgError() { errored.value = true; loaded.value = false }
+watch(src, () => {
+  loaded.value = false
+  errored.value = false
+  // Если браузер уже закэшировал картинку и onload не сработает, дёрнем
+  // вручную через nextTick — у <img> может быть выставлен `complete` сразу.
+  nextTick(() => {
+    if (imgRef.value?.complete && imgRef.value.naturalWidth > 0) loaded.value = true
+  })
+})
+onMounted(() => {
+  if (imgRef.value?.complete && imgRef.value.naturalWidth > 0) loaded.value = true
+})
+
 // NodeViewWrapper — block с text-align, inner wrapperRef — inline-block.
 // Так выравнивание левее/центр/правее работает без flex-конфликтов.
 const alignClass = computed(() =>
@@ -49,6 +69,10 @@ const imageStyle = computed(() => {
   if (widthPx.value || aspectRatio.value) return { width: '100%', height: 'auto' }
   return { width: 'auto' }
 })
+
+// Когда нет ни intrinsic-размеров, ни выставленной ширины, плейсхолдеру
+// нужна какая-то высота, чтобы он был видим до загрузки.
+const placeholderHasAspect = computed(() => Boolean(aspectRatio.value || widthPx.value))
 
 function startResize(e: PointerEvent) {
   if (!editable.value || !imgRef.value) return
@@ -116,7 +140,7 @@ function btnClass(active: boolean) {
   >
     <div
       ref="wrapperRef"
-      class="relative inline-block max-w-full rounded-md bg-surface text-left align-top"
+      class="relative inline-block max-w-full rounded-md text-left align-top"
       :style="wrapperStyle"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
@@ -189,10 +213,51 @@ function btnClass(active: boolean) {
         :alt="alt"
         :width="intrinsicWidth || undefined"
         :height="intrinsicHeight || undefined"
-        class="block h-auto max-w-full rounded-md select-none"
+        class="block h-auto max-w-full rounded-md select-none transition-opacity duration-200"
+        :class="[
+          loaded ? 'opacity-100' : 'opacity-0',
+          // Если intrinsic-размеров нет, оставшийся <img> с opacity-0 всё равно
+          // занял бы место (0×0 в большинстве браузеров до момента load).
+          // Прячем его из layout, пока плейсхолдер задаёт собственный размер.
+          !loaded && !placeholderHasAspect && 'hidden'
+        ]"
         :style="imageStyle"
         draggable="false"
+        @load="onImgLoad"
+        @error="onImgError"
       >
+
+      <!-- Loading placeholder — рисуется поверх <img>, когда размер задан
+           wrapper'ом (intrinsic/width), и в самом потоке c min-размером,
+           если размер заранее неизвестен. Так картинка не "прыгает" на месте,
+           но плейсхолдер всё равно виден до подгрузки. -->
+      <div
+        v-if="!loaded && !errored"
+        contenteditable="false"
+        class="pointer-events-none flex flex-col items-center justify-center gap-2 overflow-hidden rounded-md"
+        :class="placeholderHasAspect
+          ? 'absolute inset-0'
+          : 'flex h-[180px] w-[260px] max-w-full'"
+      >
+        <div class="absolute inset-0 animate-pulse bg-gradient-to-br from-hairline-soft via-surface to-hairline-soft" />
+        <div class="relative flex flex-col items-center gap-1.5 text-steel">
+          <Icon name="lucide:image" class="h-5 w-5" />
+          <span class="text-caption">Загружаю изображение…</span>
+        </div>
+      </div>
+
+      <!-- Error fallback — отдельный, чтобы не выглядеть как "вечная загрузка". -->
+      <div
+        v-else-if="errored"
+        contenteditable="false"
+        class="pointer-events-none flex flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-hairline bg-surface text-steel"
+        :class="placeholderHasAspect
+          ? 'absolute inset-0'
+          : 'h-[180px] w-[260px] max-w-full'"
+      >
+        <Icon name="lucide:image-off" class="h-5 w-5" />
+        <span class="text-caption">Не удалось загрузить картинку</span>
+      </div>
 
       <!-- Resize handle: при наведении или перетаскивании. -->
       <span
