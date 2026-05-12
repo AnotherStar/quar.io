@@ -34,12 +34,12 @@ const { user } = useAuthState()
 
     <footer>
       <div class="container-page pt-lg pb-[30px]">
-        <div class="flex flex-col gap-sm md:flex-row md:items-center md:justify-between">
+        <div class="flex flex-col items-center gap-sm md:flex-row md:justify-between">
           <div class="flex items-center gap-2">
             <img src="/icons/icon-192.png" alt="" width="24" height="24" class="h-6 w-6 rounded" />
             <span class="text-body-sm text-steel">© {{ new Date().getFullYear() }} quar.io</span>
           </div>
-          <div class="flex gap-md text-body-sm text-steel">
+          <div class="hidden gap-md text-body-sm text-steel md:flex">
             <NuxtLink to="/#why">Почему quar.io</NuxtLink>
             <NuxtLink to="/#trust">Нам доверяют</NuxtLink>
             <NuxtLink to="/#how">Как это работает</NuxtLink>
