@@ -159,32 +159,32 @@ function downloadCsv() {
       <Transition name="tab-content" mode="out-in">
       <!-- Tab #1 — Регистрации (список). -->
       <div v-if="tab === 'registrations'" key="registrations" class="mt-xl">
-        <table v-if="data?.items.length" class="w-full">
+        <UiTable v-if="data?.items.length" min-width="860px">
           <thead>
-            <tr class="border-b border-hairline text-caption text-steel uppercase">
-              <th class="pb-sm text-left">Когда</th>
-              <th class="pb-sm text-left">Клиент</th>
-              <th class="pb-sm text-left">Контакты</th>
-              <th class="pb-sm text-left">Серийный №</th>
-              <th class="pb-sm text-left">Покупка</th>
-              <th class="pb-sm text-left">Инструкция</th>
+            <tr>
+              <th class="text-left">Когда</th>
+              <th class="text-left">Клиент</th>
+              <th class="text-left">Контакты</th>
+              <th class="text-left">Серийный №</th>
+              <th class="text-left">Покупка</th>
+              <th class="text-left">Инструкция</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in data.items" :key="r.id" class="border-b border-hairline-soft align-top">
-              <td class="py-sm text-caption text-steel whitespace-nowrap">
+            <tr v-for="r in data.items" :key="r.id" class="align-top">
+              <td class="text-caption text-steel whitespace-nowrap">
                 {{ new Date(r.createdAt).toLocaleString() }}
               </td>
-              <td class="py-sm text-body-sm-md text-ink">{{ r.customerName }}</td>
-              <td class="py-sm text-body-sm text-charcoal">
+              <td class="text-body-sm-md text-ink">{{ r.customerName }}</td>
+              <td class="text-body-sm text-charcoal">
                 <div>{{ r.customerEmail }}</div>
                 <div v-if="r.customerPhone" class="text-steel">{{ r.customerPhone }}</div>
               </td>
-              <td class="py-sm text-body-sm font-mono text-charcoal">{{ r.serialNumber || '—' }}</td>
-              <td class="py-sm text-body-sm text-charcoal">
+              <td class="text-body-sm font-mono text-charcoal">{{ r.serialNumber || '—' }}</td>
+              <td class="text-body-sm text-charcoal">
                 {{ r.purchaseDate ? new Date(r.purchaseDate).toLocaleDateString() : '—' }}
               </td>
-              <td class="py-sm text-body-sm">
+              <td class="text-body-sm">
                 <NuxtLink
                   v-if="r.instruction"
                   :to="`/dashboard/instructions/${r.instruction.id}/edit`"
@@ -196,7 +196,7 @@ function downloadCsv() {
               </td>
             </tr>
           </tbody>
-        </table>
+        </UiTable>
         <p v-else class="py-md text-body text-steel">
           Пока нет регистраций. Они появятся, когда покупатели отправят форму гарантии на опубликованной инструкции.
         </p>

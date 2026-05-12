@@ -20,6 +20,7 @@ import { StreamingBlockExtractor, normalizeBlock } from '~~/server/utils/streami
 import { extractImagesFromPdf } from '~~/server/utils/pdfImageExtractor'
 import { generateShortId } from '~~/server/utils/slug'
 import { getOpenAIApiKey, getOpenAIBaseUrl } from '~~/server/utils/openai'
+import { recordAiUsage, type AiUsageStatus } from '~~/server/utils/aiUsage'
 import {
   INSTRUCTION_GENERATION_MODEL,
   getOpenAIModelInfo,
@@ -39,7 +40,7 @@ type InputFile = {
 }
 
 export default defineEventHandler(async (event) => {
-  const { tenant } = await requireTenant(event, { minRole: 'EDITOR' })
+  const { tenant, user } = await requireTenant(event, { minRole: 'EDITOR' })
   const id = getRouterParam(event, 'id')!
   const requestId = generateShortId()
 
@@ -238,6 +239,12 @@ export default defineEventHandler(async (event) => {
   let droppedImageBlocks = 0
   let usage: ReturnType<typeof normalizeResponseUsage> | null = null
 
+  // Usage logging — set as we go, written once in finally{} so we capture
+  // success / abort / error in a single place.
+  const aiStartedAt = Date.now()
+  let usageStatus: AiUsageStatus = 'error'
+  let usageError: string | null = null
+
   try {
     const stream = await client.responses.create({
       model: INSTRUCTION_GENERATION_MODEL,
@@ -334,19 +341,50 @@ export default defineEventHandler(async (event) => {
       tokens: usage?.totalTokens,
       costUsd: usage?.estimatedCostUsd
     })
+    usageStatus = 'success'
     sse('done', summary)
   } catch (e: any) {
-    if (isAbortError(e)) return
+    if (isAbortError(e)) {
+      usageStatus = 'aborted'
+      return
+    }
+    usageError = e?.message || 'Ошибка генерации'
     console.error('[generate-stream] error', {
       requestId,
-      message: e?.message || 'Ошибка генерации',
+      message: usageError,
       status: e?.status,
       code: e?.code,
       cause: e?.cause?.message
     })
-    sse('error', { message: e?.message || 'Ошибка генерации' })
+    sse('error', { message: usageError })
   } finally {
     if (!res.writableEnded && !res.destroyed) res.end()
+    await recordAiUsage({
+      tenantId: tenant.id,
+      userId: user.id,
+      feature: 'instruction-generation',
+      model: INSTRUCTION_GENERATION_MODEL,
+      status: usageStatus,
+      errorMessage: usageError,
+      inputTokens: usage?.inputTokens ?? null,
+      cachedInputTokens: usage?.cachedInputTokens ?? null,
+      outputTokens: usage?.outputTokens ?? null,
+      reasoningTokens: usage?.reasoningTokens ?? null,
+      totalTokens: usage?.totalTokens ?? null,
+      estimatedCostUsd: usage?.estimatedCostUsd ?? null,
+      durationMs: Date.now() - aiStartedAt,
+      requestId,
+      metadata: {
+        instructionId: instr.id,
+        fileCount: files.length,
+        pdfCount: pdfFiles.length,
+        userImageCount: imageFilesInOrder.length,
+        userPromptChars: userPrompt.length,
+        extractedImages: extractedImagesCount,
+        acceptedImageBlocks,
+        droppedImageBlocks
+      }
+    })
   }
 })
 

@@ -632,7 +632,7 @@ const hint = computed(() => {
 
 <template>
   <div>
-    <PageHeader icon="lucide:arrow-left-right" title="Активация QR-кодов">
+    <PageHeader icon="lucide:arrow-left-right" title="Активация QR-кодов" title-mobile="Активация QR">
       <template #actions>
         <UiButton
           variant="secondary"

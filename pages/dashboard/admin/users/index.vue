@@ -93,20 +93,20 @@ const topPlan = (row: AdminUserRow) => {
     </div>
 
     <div class="mt-xl">
-      <table v-if="data?.users.length" class="w-full">
+      <UiTable v-if="data?.users.length" min-width="820px">
         <thead>
-          <tr class="border-b border-hairline text-caption text-steel uppercase">
-            <th class="pb-sm text-left">Пользователь</th>
-            <th class="pb-sm text-left">Тариф</th>
-            <th class="pb-sm text-left">Компании</th>
-            <th class="pb-sm text-right">Инструкций</th>
-            <th class="pb-sm text-right">Визиты · 30 дн</th>
-            <th class="pb-sm text-right">Регистрация</th>
+          <tr>
+            <th class="text-left">Пользователь</th>
+            <th class="text-left">Тариф</th>
+            <th class="text-left">Компании</th>
+            <th class="text-right">Инструкций</th>
+            <th class="text-right">Визиты · 30 дн</th>
+            <th class="text-right">Регистрация</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="u in data.users" :key="u.id" class="border-b border-hairline-soft">
-            <td class="py-sm">
+          <tr v-for="u in data.users" :key="u.id">
+            <td>
               <NuxtLink :to="`/dashboard/admin/users/${u.id}`" class="group block">
                 <div class="flex items-center gap-2">
                   <span class="text-body-sm-md text-ink group-hover:text-primary">
@@ -122,13 +122,13 @@ const topPlan = (row: AdminUserRow) => {
                 </span>
               </NuxtLink>
             </td>
-            <td class="py-sm align-top">
+            <td class="align-top">
               <UiBadge v-if="topPlan(u)" :variant="planBadgeVariant(topPlan(u)!.plan)">
                 {{ topPlan(u)!.plan }}
               </UiBadge>
               <span v-else class="text-caption text-steel">—</span>
             </td>
-            <td class="py-sm align-top">
+            <td class="align-top">
               <span class="text-body-sm text-ink">{{ u.tenants.length }}</span>
               <span
                 v-if="u.tenants.length"
@@ -137,18 +137,18 @@ const topPlan = (row: AdminUserRow) => {
                 {{ u.tenants.map((t) => t.name).slice(0, 2).join(', ') }}{{ u.tenants.length > 2 ? '…' : '' }}
               </span>
             </td>
-            <td class="py-sm align-top text-right text-body-sm text-ink">
+            <td class="align-top text-right text-body-sm text-ink">
               {{ u.instructionsTotal }}
             </td>
-            <td class="py-sm align-top text-right text-body-sm text-ink">
+            <td class="align-top text-right text-body-sm text-ink">
               {{ u.visits30dTotal }}
             </td>
-            <td class="py-sm align-top text-right text-caption text-steel">
+            <td class="align-top text-right text-caption text-steel">
               {{ formatDate(u.createdAt) }}
             </td>
           </tr>
         </tbody>
-      </table>
+      </UiTable>
       <p v-else-if="pending" class="py-md text-body text-steel">Загрузка…</p>
       <p v-else class="py-md text-body text-steel">
         <span v-if="debouncedSearch">Ничего не найдено по «{{ debouncedSearch }}».</span>

@@ -2,13 +2,18 @@
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 /**
- * Раздел «Настройки». Два таба:
- *   - settings — профиль, компания, юридический профиль, брендинг
- *   - billing  — тариф и оплата (бывший /dashboard/billing)
+ * Раздел «Настройки». Три таба:
+ *   - profile — данные пользователя (email, имя, выход из аккаунта)
+ *   - company — компания, юридический профиль, брендинг
+ *   - billing — тариф и оплата (бывший /dashboard/billing)
  *
  * Активный таб берётся из ?tab= в URL и пишется обратно через router.replace,
  * чтобы deep-link и refresh страницы сохраняли выбор. Старый маршрут
  * /dashboard/billing редиректит сюда с ?tab=billing.
+ *
+ * Историческое значение `?tab=settings` (когда профиль и компания были в
+ * одной вкладке) нормализуется в `profile` — чтобы старые ссылки не
+ * приводили на пустую страницу.
  */
 
 const api = useApi()
@@ -16,18 +21,25 @@ const { currentTenant, currentRole, user, refresh } = useAuthState()
 const route = useRoute()
 const router = useRouter()
 
-type SettingsTab = 'settings' | 'billing'
+type SettingsTab = 'profile' | 'company' | 'billing'
 
-const tab = ref<SettingsTab>(route.query.tab === 'billing' ? 'billing' : 'settings')
+function normalizeTab(q: unknown): SettingsTab {
+  if (q === 'billing') return 'billing'
+  if (q === 'company') return 'company'
+  return 'profile'
+}
+
+const tab = ref<SettingsTab>(normalizeTab(route.query.tab))
 
 const tabItems: Array<{ value: SettingsTab; label: string }> = [
-  { value: 'settings', label: 'Настройки' },
+  { value: 'profile', label: 'Профиль' },
+  { value: 'company', label: 'Компания' },
   { value: 'billing', label: 'Тариф' }
 ]
 
 watch(tab, (next) => {
   const query = { ...route.query }
-  if (next === 'settings') delete query.tab
+  if (next === 'profile') delete query.tab
   else query.tab = next
   router.replace({ query })
 })
@@ -36,7 +48,7 @@ watch(tab, (next) => {
 watch(
   () => route.query.tab,
   (q) => {
-    const next: SettingsTab = q === 'billing' ? 'billing' : 'settings'
+    const next = normalizeTab(q)
     if (next !== tab.value) tab.value = next
   }
 )
@@ -234,8 +246,8 @@ const trialBlocked = computed(() =>
       </div>
 
       <Transition name="tab-content" mode="out-in">
-        <!-- ── Tab: Настройки ────────────────────────────────────────── -->
-        <div v-if="tab === 'settings'" key="settings" class="space-y-xl">
+        <!-- ── Tab: Профиль ──────────────────────────────────────────── -->
+        <div v-if="tab === 'profile'" key="profile" class="space-y-xl">
           <div class="rounded-lg bg-surface p-xl">
             <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
               <div>
@@ -252,7 +264,10 @@ const trialBlocked = computed(() =>
               </UiButton>
             </div>
           </div>
+        </div>
 
+        <!-- ── Tab: Компания ─────────────────────────────────────────── -->
+        <div v-else-if="tab === 'company'" key="company" class="space-y-xl">
           <div class="rounded-lg bg-surface p-xl">
             <div class="flex items-center gap-3">
               <Icon name="lucide:building-2" class="h-5 w-5 text-navy opacity-50" />

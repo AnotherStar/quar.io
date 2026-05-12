@@ -160,10 +160,10 @@ function lastDesign(code: QrCodeRow) {
            приезжает справа (тот же tab-content transition, что в /dashboard/
            instructions). Состояние pending и пустой результат показываются
            как одна строка <tr colspan="7"> внутри того же tbody. -->
-      <table class="w-full">
+      <UiTable min-width="720px">
         <thead>
-          <tr class="border-b border-hairline text-caption text-steel uppercase">
-            <th class="w-8 pb-sm">
+          <tr>
+            <th class="w-8">
               <input
                 type="checkbox"
                 :checked="allSelected"
@@ -173,12 +173,12 @@ function lastDesign(code: QrCodeRow) {
                 @change="toggleAll"
               >
             </th>
-            <th class="pb-sm text-left">QR</th>
-            <th class="pb-sm text-left">Статус</th>
-            <th class="pb-sm text-left">Печать</th>
-            <th class="pb-sm text-left">Инструкция</th>
-            <th class="pb-sm text-right">Создан</th>
-            <th class="w-10 pb-sm" />
+            <th class="text-left">QR</th>
+            <th class="text-left">Статус</th>
+            <th class="text-left">Печать</th>
+            <th class="text-left">Инструкция</th>
+            <th class="text-right">Создан</th>
+            <th class="w-10" />
           </tr>
         </thead>
         <Transition name="tab-content" mode="out-in">
@@ -200,9 +200,8 @@ function lastDesign(code: QrCodeRow) {
             v-for="code in codes"
             v-else
             :key="code.id"
-            class="border-b border-hairline-soft"
           >
-            <td class="py-sm">
+            <td>
               <input
                 type="checkbox"
                 :checked="selected.has(code.id)"
@@ -210,32 +209,32 @@ function lastDesign(code: QrCodeRow) {
                 @change="toggleOne(code.id)"
               >
             </td>
-            <td class="py-sm">
+            <td>
               <a :href="shortUrl(code)" target="_blank" rel="noopener" class="text-body-sm-md text-link hover:underline">
                 /s/{{ code.shortId }}
               </a>
             </td>
-            <td class="py-sm">
+            <td>
               <UiBadge :variant="code.instruction ? 'tag-green' : 'tag-orange'">
                 {{ code.instruction ? 'Привязан' : 'Свободен' }}
               </UiBadge>
             </td>
-            <td class="py-sm text-body-sm">
+            <td class="text-body-sm">
               <template v-if="code.firstPrintedAt">
                 <UiBadge variant="tag-gray">{{ lastDesign(code) || 'Напечатан' }}</UiBadge>
                 <span class="ml-xs text-caption text-steel">{{ fmtDate(code.lastPrintedAt) }}</span>
               </template>
               <span v-else class="text-caption text-steel">Не печатался</span>
             </td>
-            <td class="py-sm text-body-sm text-charcoal">
+            <td class="text-body-sm text-charcoal">
               <template v-if="code.instruction">
                 {{ code.instruction.title }}
                 <span class="block text-caption text-steel">ШК {{ code.instruction.productBarcode || '—' }}</span>
               </template>
               <span v-else class="text-steel">Не привязан</span>
             </td>
-            <td class="py-sm text-right text-caption text-steel">{{ fmtDate(code.createdAt) }}</td>
-            <td class="py-sm text-right">
+            <td class="text-right text-caption text-steel">{{ fmtDate(code.createdAt) }}</td>
+            <td class="text-right">
               <NuxtLink
                 :to="`/dashboard/qr-codes/${code.id}`"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-md text-steel hover:bg-surface hover:text-ink"
@@ -247,7 +246,7 @@ function lastDesign(code: QrCodeRow) {
           </tr>
         </tbody>
         </Transition>
-      </table>
+      </UiTable>
 
       <p v-if="!pending && codes.length" class="mt-md text-caption text-steel">
         Показано {{ codes.length }} из {{ totalShown }}

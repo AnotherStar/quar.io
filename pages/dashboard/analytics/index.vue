@@ -16,12 +16,7 @@ watch(tab, (v) => {
   router.replace({ query: { ...route.query, tab: v === 'dashboard' ? undefined : v } })
 })
 
-// Period selector — shared between tabs.
-const days = ref<number>(Number(route.query.days ?? 30) || 30)
-const periods = [7, 30, 90]
-watch(days, (v) => {
-  router.replace({ query: { ...route.query, days: v === 30 ? undefined : String(v) } })
-})
+const days = ref(30)
 
 // ─── Dashboard tab ────────────────────────────────────────────────────────
 const overviewKey = computed(() => `analytics-overview-${currentTenant.value?.id ?? 'none'}-${days.value}`)
@@ -126,21 +121,7 @@ function closeVisit() {
 
 <template>
   <div>
-    <PageHeader icon="lucide:bar-chart-3" title="Аналитика">
-      <template #actions>
-        <div class="inline-flex h-9 items-stretch overflow-hidden rounded-md border border-hairline">
-          <button
-            v-for="p in periods"
-            :key="p"
-            type="button"
-            :class="['px-md text-caption-bold transition-colors', days === p ? 'bg-primary text-on-primary' : 'bg-canvas text-charcoal hover:bg-hairline-soft']"
-            @click="days = p"
-          >
-            {{ p }}д
-          </button>
-        </div>
-      </template>
-    </PageHeader>
+    <PageHeader icon="lucide:bar-chart-3" title="Аналитика" />
 
     <div class="mt-sm">
       <UiSegmentedTabs v-model="tab" :tabs="tabs" />
@@ -148,7 +129,7 @@ function closeVisit() {
 
     <!-- ─── Дашборд ────────────────────────────────────────────────────── -->
     <div v-show="tab === 'dashboard'" class="mt-xl space-y-2xl">
-      <div v-if="overviewPending && !overview" class="rounded-lg bg-surface p-2xl text-center text-body-sm text-steel">
+      <div v-if="overviewPending && !overview" class="rounded-lg bg-surface p-2xl text-center text-body text-steel">
         Загрузка…
       </div>
 
@@ -178,19 +159,22 @@ function closeVisit() {
         </div>
 
         <!-- Динамика по дням -->
-        <UiCard>
+        <div class="rounded-lg bg-surface p-xl">
           <div class="flex items-center justify-between">
-            <h3 class="text-h5 text-navy">Визиты по дням</h3>
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:trending-up" class="h-5 w-5 text-navy opacity-50" />
+              <h2 class="text-h4 text-navy">Визиты по дням</h2>
+            </div>
             <span class="text-caption text-steel">Последние {{ days }} дн.</span>
           </div>
-          <div v-if="!overview?.byDay?.length" class="mt-md py-lg text-center text-body-sm text-steel">
+          <div v-if="!overview?.byDay?.length" class="mt-md py-lg text-center text-body text-steel">
             Данных пока нет.
           </div>
           <div v-else class="mt-md flex h-32 items-end gap-1">
             <div
               v-for="d in overview.byDay"
               :key="d.day"
-              class="group relative flex-1 min-w-[6px] rounded-t bg-tint-lavender hover:bg-primary/60"
+              class="group relative flex-1 min-w-[6px] rounded-t bg-primary/30 hover:bg-primary/60"
               :style="{ height: `${Math.max(4, (d.visits / maxByDay) * 100)}%` }"
               :title="`${formatDay(d.day)}: ${d.visits} визитов, ${d.pageViews} просмотров`"
             />
@@ -199,203 +183,220 @@ function closeVisit() {
             <span>{{ formatDay(overview.byDay[0].day) }}</span>
             <span>{{ formatDay(overview.byDay[overview.byDay.length - 1].day) }}</span>
           </div>
-        </UiCard>
+        </div>
 
         <!-- Топ инструкций -->
-        <UiCard>
+        <div class="rounded-lg bg-surface p-xl">
           <div class="flex items-center justify-between">
-            <h3 class="text-h5 text-navy">Топ инструкций</h3>
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:list-ordered" class="h-5 w-5 text-navy opacity-50" />
+              <h2 class="text-h4 text-navy">Топ инструкций</h2>
+            </div>
             <UiButton to="/dashboard/instructions" variant="secondary" size="sm">Все инструкции</UiButton>
           </div>
-          <div v-if="!overview?.topInstructions?.length" class="mt-md py-lg text-center text-body-sm text-steel">
+          <p v-if="!overview?.topInstructions?.length" class="mt-md py-lg text-center text-body text-steel">
             Пока нет визитов.
-          </div>
-          <table v-else class="mt-md w-full text-body-sm">
-            <thead class="text-caption-bold uppercase tracking-wide text-steel">
-              <tr class="border-b border-hairline-soft">
-                <th class="py-2 text-left font-normal">Инструкция</th>
-                <th class="py-2 text-right font-normal">Визиты</th>
-                <th class="py-2 text-right font-normal">Просмотры</th>
-                <th class="py-2 text-right font-normal">Среднее время</th>
+          </p>
+          <UiTable v-else min-width="640px" class="mt-md">
+            <thead>
+              <tr>
+                <th class="text-left">Инструкция</th>
+                <th class="text-right">Визиты</th>
+                <th class="text-right">Просмотры</th>
+                <th class="text-right">Среднее время</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-hairline-soft">
+            <tbody>
               <tr v-for="i in overview.topInstructions" :key="i.id">
-                <td class="py-2 pr-md">
-                  <NuxtLink :to="`/dashboard/instructions/${i.id}/analytics`" class="text-ink hover:text-primary">
+                <td class="pr-md whitespace-nowrap">
+                  <NuxtLink :to="`/dashboard/instructions/${i.id}/analytics`" class="text-body-sm-md text-ink hover:text-primary">
                     {{ i.title }}
                   </NuxtLink>
                 </td>
-                <td class="py-2 text-right tabular-nums">{{ i.visits }}</td>
-                <td class="py-2 text-right tabular-nums text-steel">{{ i.pageViews }}</td>
-                <td class="py-2 text-right tabular-nums text-steel">{{ formatDuration(i.avgDurationMs) }}</td>
+                <td class="text-right tabular-nums text-body-sm text-ink">{{ i.visits }}</td>
+                <td class="text-right tabular-nums text-body-sm text-steel">{{ i.pageViews }}</td>
+                <td class="text-right tabular-nums text-body-sm text-steel">{{ formatDuration(i.avgDurationMs) }}</td>
               </tr>
             </tbody>
-          </table>
-        </UiCard>
+          </UiTable>
+        </div>
 
         <!-- Источники и устройства -->
         <div class="grid grid-cols-1 gap-md md:grid-cols-2">
-          <UiCard>
-            <h3 class="text-h5 mb-md text-navy">Источник захода</h3>
-            <ul class="divide-y divide-hairline-soft">
-              <li v-for="r in overview?.byEntrySource" :key="r.source" class="flex items-center justify-between py-2 text-body-sm">
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:scan-line" class="h-5 w-5 text-navy opacity-50" />
+              <h2 class="text-h4 text-navy">Источник захода</h2>
+            </div>
+            <ul class="mt-md divide-y divide-hairline-soft">
+              <li v-for="r in overview?.byEntrySource" :key="r.source" class="flex items-center justify-between py-sm text-body-sm">
                 <UiBadge :variant="r.source === 'qr' ? 'tag-green' : r.source === 'utm' ? 'tag-orange' : 'tag-gray'">
                   {{ entrySourceLabel[r.source] ?? r.source }}
                 </UiBadge>
                 <span class="tabular-nums text-steel">{{ r.count }}</span>
               </li>
-              <li v-if="!overview?.byEntrySource?.length" class="py-md text-center text-steel">Нет данных</li>
+              <li v-if="!overview?.byEntrySource?.length" class="py-md text-center text-body text-steel">Нет данных</li>
             </ul>
-          </UiCard>
+          </div>
 
-          <UiCard>
-            <h3 class="text-h5 mb-md text-navy">UTM-источники</h3>
-            <ul class="divide-y divide-hairline-soft">
-              <li v-for="r in overview?.byUtmSource" :key="r.utmSource" class="flex items-center justify-between py-2 text-body-sm">
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:tag" class="h-5 w-5 text-navy opacity-50" />
+              <h2 class="text-h4 text-navy">UTM-источники</h2>
+            </div>
+            <ul class="mt-md divide-y divide-hairline-soft">
+              <li v-for="r in overview?.byUtmSource" :key="r.utmSource" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="text-charcoal">{{ r.utmSource }}</span>
                 <span class="tabular-nums text-steel">{{ r.count }}</span>
               </li>
-              <li v-if="!overview?.byUtmSource?.length" class="py-md text-center text-steel">Нет UTM-меток</li>
+              <li v-if="!overview?.byUtmSource?.length" class="py-md text-center text-body text-steel">Нет UTM-меток</li>
             </ul>
-          </UiCard>
+          </div>
 
-          <UiCard>
-            <h3 class="text-h5 mb-md text-navy">По странам</h3>
-            <ul class="divide-y divide-hairline-soft max-h-[280px] overflow-y-auto">
-              <li v-for="r in overview?.byCountry" :key="r.country" class="flex items-center justify-between py-2 text-body-sm">
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:globe" class="h-5 w-5 text-navy opacity-50" />
+              <h2 class="text-h4 text-navy">По странам</h2>
+            </div>
+            <ul class="mt-md max-h-[280px] divide-y divide-hairline-soft overflow-y-auto">
+              <li v-for="r in overview?.byCountry" :key="r.country" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="text-charcoal">{{ r.country }}</span>
                 <span class="tabular-nums text-steel">{{ r.count }}</span>
               </li>
-              <li v-if="!overview?.byCountry?.length" class="py-md text-center text-steel">Нет данных</li>
+              <li v-if="!overview?.byCountry?.length" class="py-md text-center text-body text-steel">Нет данных</li>
             </ul>
-          </UiCard>
+          </div>
 
-          <UiCard>
-            <h3 class="text-h5 mb-md text-navy">По устройствам</h3>
-            <ul class="divide-y divide-hairline-soft">
-              <li v-for="r in overview?.byDevice" :key="r.deviceType" class="flex items-center justify-between py-2 text-body-sm">
-                <span class="text-charcoal capitalize">{{ r.deviceType }}</span>
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:monitor-smartphone" class="h-5 w-5 text-navy opacity-50" />
+              <h2 class="text-h4 text-navy">По устройствам</h2>
+            </div>
+            <ul class="mt-md divide-y divide-hairline-soft">
+              <li v-for="r in overview?.byDevice" :key="r.deviceType" class="flex items-center justify-between py-sm text-body-sm">
+                <span class="capitalize text-charcoal">{{ r.deviceType }}</span>
                 <span class="tabular-nums text-steel">{{ r.count }}</span>
               </li>
-              <li v-if="!overview?.byDevice?.length" class="py-md text-center text-steel">Нет данных</li>
+              <li v-if="!overview?.byDevice?.length" class="py-md text-center text-body text-steel">Нет данных</li>
             </ul>
-          </UiCard>
+          </div>
         </div>
 
         <!-- Цели -->
-        <UiCard>
-          <h3 class="text-h5 mb-md text-navy">Цели</h3>
-          <div v-if="!overview?.goalsByCode?.length" class="py-md text-center text-body-sm text-steel">
-            Пока не зафиксировано ни одной цели.
+        <div class="rounded-lg bg-surface p-xl">
+          <div class="flex items-center gap-3">
+            <Icon name="lucide:target" class="h-5 w-5 text-navy opacity-50" />
+            <h2 class="text-h4 text-navy">Цели</h2>
           </div>
-          <div v-else class="grid grid-cols-2 gap-md md:grid-cols-4">
-            <div v-for="g in overview.goalsByCode" :key="g.code" class="rounded-md border border-hairline-soft p-md">
+          <p v-if="!overview?.goalsByCode?.length" class="mt-md py-md text-center text-body text-steel">
+            Пока не зафиксировано ни одной цели.
+          </p>
+          <div v-else class="mt-md grid grid-cols-2 gap-md md:grid-cols-4">
+            <div v-for="g in overview.goalsByCode" :key="g.code" class="rounded-md bg-canvas p-md">
               <p class="font-mono text-caption text-steel">{{ g.code }}</p>
-              <p class="mt-1 text-h3 text-navy tabular-nums">{{ g.count }}</p>
+              <p class="mt-1 text-h3 tabular-nums text-navy">{{ g.count }}</p>
             </div>
           </div>
-        </UiCard>
+        </div>
       </template>
     </div>
 
     <!-- ─── Визиты ────────────────────────────────────────────────────── -->
-    <div v-show="tab === 'visits'" class="mt-xl space-y-md">
-      <UiCard>
-        <div class="flex flex-wrap items-center gap-sm">
-          <label class="flex items-center gap-2 text-body-sm text-steel">
-            Инструкция
-            <select v-model="filterInstructionId" class="h-9 rounded-md border border-hairline bg-canvas px-sm text-body-sm text-ink">
-              <option value="">Все</option>
-              <option v-for="i in instructionsList" :key="i.id" :value="i.id">{{ i.title }}</option>
-            </select>
-          </label>
-          <label class="flex items-center gap-2 text-body-sm text-steel">
-            Источник
-            <select v-model="filterEntrySource" class="h-9 rounded-md border border-hairline bg-canvas px-sm text-body-sm text-ink">
-              <option value="">Все</option>
-              <option value="qr">QR</option>
-              <option value="utm">UTM</option>
-              <option value="referral">Реферал</option>
-              <option value="internal">Внутренний</option>
-              <option value="direct">Прямой</option>
-            </select>
-          </label>
-          <label class="flex items-center gap-2 text-body-sm text-steel">
-            Тип
-            <select v-model="filterReturning" class="h-9 rounded-md border border-hairline bg-canvas px-sm text-body-sm text-ink">
-              <option value="">Все</option>
-              <option value="false">Новые</option>
-              <option value="true">Вернувшиеся</option>
-            </select>
-          </label>
-          <span class="ml-auto text-caption text-steel">Всего: <span class="text-ink tabular-nums">{{ visitsData?.total ?? 0 }}</span></span>
-        </div>
-      </UiCard>
+    <div v-show="tab === 'visits'">
+      <div class="mt-md flex flex-wrap items-center gap-md">
+        <select
+          v-model="filterInstructionId"
+          class="h-10 rounded-lg border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Все инструкции</option>
+          <option v-for="i in instructionsList" :key="i.id" :value="i.id">{{ i.title }}</option>
+        </select>
+        <select
+          v-model="filterEntrySource"
+          class="h-10 rounded-lg border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Все источники</option>
+          <option value="qr">QR</option>
+          <option value="utm">UTM</option>
+          <option value="referral">Реферал</option>
+          <option value="internal">Внутренний</option>
+          <option value="direct">Прямой</option>
+        </select>
+        <select
+          v-model="filterReturning"
+          class="h-10 rounded-lg border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Все типы</option>
+          <option value="false">Новые</option>
+          <option value="true">Вернувшиеся</option>
+        </select>
+        <span class="ml-auto text-caption text-steel">
+          Всего: <span class="text-ink tabular-nums">{{ visitsData?.total ?? 0 }}</span>
+        </span>
+      </div>
 
-      <UiCard :padded="'sm'">
-        <div v-if="visitsPending && !visitsData" class="py-2xl text-center text-body-sm text-steel">Загрузка…</div>
-        <div v-else-if="!visitsData?.items?.length" class="py-2xl text-center text-body-sm text-steel">
+      <div class="mt-xl">
+        <p v-if="visitsPending && !visitsData" class="py-md text-body text-steel">Загрузка…</p>
+        <p v-else-if="!visitsData?.items?.length" class="py-md text-body text-steel">
           Визитов по выбранным фильтрам нет.
-        </div>
-        <table v-else class="w-full text-body-sm">
-          <thead class="text-caption-bold uppercase tracking-wide text-steel">
-            <tr class="border-b border-hairline-soft">
-              <th class="px-sm py-2 text-left font-normal">Время</th>
-              <th class="px-sm py-2 text-left font-normal">Инструкция</th>
-              <th class="px-sm py-2 text-left font-normal">Источник</th>
-              <th class="px-sm py-2 text-left font-normal">Гео</th>
-              <th class="px-sm py-2 text-left font-normal">Устройство</th>
-              <th class="px-sm py-2 text-right font-normal">Время</th>
-              <th class="px-sm py-2 text-right font-normal">Скролл</th>
-              <th class="px-sm py-2 text-right font-normal">Стр.</th>
-              <th class="px-sm py-2 text-right font-normal">Цели</th>
-              <th class="px-sm py-2"></th>
+        </p>
+        <UiTable v-else min-width="960px">
+          <thead>
+            <tr>
+              <th class="text-left">Время</th>
+              <th class="text-left">Инструкция</th>
+              <th class="text-left">Источник</th>
+              <th class="text-left">Гео</th>
+              <th class="text-left">Устройство</th>
+              <th class="text-right">Время</th>
+              <th class="text-right">Скролл</th>
+              <th class="text-right">Стр.</th>
+              <th class="text-right">Цели</th>
+              <th class="w-6" />
             </tr>
           </thead>
-          <tbody class="divide-y divide-hairline-soft">
+          <tbody>
             <tr
               v-for="v in visitsData.items"
               :key="v.id"
-              class="cursor-pointer transition-colors hover:bg-hairline-soft"
+              class="cursor-pointer hover:bg-surface"
               @click="openVisit(v.id)"
             >
-              <td class="px-sm py-2 whitespace-nowrap tabular-nums text-charcoal">{{ formatDateTime(v.startedAt) }}</td>
-              <td class="px-sm py-2 max-w-[240px]">
-                <span class="block truncate text-ink">{{ v.instruction?.title }}</span>
+              <td class="whitespace-nowrap tabular-nums text-body-sm text-charcoal">{{ formatDateTime(v.startedAt) }}</td>
+              <td class="max-w-[240px]">
+                <span class="block truncate text-body-sm-md text-ink">{{ v.instruction?.title }}</span>
               </td>
-              <td class="px-sm py-2">
+              <td class="whitespace-nowrap">
                 <UiBadge :variant="v.entrySource === 'qr' ? 'tag-green' : v.entrySource === 'utm' ? 'tag-orange' : 'tag-gray'">
                   {{ entrySourceLabel[v.entrySource ?? 'unknown'] ?? v.entrySource }}
                 </UiBadge>
                 <UiBadge v-if="v.isReturning" variant="tag-purple" class="ml-1">↻</UiBadge>
               </td>
-              <td class="px-sm py-2 whitespace-nowrap text-charcoal">
+              <td class="whitespace-nowrap text-body-sm text-charcoal">
                 {{ v.country || '—' }}<span v-if="v.city" class="text-steel">, {{ v.city }}</span>
               </td>
-              <td class="px-sm py-2 whitespace-nowrap text-charcoal capitalize">
+              <td class="whitespace-nowrap text-body-sm capitalize text-charcoal">
                 {{ v.deviceType ?? '—' }}<span v-if="v.os" class="text-steel"> · {{ v.os }}</span>
               </td>
-              <td class="px-sm py-2 text-right tabular-nums text-steel">{{ formatDuration(v.totalDurationMs) }}</td>
-              <td class="px-sm py-2 text-right tabular-nums text-steel">{{ v.maxScrollDepth }}%</td>
-              <td class="px-sm py-2 text-right tabular-nums text-steel">{{ v.pageViews }}</td>
-              <td class="px-sm py-2 text-right tabular-nums">
+              <td class="text-right tabular-nums text-body-sm text-steel">{{ formatDuration(v.totalDurationMs) }}</td>
+              <td class="text-right tabular-nums text-body-sm text-steel">{{ v.maxScrollDepth }}%</td>
+              <td class="text-right tabular-nums text-body-sm text-steel">{{ v.pageViews }}</td>
+              <td class="text-right tabular-nums text-body-sm">
                 <span :class="v._count?.goals ? 'text-primary font-semibold' : 'text-steel'">{{ v._count?.goals ?? 0 }}</span>
               </td>
-              <td class="px-sm py-2 text-right text-steel">
+              <td class="text-right text-steel">
                 <Icon name="lucide:chevron-right" class="h-4 w-4" />
               </td>
             </tr>
           </tbody>
-        </table>
-      </UiCard>
+        </UiTable>
 
-      <!-- Пагинация -->
-      <div v-if="visitsData && visitsData.totalPages > 1" class="flex items-center justify-between text-body-sm">
-        <span class="text-steel">Страница {{ visitsData.page }} из {{ visitsData.totalPages }}</span>
-        <div class="flex gap-2">
-          <UiButton variant="secondary" size="sm" :disabled="page <= 1" @click="page = Math.max(1, page - 1)">← Назад</UiButton>
-          <UiButton variant="secondary" size="sm" :disabled="page >= visitsData.totalPages" @click="page = Math.min(visitsData.totalPages, page + 1)">Вперёд →</UiButton>
+        <div v-if="visitsData && visitsData.totalPages > 1" class="mt-md flex items-center justify-between text-body-sm">
+          <span class="text-steel">Страница {{ visitsData.page }} из {{ visitsData.totalPages }}</span>
+          <div class="flex gap-2">
+            <UiButton variant="secondary" size="sm" :disabled="page <= 1" @click="page = Math.max(1, page - 1)">← Назад</UiButton>
+            <UiButton variant="secondary" size="sm" :disabled="page >= visitsData.totalPages" @click="page = Math.min(visitsData.totalPages, page + 1)">Вперёд →</UiButton>
+          </div>
         </div>
       </div>
     </div>

@@ -27,6 +27,7 @@ export interface PrintBatchListItem {
   error: string | null
   createdAt: string
   createdByEmail: string | null
+  archivedAt: string | null
 }
 
 export interface PrintTemplateListItem {

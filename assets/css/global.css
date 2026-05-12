@@ -83,6 +83,26 @@
   .container-page {
     @apply mx-auto w-full max-w-[1280px] px-4 md:px-8;
   }
+
+  /* Dashboard-таблица: общая база для списков сущностей.
+   * Используется через <UiTable> (рендерит <table class="ui-table">)
+   * либо напрямую как класс. Cell-level выравнивание/цвет/whitespace
+   * страницы задают сами через утилиты — здесь только костяк. */
+  .ui-table {
+    @apply w-full;
+  }
+  .ui-table thead tr {
+    @apply border-b border-hairline text-caption text-steel uppercase;
+  }
+  .ui-table thead th {
+    @apply pb-sm font-normal;
+  }
+  .ui-table tbody tr {
+    @apply border-b border-hairline-soft;
+  }
+  .ui-table tbody td {
+    @apply py-sm;
+  }
 }
 
 .page-enter-active,

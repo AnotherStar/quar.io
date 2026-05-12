@@ -31,6 +31,7 @@ model User {
   sessions     Session[]
   memberships  Membership[]
   magicLinks   MagicLink[]
+  aiUsageEvents AiUsageEvent[]
 }
 
 model Session {
@@ -96,6 +97,7 @@ model Tenant {
   legalProfile        TenantLegalProfile?
   legalDocuments      LegalDocumentVersion[]
   consentEvents       ConsentEvent[]
+  aiUsageEvents       AiUsageEvent[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -360,10 +362,13 @@ model PrintBatch {
   pdfSizeBytes     Int?
   error            String?
 
+  archivedAt       DateTime?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   @@index([tenantId, createdAt])
+  @@index([tenantId, archivedAt])
 }
 
 // Immutable snapshot. Created on publish or explicit "save version".
@@ -716,4 +721,42 @@ model ApiKey {
   revokedAt   DateTime?
 
   @@index([tenantId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI usage log
+// One row per AI invocation (status=success|error|aborted). Captures token
+// counts, image counts, estimated USD cost, request id for log correlation.
+// Used for billing-style reporting and (later) per-tenant quota enforcement.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AiUsageEvent {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId            String?
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  feature           String                              // 'instruction-generation' | 'image-edit' | ...
+  model             String                              // 'gpt-5.4' | 'gpt-image-1.5' | ...
+  status            String                              // 'success' | 'error' | 'aborted'
+  errorMessage      String?
+
+  inputTokens       Int?
+  cachedInputTokens Int?
+  outputTokens      Int?
+  reasoningTokens   Int?
+  totalTokens       Int?
+
+  imageCount        Int?                                // for image gen / edit endpoints
+
+  estimatedCostUsd  Float?                              // model pricing × token usage at request time
+  durationMs        Int?
+  requestId         String?                             // matches the requestId in server logs
+  metadata          Json?
+
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, feature, createdAt])
 }

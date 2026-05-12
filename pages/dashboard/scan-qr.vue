@@ -135,40 +135,40 @@ function openPdf() {
     <UiCard>
       <div v-if="pending" class="py-md text-body text-steel">Загружаю QR-коды…</div>
 
-      <table v-else-if="codes.length" class="w-full">
+      <UiTable v-else-if="codes.length">
         <thead>
-          <tr class="border-b border-hairline text-caption text-steel uppercase">
-            <th class="pb-sm text-left">QR</th>
-            <th class="pb-sm text-left">Статус</th>
-            <th class="pb-sm text-left">Инструкция</th>
-            <th class="pb-sm text-right">Создан</th>
+          <tr>
+            <th class="text-left">QR</th>
+            <th class="text-left">Статус</th>
+            <th class="text-left">Инструкция</th>
+            <th class="text-right">Создан</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="code in codes" :key="code.id" class="border-b border-hairline-soft">
-            <td class="py-sm">
+          <tr v-for="code in codes" :key="code.id">
+            <td>
               <a :href="shortUrl(code)" target="_blank" rel="noopener" class="text-body-sm-md text-link hover:underline">
                 /s/{{ code.shortId }}
               </a>
             </td>
-            <td class="py-sm">
+            <td>
               <UiBadge :variant="code.instruction ? 'tag-green' : 'tag-orange'">
                 {{ code.instruction ? 'Привязан' : 'Свободен' }}
               </UiBadge>
             </td>
-            <td class="py-sm text-body-sm text-charcoal">
+            <td class="text-body-sm text-charcoal">
               <template v-if="code.instruction">
                 {{ code.instruction.title }}
                 <span class="block text-caption text-steel">ШК {{ code.instruction.productBarcode }}</span>
               </template>
               <span v-else class="text-steel">Ждёт сканирования ШК</span>
             </td>
-            <td class="py-sm text-right text-caption text-steel">
+            <td class="text-right text-caption text-steel">
               {{ new Date(code.createdAt).toLocaleDateString() }}
             </td>
           </tr>
         </tbody>
-      </table>
+      </UiTable>
 
       <p v-else class="py-md text-body text-steel">
         Пока нет QR-кодов в выбранном фильтре.

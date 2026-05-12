@@ -61,9 +61,9 @@ async function submit() {
   <div>
     <PageHeader icon="lucide:printer" title="Подготовка к печати">
       <template #actions>
-        <UiButton variant="secondary" to="/dashboard/print">
+        <UiButton variant="secondary" to="/dashboard/print" aria-label="К списку тиражей">
           <Icon name="lucide:arrow-left" class="h-4 w-4" />
-          К списку тиражей
+          <span class="hidden md:inline">К списку тиражей</span>
         </UiButton>
       </template>
     </PageHeader>

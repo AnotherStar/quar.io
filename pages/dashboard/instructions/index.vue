@@ -119,7 +119,7 @@ async function unarchive(id: string) {
       <template #actions>
         <UiButton :loading="creating" @click="createNew">
           <Icon name="lucide:plus" class="h-4 w-4" />
-          Новая
+          Создать
         </UiButton>
       </template>
     </PageHeader>
@@ -148,19 +148,19 @@ async function unarchive(id: string) {
 
     <Transition name="tab-content" mode="out-in">
     <div :key="tab" class="mt-xl">
-      <table v-if="visible.length" class="w-full">
+      <UiTable v-if="visible.length">
         <thead>
-          <tr class="border-b border-hairline text-caption text-steel uppercase">
-            <th class="pb-sm text-left">Инструкция</th>
-            <th class="pb-sm text-left">Статус</th>
-            <th class="pb-sm text-right">Просмотры · 30 дн</th>
-            <th class="pb-sm w-10" />
+          <tr>
+            <th class="text-left">Инструкция</th>
+            <th class="text-left">Статус</th>
+            <th class="text-right">Просмотры · 30 дн</th>
+            <th class="w-10" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in visible" :key="i.id" class="border-b border-hairline-soft">
+          <tr v-for="i in visible" :key="i.id">
             <!-- Title + slug, click → editor -->
-            <td class="py-sm">
+            <td>
               <NuxtLink
                 :to="`/dashboard/instructions/${i.id}/edit`"
                 class="group block"
@@ -174,13 +174,13 @@ async function unarchive(id: string) {
                 </span>
               </NuxtLink>
             </td>
-            <td class="py-sm align-top">
+            <td class="align-top">
               <UiBadge :variant="i.status === 'PUBLISHED' ? 'tag-green' : i.status === 'ARCHIVED' ? 'tag-orange' : i.status === 'IN_REVIEW' ? 'tag-orange' : 'tag-gray'">
                 {{ i.status }}
               </UiBadge>
             </td>
             <!-- Analytics, click → analytics page -->
-            <td class="py-sm align-top text-right">
+            <td class="align-top text-right">
               <NuxtLink
                 :to="`/dashboard/instructions/${i.id}/analytics`"
                 class="inline-flex items-center gap-1 text-body-sm-md text-ink hover:text-primary"
@@ -190,7 +190,7 @@ async function unarchive(id: string) {
               </NuxtLink>
             </td>
             <!-- Kebab menu with row actions -->
-            <td class="py-sm align-top">
+            <td class="align-top">
               <div :ref="(el: any) => bindMenu(el, i.id)" class="relative">
                 <button
                   type="button"
@@ -274,7 +274,7 @@ async function unarchive(id: string) {
             </td>
           </tr>
         </tbody>
-      </table>
+      </UiTable>
       <p v-else class="py-md text-body text-steel">
         <span v-if="search">Ничего не найдено по «{{ search }}».</span>
         <span v-else-if="tab === 'archive'">Архив пуст.</span>

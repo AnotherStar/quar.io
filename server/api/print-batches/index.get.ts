@@ -32,7 +32,8 @@ export default defineEventHandler(async (event) => {
       pdfSizeBytes: b.pdfSizeBytes,
       error: b.error,
       createdAt: b.createdAt.toISOString(),
-      createdByEmail: b.createdById ? (emailById.get(b.createdById) ?? null) : null
+      createdByEmail: b.createdById ? (emailById.get(b.createdById) ?? null) : null,
+      archivedAt: b.archivedAt?.toISOString() ?? null
     }
   })
 

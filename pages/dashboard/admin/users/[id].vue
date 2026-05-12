@@ -144,31 +144,31 @@ const formatDate = (s: string | null | undefined) =>
           </div>
         </div>
 
-        <table v-if="t.instructions.length" class="w-full">
+        <UiTable v-if="t.instructions.length" min-width="720px">
           <thead>
-            <tr class="border-b border-hairline text-caption text-steel uppercase">
-              <th class="pb-sm text-left">Инструкция</th>
-              <th class="pb-sm text-left">Статус</th>
-              <th class="pb-sm text-right">Визиты · 30 дн</th>
-              <th class="pb-sm text-right">Просмотры · 30 дн</th>
-              <th class="pb-sm text-right">Обновлена</th>
+            <tr>
+              <th class="text-left">Инструкция</th>
+              <th class="text-left">Статус</th>
+              <th class="text-right">Визиты · 30 дн</th>
+              <th class="text-right">Просмотры · 30 дн</th>
+              <th class="text-right">Обновлена</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="i in t.instructions" :key="i.id" class="border-b border-hairline-soft">
-              <td class="py-sm">
+            <tr v-for="i in t.instructions" :key="i.id">
+              <td>
                 <p class="text-body-sm-md text-ink">{{ i.title }}</p>
                 <p class="text-caption text-steel">/{{ t.slug }}/{{ i.slug }}</p>
               </td>
-              <td class="py-sm align-top">
+              <td class="align-top">
                 <UiBadge :variant="statusBadgeVariant(i.status)">{{ i.status }}</UiBadge>
               </td>
-              <td class="py-sm align-top text-right text-body-sm text-ink">{{ i.visits30d }}</td>
-              <td class="py-sm align-top text-right text-body-sm text-ink">{{ i.pageViews30d }}</td>
-              <td class="py-sm align-top text-right text-caption text-steel">{{ formatDate(i.updatedAt) }}</td>
+              <td class="align-top text-right text-body-sm text-ink">{{ i.visits30d }}</td>
+              <td class="align-top text-right text-body-sm text-ink">{{ i.pageViews30d }}</td>
+              <td class="align-top text-right text-caption text-steel">{{ formatDate(i.updatedAt) }}</td>
             </tr>
           </tbody>
-        </table>
+        </UiTable>
         <p v-else class="py-md text-body text-steel">Инструкций пока нет.</p>
       </div>
 

@@ -22,15 +22,15 @@ function isEmpty(content: any): boolean {
 
 <template>
   <div>
-    <PageHeader icon="lucide:blocks" title="Переиспользуемые секции">
+    <PageHeader icon="lucide:blocks" title="Секции">
       <template #actions>
         <UiButton v-if="isPaid" to="/dashboard/sections/new">
           <Icon name="lucide:plus" class="h-4 w-4" />
-          Новая секция
+          Создать
         </UiButton>
         <UiButton v-else disabled>
           <Icon name="lucide:plus" class="h-4 w-4" />
-          Новая секция
+          Создать
         </UiButton>
       </template>
     </PageHeader>
