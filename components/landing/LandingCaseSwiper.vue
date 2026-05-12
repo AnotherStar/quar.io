@@ -1,21 +1,21 @@
 <script setup lang="ts">
 const cases = [
   {
-    title: 'Теперь это Ваш покупатель',
+    title: 'Теперь это ваш покупатель',
     copy: 'Открывая инструкцию, клиенты сразу видят оффер на следующую покупку: расходники, аксессуары, промокод или скидку',
-    cta: 'Клиент совершает повторный заказ',
+    cta: 'Рост повторных продаж до 40%',
     icon: 'lucide:shopping-bag'
   },
   {
     title: 'Работа с негативом до публикации отзыва',
     copy: 'Вместо негативного отзыва покупатель нажимает кнопку в инструкции, задаёт вопрос и получает помощь там же, где застрял.',
-    cta: 'Вопрос решён до отзыва',
+    cta: 'До 90% меньше негативных отзывов',
     icon: 'lucide:message-circle-question'
   },
   {
     title: 'Профессиональная инструкция — это просто',
     copy: 'Загрузите обычные фотографии или уже существующий файл с инструкцией: quar.io соберет профессиональную инструкцию, добавит иллюстрации и визуальные подсказки. Экономьте время и деньги на верстке и дизайне.',
-    cta: 'Из материалов — в готовую инструкцию',
+    cta: 'Инструкция опубликована за 10 минут',
     icon: 'lucide:image-plus'
   }
 ]
@@ -32,10 +32,6 @@ const transitionEnabled = ref(false)
 const dragOffset = ref(0)
 const dragStartX = ref(0)
 const isDragging = ref(false)
-const compareReady = ref(false)
-const compareHovered = ref(false)
-let compareReadyTimer: ReturnType<typeof setTimeout> | undefined
-
 onMounted(() => {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -48,21 +44,6 @@ const active = computed(() => {
   if (slideIndex.value === 0) return cases.length - 1
   if (slideIndex.value === cases.length + 1) return 0
   return slideIndex.value - 1
-})
-
-watch(active, (value) => {
-  compareHovered.value = false
-  compareReady.value = false
-  if (compareReadyTimer) clearTimeout(compareReadyTimer)
-  if (value === 2) {
-    compareReadyTimer = setTimeout(() => {
-      compareReady.value = true
-    }, 460)
-  }
-}, { immediate: true })
-
-onBeforeUnmount(() => {
-  if (compareReadyTimer) clearTimeout(compareReadyTimer)
 })
 
 const trackStyle = computed(() => ({
@@ -131,18 +112,10 @@ function onPointerCancel(event: PointerEvent) {
   ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
 }
 
-function activateCompare() {
-  if (!compareReady.value) return
-  compareHovered.value = true
-}
-
-function resetCompare() {
-  compareHovered.value = false
-}
 </script>
 
 <template>
-  <section id="cases" class="bg-canvas">
+  <section id="cases" class="relative z-10 bg-canvas shadow-[0_-16px_40px_-20px_rgba(15,15,15,0.16),0_16px_40px_-20px_rgba(15,15,15,0.16)]">
     <div class="container-page py-section-lg">
       <div
         ref="viewport"
@@ -165,16 +138,12 @@ function resetCompare() {
           >
             <div class="grid lg:grid-cols-2">
               <div class="border-b border-hairline py-xl pr-xl md:py-2xl md:pr-2xl lg:border-b-0">
-                <h3 class="text-h2 text-navy">
-                  <template v-if="slide.realIndex === 0">
-                    Теперь это
-                    <span class="inline-block rounded-lg bg-primary px-sm text-white shadow-subtle">Ваш</span>
-                    покупатель
-                  </template>
-                  <template v-else>{{ slide.title }}</template>
-                </h3>
+                <h3 class="text-h2 text-navy">{{ slide.title }}</h3>
                 <p class="mt-lg text-h4 font-medium leading-[1.55] text-slate">{{ slide.copy }}</p>
-                <p class="mt-8 text-body-sm-md text-primary">{{ slide.cta }}</p>
+                <p class="mt-8 inline-flex items-center gap-sm rounded-lg bg-surface px-md py-sm text-h5 font-semibold text-primary">
+                  <Icon name="lucide:trending-up" class="h-5 w-5" />
+                  {{ slide.cta }}
+                </p>
               </div>
 
               <div class="min-h-[420px] bg-transparent p-lg md:p-2xl">
@@ -197,15 +166,7 @@ function resetCompare() {
                 </div>
 
                 <div v-else class="grid h-full place-items-center">
-                  <div
-                    :class="[
-                      'case-compare case-compare-frame relative w-full max-w-3xl overflow-hidden rounded-2xl bg-canvas',
-                      compareHovered && slide.realIndex === active ? 'case-compare-active' : ''
-                    ]"
-                    @pointerenter="activateCompare"
-                    @pointermove="activateCompare"
-                    @pointerleave="resetCompare"
-                  >
+                  <div class="case-compare case-compare-frame relative w-full max-w-3xl overflow-hidden rounded-2xl bg-canvas">
                     <div class="case-compare-media relative aspect-square bg-surface">
                       <img
                         src="/landing/vel-before.png"
@@ -233,12 +194,12 @@ function resetCompare() {
         </div>
       </div>
 
-      <div class="mt-lg flex justify-center gap-xs">
+      <div class="mt-xl flex justify-center gap-sm">
         <button
           v-for="(_, index) in cases"
           :key="index"
           type="button"
-          :class="['h-2 rounded-full transition-all', active === index ? 'w-8 bg-primary' : 'w-2 bg-hairline-strong']"
+          :class="['h-3 rounded-full transition-all', active === index ? 'w-16 bg-primary' : 'w-3 bg-hairline-strong hover:bg-stone']"
           :aria-label="`Показать кейс ${index + 1}`"
           @click="moveTo(index + 1)"
         />
@@ -266,19 +227,55 @@ function resetCompare() {
 
 .case-compare-after {
   clip-path: polygon(90% 0, 100% 0, 100% 100%, 90% 100%);
-  transition: clip-path 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .case-compare-divider {
   left: 90%;
-  transition: left 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.case-compare-active .case-compare-after {
-  clip-path: polygon(10% 0, 100% 0, 100% 100%, 10% 100%);
+@supports (animation-timeline: view()) {
+  .case-compare-after {
+    animation: case-compare-reveal linear both;
+    animation-timeline: view();
+    animation-range: cover 25% cover 75%;
+  }
+
+  .case-compare-divider {
+    animation: case-compare-divider linear both;
+    animation-timeline: view();
+    animation-range: cover 25% cover 75%;
+  }
 }
 
-.case-compare-active .case-compare-divider {
-  left: 10%;
+@keyframes case-compare-reveal {
+  from {
+    clip-path: polygon(90% 0, 100% 0, 100% 100%, 90% 100%);
+  }
+
+  to {
+    clip-path: polygon(10% 0, 100% 0, 100% 100%, 10% 100%);
+  }
+}
+
+@keyframes case-compare-divider {
+  from {
+    left: 90%;
+  }
+
+  to {
+    left: 10%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-compare-after {
+    animation: none;
+    clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
+  }
+
+  .case-compare-divider {
+    animation: none;
+    left: 50%;
+  }
 }
 </style>

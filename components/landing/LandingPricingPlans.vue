@@ -25,12 +25,10 @@ const plans = [
 </script>
 
 <template>
-  <section id="pricing" class="bg-surface-soft">
+  <section id="pricing" class="bg-surface-soft shadow-[inset_0_16px_32px_-16px_rgba(15,15,15,0.15)]">
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-4xl text-center">
         <p class="text-caption-bold uppercase text-steel">Тарифы</p>
-        <h2 class="mt-3 text-h2 text-navy">Начните с пилота, потом масштабируйте QR-канал на каталог.</h2>
-        <p class="mt-md text-h5 font-medium text-slate">Первый месяц нужен, чтобы проверить сценарий на реальных товарах и первых вопросах покупателей.</p>
       </div>
 
       <div class="pricing-grid mt-section grid gap-md lg:grid-cols-3">

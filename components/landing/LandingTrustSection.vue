@@ -24,16 +24,16 @@ function runCounters() {
 }
 
 const testimonials = [
-  { name: 'Анна', initials: 'АК', avatarTone: 'bg-tint-rose text-brand-pink-deep', company: 'бренд товаров для дома', role: 'операционный директор', quote: 'Раньше вопросы жили в отзывах. Теперь видим, где человек застрял, и можем исправить инструкцию до следующей партии.' },
-  { name: 'Илья', initials: 'ИС', avatarTone: 'bg-tint-sky text-primary', company: 'магазин на маркетплейсах', role: 'основатель', quote: 'QR уже в коробке, покупатель уже у нас. Самое логичное место, чтобы предложить расходники и повторный заказ напрямую.' },
-  { name: 'Мария', initials: 'МЛ', avatarTone: 'bg-tint-mint text-success', company: 'электроника', role: 'руководитель поддержки', quote: 'Нам важна не красота PDF, а меньше возвратов и меньше однотипных вопросов. quar.io попадает ровно в эту задачу.' },
-  { name: 'Дмитрий', initials: 'ДР', avatarTone: 'bg-tint-lavender text-brand-purple', company: 'мебельный каталог', role: 'product lead', quote: 'Версии и переиспользуемые секции выглядят как система, которую можно масштабировать на каталог, а не делать вручную по SKU.' },
-  { name: 'Олег', initials: 'ОП', avatarTone: 'bg-tint-yellow text-warning', company: 'товары для ремонта', role: 'category manager', quote: 'После скана QR покупатель не остаётся один с инструкцией. Он может спросить, а мы видим, какой шаг реально ломает сценарий.' },
-  { name: 'Елена', initials: 'ЕМ', avatarTone: 'bg-tint-peach text-brand-orange-deep', company: 'детские товары', role: 'brand manager', quote: 'Для нас это канал после продажи: объяснить, успокоить, предложить аксессуар и не потерять человека в интерфейсе маркетплейса.' },
-  { name: 'Павел', initials: 'ПГ', avatarTone: 'bg-tint-gray text-charcoal', company: 'спорттовары', role: 'ecommerce lead', quote: 'Понравилось, что QR не надо менять после печати. Исправили шаг, обновили оффер, а коробки остаются теми же.' },
-  { name: 'Ксения', initials: 'КН', avatarTone: 'bg-primary/10 text-primary', company: 'косметика и уход', role: 'CRM lead', quote: 'Повторная покупка появляется в момент использования продукта, а не через холодную рассылку через месяц.' },
-  { name: 'Роман', initials: 'РВ', avatarTone: 'bg-tint-cream text-brand-brown', company: 'инструменты', role: 'руководитель продукта', quote: 'Сразу видно, где люди нажимают “непонятно”. Это честнее, чем ждать плохой отзыв и гадать, что именно пошло не так.' },
-  { name: 'Наталья', initials: 'НА', avatarTone: 'bg-tint-sky text-link-blue', company: 'зоотовары', role: 'операционный менеджер', quote: 'Хорошо, что это не просто страница. Есть инструкция, контакт с покупателем, аналитика и место для следующего предложения.' }
+  { name: 'Анна', avatar: '/landing/faces/2.png', company: 'бренд товаров для дома', role: 'операционный директор', quote: 'Раньше вопросы жили в отзывах. Теперь видим, где человек застрял, и можем исправить инструкцию до следующей партии.' },
+  { name: 'Илья', avatar: '/landing/faces/1.png', company: 'магазин на маркетплейсах', role: 'основатель', quote: 'QR уже в коробке, покупатель уже у нас. Самое логичное место, чтобы предложить расходники и повторный заказ напрямую.' },
+  { name: 'Мария', avatar: '/landing/faces/4.png', company: 'электроника', role: 'руководитель поддержки', quote: 'Нам важна не красота PDF, а меньше возвратов и меньше однотипных вопросов. quar.io попадает ровно в эту задачу.' },
+  { name: 'Дмитрий', avatar: '/landing/faces/3.png', company: 'мебельный каталог', role: 'product lead', quote: 'Версии и переиспользуемые секции выглядят как система, которую можно масштабировать на каталог, а не делать вручную по SKU.' },
+  { name: 'Олег', avatar: '/landing/faces/5.png', company: 'товары для ремонта', role: 'category manager', quote: 'После скана QR покупатель не остаётся один с инструкцией. Он может спросить, а мы видим, какой шаг реально ломает сценарий.' },
+  { name: 'Елена', avatar: '/landing/faces/6.png', company: 'детские товары', role: 'brand manager', quote: 'Для нас это канал после продажи: объяснить, успокоить, предложить аксессуар и не потерять человека в интерфейсе маркетплейса.' },
+  { name: 'Павел', avatar: '/landing/faces/7.png', company: 'спорттовары', role: 'ecommerce lead', quote: 'Понравилось, что QR не надо менять после печати. Исправили шаг, обновили оффер, а коробки остаются теми же.' },
+  { name: 'Ксения', avatar: '/landing/faces/8.png', company: 'косметика и уход', role: 'CRM lead', quote: 'Повторная покупка появляется в момент использования продукта, а не через холодную рассылку через месяц.' },
+  { name: 'Роман', avatar: '/landing/faces/9.png', company: 'инструменты', role: 'руководитель продукта', quote: 'Сразу видно, где люди нажимают “непонятно”. Это честнее, чем ждать плохой отзыв и гадать, что именно пошло не так.' },
+  { name: 'Наталья', avatar: '/landing/faces/10.png', company: 'зоотовары', role: 'операционный менеджер', quote: 'Хорошо, что это не просто страница. Есть инструкция, контакт с покупателем, аналитика и место для следующего предложения.' }
 ]
 
 const testimonialSlides = [...testimonials, ...testimonials]
@@ -54,18 +54,58 @@ function setMarqueePaused(value: boolean) {
   marqueePaused.value = value
 }
 
+const isDragging = ref(false)
+let dragStartX = 0
+let dragStartOffset = 0
+
+function cycleWidth() {
+  return (marqueeTrack.value?.scrollWidth ?? 0) / 2
+}
+
+function wrapOffset(value: number) {
+  const w = cycleWidth()
+  if (w <= 0) return 0
+  return ((value % w) + w) % w
+}
+
+function onMarqueePointerDown(event: PointerEvent) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return
+  isDragging.value = true
+  marqueePaused.value = true
+  dragStartX = event.clientX
+  dragStartOffset = marqueeOffset.value
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+}
+
+function onMarqueePointerMove(event: PointerEvent) {
+  if (!isDragging.value) return
+  const delta = event.clientX - dragStartX
+  marqueeOffset.value = wrapOffset(dragStartOffset - delta)
+}
+
+function endMarqueeDrag(event: PointerEvent) {
+  if (!isDragging.value) return
+  isDragging.value = false
+  marqueePaused.value = false
+  marqueeLastTime = 0
+  ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
+}
+
 function runMarquee(timestamp: number) {
   if (!marqueeLastTime) marqueeLastTime = timestamp
   const delta = Math.min(timestamp - marqueeLastTime, 64)
   marqueeLastTime = timestamp
 
-  const targetSpeed = marqueePaused.value ? 0 : marqueeBaseSpeed
-  const ease = 1 - Math.exp(-delta / 260)
-  marqueeSpeed += (targetSpeed - marqueeSpeed) * ease
+  if (!isDragging.value) {
+    const targetSpeed = marqueePaused.value ? 0 : marqueeBaseSpeed
+    const ease = 1 - Math.exp(-delta / 260)
+    marqueeSpeed += (targetSpeed - marqueeSpeed) * ease
 
-  const cycleWidth = (marqueeTrack.value?.scrollWidth ?? 0) / 2
-  if (cycleWidth > 0) {
-    marqueeOffset.value = (marqueeOffset.value + marqueeSpeed * delta / 1000) % cycleWidth
+    if (cycleWidth() > 0) {
+      marqueeOffset.value = wrapOffset(marqueeOffset.value + marqueeSpeed * delta / 1000)
+    }
+  } else {
+    marqueeSpeed = 0
   }
 
   marqueeFrame = requestAnimationFrame(runMarquee)
@@ -104,24 +144,23 @@ onBeforeUnmount(() => {
   <section id="trust" class="trust-section bg-[linear-gradient(180deg,var(--color-surface)_0%,var(--color-surface)_45%,var(--color-canvas)_100%)] text-ink">
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
-        <p class="text-caption-bold uppercase text-steel">Почему нам доверяют</p>
+        <p class="text-caption-bold uppercase text-steel">Нам доверяют</p>
       </div>
 
-      <div ref="statsRoot" class="mt-section grid divide-y divide-hairline rounded-2xl border border-hairline bg-canvas md:grid-cols-3 md:divide-x md:divide-y-0">
-        <div v-for="(stat, i) in stats" :key="stat.label" class="p-xl text-center">
-          <p class="stat-num text-[54px] font-semibold leading-none text-primary">{{ displayed[i] }}{{ stat.suffix }}</p>
-          <p class="mt-sm text-body-sm-md text-steel">{{ stat.label }}</p>
-        </div>
-      </div>
     </div>
 
     <div
-      class="trust-marquee relative left-1/2 w-screen -translate-x-1/2 overflow-hidden pb-section-lg"
+      class="trust-marquee overflow-hidden pb-section-lg"
     >
       <div
-        class="trust-marquee-hitbox"
+        class="trust-marquee-hitbox touch-pan-y select-none"
+        :class="isDragging ? 'cursor-grabbing' : 'cursor-grab'"
         @pointerenter="setMarqueePaused(true)"
         @pointerleave="setMarqueePaused(false)"
+        @pointerdown="onMarqueePointerDown"
+        @pointermove="onMarqueePointerMove"
+        @pointerup="endMarqueeDrag"
+        @pointercancel="endMarqueeDrag"
       >
         <div
           ref="marqueeTrack"
@@ -135,9 +174,12 @@ onBeforeUnmount(() => {
           >
             <div>
               <div class="flex items-center justify-between">
-                <div :class="['grid h-14 w-14 place-items-center rounded-full text-body-sm-md shadow-subtle ring-4 ring-canvas', item.avatarTone]">
-                  {{ item.initials }}
-                </div>
+                <img
+                  :src="item.avatar"
+                  :alt="item.name"
+                  class="h-14 w-14 rounded-full object-cover shadow-subtle ring-4 ring-canvas"
+                  draggable="false"
+                >
                 <Icon name="lucide:quote" class="h-6 w-6 text-primary/30" />
               </div>
               <p class="mt-xl text-h5 leading-[1.45] text-charcoal">“{{ item.quote }}”</p>

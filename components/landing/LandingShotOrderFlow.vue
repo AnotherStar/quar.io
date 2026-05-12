@@ -4,21 +4,21 @@ const steps = [
     label: 'Шаг 01',
     title: 'Создайте или загрузите инструкцию',
     copy: 'Вы можете загрузить уже готовый файл с вашей инструкцией или создать ее с нуля в нашем редакторе. ИИ-ассистент поможет ее улучшить, превратит фотографии в профессиональные иллюстрации, подскажет как сделать инструкцию понятнее.',
-    bullets: ['Сгенерируем инструкцию из файла DOC, PDF', 'Встроенный редактор изображений', 'Редактируйте без дизайнера']
+    bullets: ['Сгенерируем инструкцию из DOC, PDF и других форматов', 'Встроенный ИИ-редактор изображений', 'Вносите правки и дополнения без дизайнера']
   },
   {
     label: 'Шаг 02',
     title: 'Приложите QR-код к заказу',
-    copy: 'Это может быть наклейка, буклет, краткое руководство или любой другой носитель.',
-    bullets: ['Библиотека из 50+ работающих дизайнов', 'Приложение для умной активации QR-кодов', 'Ссылку можно поменять даже после получения товара'],
+    copy: 'Это может быть наклейка на упаковке, буклет-вкладыш, краткое руководство, визитная карточка, нанесение на самом товаре или любой другой носитель. Выберите подходящий дизайн из нашей библиотеки и отправьте в печать.',
+    bullets: ['Библиотека из 50+ действительно работающих дизайнов', 'Приложение для умной активации QR-кодов', 'Ссылку можно поменять даже после получения товара'],
     image: '/landing/step-2.png',
     imageAlt: 'Коробка с QR-кодом внутри заказа'
   },
   {
     label: 'Шаг 03',
     title: 'Клиент переходит по ссылке',
-    copy: 'Вместо статичного PDF ваш покупатель видит профессионально подготовленную инструкцию, может задать вопросы по сборке, подписаться на вашу рассылку, совершить заказ на другие ваши товары.',
-    bullets: ['Отвечайте на негатив до публикации отзыва', 'Предлагайте другие ваши товары или скидки на повторный заказ', 'Изменяйте инструкцию на основе обратной связи'],
+    copy: 'Когда покупатель знакомится с покупкой, вместо статичного PDF он видит профессионально подготовленную инструкцию, может задать вопросы по сборке, подписаться на вашу рассылку, совершить заказ на другие ваши товары.',
+    bullets: ['Отвечайте на негатив до публикации плохого отзыва', 'Предлагайте другие ваши товары или скидки на повторный заказ', 'Изменяйте инструкцию на основе обратной связи'],
     image: '/landing/step-3-2.png',
     imageAlt: 'Публичная инструкция с обратной связью и оффером'
   },
@@ -26,6 +26,8 @@ const steps = [
     label: 'Шаг 04',
     title: 'Теперь это ваш покупатель',
     copy: 'Вы можете просматривать аналитику, делать рассылки по своим покупателям, дарить им промокоды или анонсировать новинки. Исправлять ошибки или проверять гипотезы без участия дизайнеров или печати новых тиражей.',
+    bullets: ['Используйте данные для улучшения вашего продукта', 'Повышайте уровень продаж и рейтинг товаров', 'Работайте над узнаваемостью вашего бренда и репутацией'],
+
     image: '/landing/step-4.png',
     imageAlt: 'Аналитика и коммуникация с покупателями после покупки'
   }
@@ -52,9 +54,8 @@ const steps = [
           <div class="pb-section-lg">
             <h3 class="flex min-h-12 items-center text-h4 text-navy">{{ steps[0].title }}</h3>
             <p class="mt-md max-w-[640px] text-h5 font-medium leading-[1.55] text-slate">{{ steps[0].copy }}</p>
-            <ul class="mt-lg grid gap-sm text-body-sm-md text-charcoal">
-              <li v-for="bullet in steps[0].bullets" :key="bullet" class="flex items-center gap-sm">
-                <span class="h-sm w-sm rounded-full bg-primary" />
+            <ul class="mt-2xl flex flex-col items-start gap-sm">
+              <li v-for="bullet in steps[0].bullets" :key="bullet" class="inline-flex items-center rounded-full bg-surface px-md py-xs text-body-sm-md text-charcoal">
                 {{ bullet }}
               </li>
             </ul>
@@ -88,9 +89,8 @@ const steps = [
           <div class="pb-section-lg">
             <h3 class="flex min-h-12 items-center text-h4 text-navy">{{ step.title }}</h3>
             <p v-if="step.copy" class="mt-md max-w-[640px] text-h5 font-medium leading-[1.55] text-slate">{{ step.copy }}</p>
-            <ul v-if="step.bullets" class="mt-lg grid gap-sm text-body-sm-md text-charcoal">
-              <li v-for="bullet in step.bullets" :key="bullet" class="flex items-center gap-sm">
-                <span class="h-sm w-sm rounded-full bg-primary" />
+            <ul v-if="step.bullets" class="mt-2xl flex flex-col items-start gap-sm">
+              <li v-for="bullet in step.bullets" :key="bullet" class="inline-flex items-center rounded-full bg-surface px-md py-xs text-body-sm-md text-charcoal">
                 {{ bullet }}
               </li>
             </ul>
@@ -186,9 +186,17 @@ const steps = [
 }
 
 @media (min-width: 1024px) {
+  .timeline-rail {
+    padding-bottom: 200px;
+  }
+
   .timeline-marker {
     position: sticky;
     top: 96px;
+  }
+
+  .timeline-step:last-child .timeline-rail {
+    padding-bottom: 0;
   }
 
   .timeline-step:last-child .timeline-marker {
