@@ -172,7 +172,7 @@ async function logout() {
     // /auth/login увидит «залогиненного» пользователя и отбросит обратно
     // в /dashboard, где API-запросы уже падают без сессии.
     await refresh()
-    await navigateTo('/auth/login')
+    await navigateTo('/')
   } finally {
     loggingOut.value = false
   }

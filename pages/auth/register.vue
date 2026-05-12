@@ -1,16 +1,25 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'blank', middleware: 'guest' })
 
-const form = reactive({ email: '', password: '', name: '', tenantName: '', tenantSlug: '' })
+const form = reactive({ email: '', password: '', tenantName: '', tenantSlug: '' })
 const error = ref<string | null>(null)
 const loading = ref(false)
+const slugTouched = ref(false)
 const { refresh } = useAuthState()
 
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
+}
+
 watch(() => form.tenantName, (n) => {
-  if (!form.tenantSlug) {
-    form.tenantSlug = n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
+  if (!slugTouched.value) {
+    form.tenantSlug = slugify(n)
   }
 })
+
+function onSlugInput() {
+  slugTouched.value = true
+}
 
 async function submit() {
   error.value = null
@@ -30,20 +39,17 @@ async function submit() {
 <template>
   <div class="container-page flex min-h-screen items-center justify-center py-section">
     <div class="w-full max-w-md">
-      <NuxtLink to="/" class="mb-8 inline-flex items-center gap-2">
-        <img src="/icons/icon-192.png" alt="" width="36" height="36" class="h-9 w-9 rounded-md" />
-        <span class="text-h5 text-ink">quar.io</span>
+      <NuxtLink to="/" class="mb-8 flex justify-center">
+        <img src="/icons/icon-192.png" alt="" width="96" height="96" class="h-24 w-24 rounded-xl" />
       </NuxtLink>
-      <h1 class="text-h2 text-ink">Создать аккаунт</h1>
-      <p class="mt-2 text-body text-slate">1 месяц триала для первых QR-инструкций и отчета по проблемным шагам.</p>
+      <h1 class="text-h4 text-ink text-center">Регистрация</h1>
 
       <form class="mt-8 grid gap-4" @submit.prevent="submit">
         <UiInput v-model="form.email" type="email" label="Email" autocomplete="email" required />
         <UiInput v-model="form.password" type="password" label="Пароль" hint="Минимум 8 символов" autocomplete="new-password" required />
-        <UiInput v-model="form.name" label="Имя" autocomplete="name" />
         <hr class="border-hairline">
-        <UiInput v-model="form.tenantName" label="Название компании" required />
-        <UiInput v-model="form.tenantSlug" label="Slug компании" :prefix="`quar.io/`" hint="Латиница, цифры, дефис" required />
+        <UiInput v-model="form.tenantName" label="Название компании или бренда" required />
+        <UiInput v-model="form.tenantSlug" label="Ваша ссылка" :prefix="`quar.io/`" hint="Латиница, цифры, дефис" required @input="onSlugInput" />
 
         <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
 

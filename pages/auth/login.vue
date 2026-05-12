@@ -24,11 +24,10 @@ async function submit() {
 <template>
   <div class="container-page flex min-h-screen items-center justify-center py-section">
     <div class="w-full max-w-md">
-      <NuxtLink to="/" class="mb-8 inline-flex items-center gap-2">
-        <img src="/icons/icon-192.png" alt="" width="36" height="36" class="h-9 w-9 rounded-md" />
-        <span class="text-h5 text-ink">quar.io</span>
+      <NuxtLink to="/" class="mb-8 flex justify-center">
+        <img src="/icons/icon-192.png" alt="" width="96" height="96" class="h-24 w-24 rounded-xl" />
       </NuxtLink>
-      <h1 class="text-h2 text-ink">Вход</h1>
+      <h1 class="text-h2 text-ink text-center">Вход</h1>
 
       <form class="mt-8 grid gap-4" @submit.prevent="submit">
         <UiInput v-model="form.email" type="email" label="Email" autocomplete="email" required />

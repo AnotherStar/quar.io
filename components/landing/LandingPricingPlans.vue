@@ -5,21 +5,27 @@ const plans = [
     price: '500 ₽',
     copy: 'Проверить 5-10 товаров и понять, где инструкция влияет на вопросы, отзывы и повторный заказ.',
     features: ['AI-оцифровка первых инструкций', 'Публичные QR-ссылки', 'Базовая аналитика', 'Отчёт по проблемным шагам'],
-    dark: false
+    dark: false,
+    cta: 'Попробовать бесплатно',
+    to: '/auth/register'
   },
   {
     name: 'Каталог',
     price: '4 500 ₽ / мес.',
     copy: 'Перенести регулярную работу с инструкциями, секциями и QR-кодами в один кабинет.',
     features: ['До 100 инструкций', 'Reusable sections', 'Команда и роли', 'Модули feedback и warranty'],
-    dark: false
+    dark: false,
+    cta: 'Попробовать бесплатно',
+    to: '/auth/register'
   },
   {
     name: 'Бренд',
     price: 'от 14 500 ₽',
     copy: 'Брендирование, расширенные сценарии допродаж, переводы и интеграции под каталог.',
     features: ['Уникальные QR по партиям', 'Расширенная аналитика', 'AI-ассистент по инструкции', 'Приоритетная поддержка'],
-    dark: true
+    dark: true,
+    cta: 'Связаться',
+    to: '/pricing'
   }
 ]
 </script>
@@ -43,8 +49,8 @@ const plans = [
           <h3 :class="['text-h4', plan.dark ? 'text-white' : 'text-navy']">{{ plan.name }}</h3>
           <p :class="['mt-lg text-[42px] font-semibold leading-none', plan.dark ? 'text-white' : 'text-ink']">{{ plan.price }}</p>
           <p :class="['mt-lg text-body leading-relaxed', plan.dark ? 'text-white/62' : 'text-slate']">{{ plan.copy }}</p>
-          <UiButton class="mt-xl" :variant="plan.dark ? 'on-dark' : 'primary'" block>
-            {{ plan.dark ? 'Связаться' : 'Попробовать бесплатно' }}
+          <UiButton class="mt-xl" :to="plan.to" :variant="plan.dark ? 'on-dark' : 'primary'" block>
+            {{ plan.cta }}
           </UiButton>
           <ul class="mt-xl grid gap-sm">
             <li
