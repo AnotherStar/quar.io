@@ -1,66 +1,78 @@
 <script setup lang="ts">
 /**
- * Модалка ИИ-редактирования изображения. Сама модалка — UiModal; здесь только
- * содержимое: исходник слева, лента сгенерированных вариантов справа,
- * textarea с промптом и кнопка «Сгенерировать» в footer.
+ * Модалка ИИ-редактирования изображения. После клика «Сгенерировать» джоб
+ * уезжает в фон (~1 минута), модалка показывает подтверждение и закрывается.
+ * Когда генерация заканчивается, глобальная модалка ImageEditJobResultModal
+ * (mountится в dashboard-layout) показывает «было → стало».
  */
 const props = defineProps<{
   open: boolean
   sourceUrl: string
+  instructionId?: string | null
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  pick: [url: string]
 }>()
 
 const api = useApi()
-
-interface Variant { url: string; prompt: string }
+const editJobs = useImageEditJobs()
 
 const prompt = ref('')
-const variants = ref<Variant[]>([])
-const isGenerating = ref(false)
+const isSubmitting = ref(false)
+const submitted = ref(false)
 const error = ref<string | null>(null)
 
-// Сбрасываем состояние при каждом открытии модалки.
 watch(
   () => props.open,
   (open) => {
     if (open) {
       prompt.value = ''
-      variants.value = []
+      submitted.value = false
       error.value = null
-      isGenerating.value = false
+      isSubmitting.value = false
     }
   }
 )
 
 async function generate() {
   const cleanPrompt = prompt.value.trim()
-  if (!cleanPrompt || isGenerating.value) return
-  isGenerating.value = true
+  if (!cleanPrompt || isSubmitting.value) return
+  isSubmitting.value = true
   error.value = null
   try {
-    const { url } = await api<{ url: string }>('/api/ai/image-edit', {
+    const { jobId } = await api<{ jobId: string; status: string }>('/api/ai/image-edit', {
       method: 'POST',
-      body: { imageUrl: props.sourceUrl, prompt: cleanPrompt }
+      body: {
+        imageUrl: props.sourceUrl,
+        prompt: cleanPrompt,
+        instructionId: props.instructionId ?? undefined
+      }
     })
-    variants.value.unshift({ url, prompt: cleanPrompt })
+    editJobs.registerOptimistic({
+      id: jobId,
+      status: 'PENDING',
+      sourceUrl: props.sourceUrl,
+      prompt: cleanPrompt,
+      resultUrl: null,
+      errorMessage: null,
+      instructionId: props.instructionId ?? null,
+      createdAt: new Date().toISOString(),
+      completedAt: null
+    })
+    submitted.value = true
+    // Авто-закрытие, чтобы юзер действительно вернулся к работе. Достаточно
+    // ~2.5 сек, чтобы текст-подтверждение успели прочитать.
+    setTimeout(() => emit('update:open', false), 2500)
   } catch (e: any) {
-    error.value = e?.data?.statusMessage ?? e?.message ?? 'Не удалось сгенерировать'
+    error.value = e?.data?.statusMessage ?? e?.message ?? 'Не удалось запустить генерацию'
   } finally {
-    isGenerating.value = false
+    isSubmitting.value = false
   }
 }
 
-function pickVariant(v: Variant) {
-  emit('pick', v.url)
-  emit('update:open', false)
-}
-
 function close() {
-  if (isGenerating.value) return
+  if (isSubmitting.value) return
   emit('update:open', false)
 }
 
@@ -72,9 +84,9 @@ function onPromptKey(e: KeyboardEvent) {
 <template>
   <UiModal
     :open="open"
-    size="lg"
-    :close-on-backdrop="!isGenerating"
-    :close-on-esc="!isGenerating"
+    size="md"
+    :close-on-backdrop="!isSubmitting"
+    :close-on-esc="!isSubmitting"
     @update:open="(v) => emit('update:open', v)"
   >
     <template #header>
@@ -84,57 +96,56 @@ function onPromptKey(e: KeyboardEvent) {
       </div>
     </template>
 
-    <div class="grid grid-cols-1 gap-md md:grid-cols-2">
+    <div v-if="submitted" class="flex flex-col items-center gap-md py-lg text-center">
+      <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <Icon name="lucide:sparkles" class="h-6 w-6 text-primary" />
+      </div>
+      <div class="space-y-2">
+        <p class="text-h4 text-navy">Запустили генерацию</p>
+        <p class="max-w-[420px] text-body-sm text-steel">
+          Генерация занимает около минуты. Можно продолжать работу в редакторе — как
+          будет готово, мы покажем результат и предложим заменить картинку.
+        </p>
+      </div>
+    </div>
+
+    <div v-else class="grid grid-cols-1 gap-md md:grid-cols-2">
       <!-- Исходное -->
       <div class="flex flex-col gap-2">
         <p class="text-caption-bold uppercase tracking-wide text-steel">Исходное</p>
-        <div class="flex max-h-[400px] items-center justify-center overflow-hidden rounded-md bg-surface">
+        <div class="flex max-h-[320px] items-center justify-center overflow-hidden rounded-md bg-surface">
           <img :src="sourceUrl" alt="" class="max-h-full max-w-full rounded-md object-contain">
         </div>
       </div>
 
-      <!-- Варианты -->
-      <div class="flex flex-col gap-2">
-        <p class="text-caption-bold uppercase tracking-wide text-steel">
-          Варианты <span v-if="variants.length" class="text-stone">· {{ variants.length }}</span>
-        </p>
-        <div class="flex max-h-[400px] flex-col gap-sm overflow-y-auto rounded-md bg-surface p-sm">
-          <div
-            v-if="isGenerating"
-            class="flex flex-col items-center justify-center gap-2 rounded-md bg-canvas p-lg text-center"
-          >
-            <Icon name="lucide:sparkles" class="h-5 w-5 animate-pulse text-primary" />
-            <p class="text-body-sm text-steel">Генерирую…</p>
-          </div>
-          <p
-            v-else-if="!variants.length"
-            class="m-auto max-w-[240px] text-center text-body-sm text-steel"
-          >
-            Введите промпт ниже и нажмите «Сгенерировать», чтобы получить варианты.
-          </p>
-          <button
-            v-for="(v, i) in variants"
-            :key="i"
-            type="button"
-            class="group relative block overflow-hidden rounded-md bg-canvas transition-shadow hover:shadow-card"
-            @click="pickVariant(v)"
-          >
-            <img :src="v.url" alt="" class="block w-full">
-            <span class="block px-2 py-1 text-left text-caption text-steel">{{ v.prompt }}</span>
-            <span class="pointer-events-none absolute inset-0 rounded-md ring-0 ring-primary/0 transition-all group-hover:ring-2 group-hover:ring-primary/60" />
-          </button>
-        </div>
+      <!-- Пояснение, как работает асинхронная генерация -->
+      <div class="flex flex-col gap-sm">
+        <p class="text-caption-bold uppercase tracking-wide text-steel">Что произойдёт</p>
+        <ul class="space-y-2 rounded-md bg-surface p-md text-body-sm text-charcoal">
+          <li class="flex items-start gap-2">
+            <Icon name="lucide:clock-3" class="mt-0.5 h-4 w-4 shrink-0 text-steel" />
+            <span>Генерация занимает <b>около минуты</b>.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Icon name="lucide:edit-3" class="mt-0.5 h-4 w-4 shrink-0 text-steel" />
+            <span>Пока ждёте — можно продолжать работу в редакторе.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <Icon name="lucide:bell-ring" class="mt-0.5 h-4 w-4 shrink-0 text-steel" />
+            <span>Когда будет готово — покажем «было → стало» и спросим, заменить ли картинку.</span>
+          </li>
+        </ul>
       </div>
     </div>
 
     <template #footer>
-      <div class="space-y-2">
+      <div v-if="!submitted" class="space-y-2">
         <textarea
           v-model="prompt"
           rows="2"
           class="w-full resize-none rounded-lg border border-hairline bg-canvas px-md py-sm text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
           placeholder="Например: «удали фон», «добавь мягкий градиент», «сделай чёрно-белым»…"
-          :disabled="isGenerating"
+          :disabled="isSubmitting"
           @keydown="onPromptKey"
         />
         <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
@@ -142,14 +153,17 @@ function onPromptKey(e: KeyboardEvent) {
           <p class="text-caption text-steel">⌘ + Enter — отправить</p>
           <UiButton
             variant="primary"
-            :loading="isGenerating"
-            :disabled="!prompt.trim() || isGenerating"
+            :loading="isSubmitting"
+            :disabled="!prompt.trim() || isSubmitting"
             @click="generate"
           >
             <Icon name="lucide:sparkles" class="h-4 w-4" />
             Сгенерировать
           </UiButton>
         </div>
+      </div>
+      <div v-else class="flex justify-end">
+        <UiButton variant="secondary" @click="close">Понятно</UiButton>
       </div>
     </template>
   </UiModal>

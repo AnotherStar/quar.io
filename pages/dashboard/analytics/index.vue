@@ -174,7 +174,7 @@ function closeVisit() {
             <div
               v-for="d in overview.byDay"
               :key="d.day"
-              class="group relative flex-1 min-w-[6px] rounded-t bg-primary/30 hover:bg-primary/60"
+              class="group relative flex-1 min-w-[6px] rounded-t bg-tint-sky hover:bg-primary"
               :style="{ height: `${Math.max(4, (d.visits / maxByDay) * 100)}%` }"
               :title="`${formatDay(d.day)}: ${d.visits} визитов, ${d.pageViews} просмотров`"
             />

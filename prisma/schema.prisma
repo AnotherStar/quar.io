@@ -32,6 +32,7 @@ model User {
   memberships  Membership[]
   magicLinks   MagicLink[]
   aiUsageEvents AiUsageEvent[]
+  aiImageEditJobs AiImageEditJob[]
 }
 
 model Session {
@@ -99,6 +100,7 @@ model Tenant {
   legalDocuments      LegalDocumentVersion[]
   consentEvents       ConsentEvent[]
   aiUsageEvents       AiUsageEvent[]
+  aiImageEditJobs     AiImageEditJob[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -294,6 +296,7 @@ model Instruction {
   feedbackSubmissions   FeedbackSubmission[]
   activationQrCodes     ActivationQrCode[]
   consentEvents         ConsentEvent[]
+  aiImageEditJobs       AiImageEditJob[]
 
   @@unique([tenantId, slug])
   @@unique([tenantId, productBarcode])
@@ -763,6 +766,51 @@ model ApiKey {
 // counts, image counts, estimated USD cost, request id for log correlation.
 // Used for billing-style reporting and (later) per-tenant quota enforcement.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Async AI image-edit jobs
+// Создаётся при клике «Сгенерировать» в редакторе изображения. Реальный запрос
+// в OpenAI крутится в фоне внутри Nitro (~1 мин), клиент поллит результат и
+// получает модалку «было → стало», когда статус == SUCCEEDED. acknowledgedAt
+// проставляется, когда пользователь нажал «оставить»/«заменить» — после этого
+// джоб не возвращается в активном списке.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum AiImageEditJobStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+model AiImageEditJob {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Контекст, в котором создан джоб. Используется, чтобы по клику «Заменить»
+  // увести пользователя в нужный редактор (если он сейчас на другой странице).
+  // Опционален: точка входа может расширяться в будущем (например, секции).
+  instructionId   String?
+  instruction     Instruction? @relation(fields: [instructionId], references: [id], onDelete: SetNull)
+
+  status          AiImageEditJobStatus @default(PENDING)
+  sourceUrl       String
+  prompt          String
+  resultUrl       String?
+  errorMessage    String?
+
+  acknowledgedAt  DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId, userId, status])
+  @@index([tenantId, createdAt])
+}
 
 model AiUsageEvent {
   id                String   @id @default(cuid())

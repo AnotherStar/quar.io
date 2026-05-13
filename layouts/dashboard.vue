@@ -7,6 +7,22 @@ const api = useApi()
 const sidebarCollapsed = ref(false)
 const mobileMenuOpen = ref(false)
 
+// Глобальный поллер AI image-edit джобов. Запускается один раз на mount
+// layout-а — отсюда обновляется состояние useImageEditJobs(), которое читают
+// ImageMagicModal и ImageEditJobResultModal.
+const imageEditJobs = useImageEditJobs()
+onMounted(() => {
+  if (user.value) imageEditJobs.startPolling()
+})
+watch(
+  () => user.value?.id,
+  (id) => {
+    if (id) imageEditJobs.startPolling()
+    else imageEditJobs.stopPolling()
+  }
+)
+onBeforeUnmount(() => imageEditJobs.stopPolling())
+
 // Core nav items. «Настройки» сюда не входят — они доступны через клик по
 // user-row в footer сайдбара. Пункт «Модули» помечен exact:true, чтобы на
 // детальных страницах модулей (/dashboard/modules/feedback, …/warranty)
@@ -306,6 +322,11 @@ watch(() => route.fullPath, () => {
         </div>
       </section>
     </div>
+
+    <!-- Глобальная модалка результата AI image-edit. Показывается поверх
+         любой страницы дашборда, как только в БД появляется завершённый
+         джоб без acknowledgedAt (см. useImageEditJobs). -->
+    <ImageEditJobResultModal />
 
     <!-- Mobile overlay menu -->
     <Transition name="dashboard-mobile-menu">

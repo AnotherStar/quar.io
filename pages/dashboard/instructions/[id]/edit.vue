@@ -1,5 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
+import { onBeforeRouteLeave } from 'vue-router'
 import { EMPTY_DOC } from '~~/shared/types/instruction'
 import { streamInstructionFromFile } from '~/composables/useInstructionStreaming'
 import type { AiBlock } from '~~/server/utils/aiInstructionGenerator'
@@ -36,6 +37,26 @@ let suppressAutosave = false
 let hydratedInstructionId: string | null = null
 let originalSlug = ''
 
+// True once the user has edited anything in this session. Cleared after a
+// successful publish. Combined with server state to decide whether to warn
+// the user on navigation away from the editor.
+const localChangedAfterPublish = ref(false)
+
+const hasUnpublishedChanges = computed(() => {
+  const inst = instr.value
+  if (!inst) return false
+  if (inst.status === 'ARCHIVED') return false
+  if (localChangedAfterPublish.value) return true
+  if (inst.status === 'PUBLISHED') {
+    if (!inst.publishedAt) return true
+    // 1s slack covers clock skew between the publish transaction's updatedAt
+    // and publishedAt timestamps.
+    return new Date(inst.updatedAt).getTime() > new Date(inst.publishedAt).getTime() + 1000
+  }
+  const docContent = (draft.value as any)?.content
+  return Array.isArray(docContent) && docContent.length > 0
+})
+
 function hydrateInstruction(next: any) {
   if (!next || hydratedInstructionId === next.id) return
   suppressAutosave = true
@@ -57,6 +78,7 @@ watch(instr, hydrateInstruction)
 function scheduleSave() {
   if (suppressAutosave) return
   if (!instr.value) return
+  localChangedAfterPublish.value = true
   clearTimeout(saveTimer)
   saveTimer = setTimeout(async () => {
     saving.value = true; slugError.value = null
@@ -92,6 +114,7 @@ async function publish() {
   try {
     await api(`/api/instructions/${id}/publish`, { method: 'POST' })
     await refresh()
+    localChangedAfterPublish.value = false
   } catch (e: any) {
     alert(e?.data?.statusMessage ?? 'Не удалось опубликовать')
   } finally { publishing.value = false }
@@ -159,6 +182,25 @@ function cancelGeneration() {
 
 onBeforeUnmount(() => {
   if (import.meta.client && generationScrollFrame !== null) window.cancelAnimationFrame(generationScrollFrame)
+})
+
+const UNPUBLISHED_LEAVE_MESSAGE = 'У вас есть неопубликованные изменения. Они не появятся в публичной инструкции, пока вы её не опубликуете.\n\nПокинуть страницу?'
+
+onBeforeRouteLeave(() => {
+  if (!hasUnpublishedChanges.value) return true
+  return window.confirm(UNPUBLISHED_LEAVE_MESSAGE)
+})
+
+function onBeforeUnloadGuard(e: BeforeUnloadEvent) {
+  if (!hasUnpublishedChanges.value) return
+  e.preventDefault()
+  e.returnValue = ''
+}
+onMounted(() => {
+  window.addEventListener('beforeunload', onBeforeUnloadGuard)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', onBeforeUnloadGuard)
 })
 
 function aiBlockToTipTapNode(
@@ -635,7 +677,7 @@ function isGenerationAbortError(error: any) {
             name="lucide:sparkles"
             class="h-4 w-4 transition-transform group-hover:scale-110"
           />
-          Заполнить из файла
+          Сгенерировать
         </button>
 
         <!-- Share popover: status, URL editing, publish, open, copy link -->

@@ -22,10 +22,6 @@ const { startTrial, loading } = useStartTrial()
             <Icon name="lucide:arrow-right" class="h-5 w-5" />
           </UiButton>
         </div>
-        <p class="text-caption text-steel">
-          Нажимая кнопку, вы принимаете
-          <NuxtLink to="/legal/terms" class="text-link hover:underline">пользовательское соглашение</NuxtLink>.
-        </p>
       </div>
     </div>
   </section>

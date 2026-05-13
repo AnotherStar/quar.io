@@ -105,13 +105,70 @@ function setPreset(percent: number) {
 }
 function resetWidth() { props.updateAttributes({ width: null }) }
 
-// ИИ-палочка: открывает модалку, в которой можно сгенерировать варианты
-// картинки по промпту и выбрать один — он заменит src текущего узла.
+// ИИ-палочка: открывает модалку, в которой можно запустить асинхронную
+// генерацию. Сам результат прилетает позже через ImageEditJobResultModal —
+// нам тут нужно только уметь применить полученный url к текущему узлу.
 const magicOpen = ref(false)
+const route = useRoute()
+const editJobsStore = useImageEditJobs()
+// Активная генерация для этого изображения = есть PENDING/PROCESSING джоб,
+// у которого sourceUrl совпадает с текущим src. На этой основе рисуем
+// «processing»-оверлей поверх картинки.
+const isProcessing = computed(() =>
+  editJobsStore.pendingJobs.value.some((j) => j.sourceUrl === src.value)
+)
+
+// Геометрия рендеренного <img> относительно wrapper'а. Нужна, чтобы overlay
+// гарантированно лежал ровно поверх изображения: wrapper из-за aspect-ratio
+// и max-w-full может отличаться от фактических bounds <img> (например, когда
+// intrinsicWidth/Height не совпадают с реальной пропорцией картинки), и
+// inset-0 в этом случае «съезжает».
+const imgRect = ref<{ top: number; left: number; width: number; height: number } | null>(null)
+function syncImgRect() {
+  if (!import.meta.client) return
+  const img = imgRef.value
+  const wrapper = wrapperRef.value
+  if (!img || !wrapper) return
+  const ib = img.getBoundingClientRect()
+  const wb = wrapper.getBoundingClientRect()
+  imgRect.value = {
+    top: ib.top - wb.top,
+    left: ib.left - wb.left,
+    width: ib.width,
+    height: ib.height
+  }
+}
+if (import.meta.client) {
+  let ro: ResizeObserver | null = null
+  onMounted(() => {
+    syncImgRect()
+    ro = new ResizeObserver(() => syncImgRect())
+    if (imgRef.value) ro.observe(imgRef.value)
+    if (wrapperRef.value) ro.observe(wrapperRef.value)
+    window.addEventListener('resize', syncImgRect)
+  })
+  onBeforeUnmount(() => {
+    ro?.disconnect()
+    window.removeEventListener('resize', syncImgRect)
+  })
+  watch([loaded, widthPx, intrinsicWidth, intrinsicHeight, src], () => nextTick(syncImgRect))
+}
+// instructionId известен только когда редактор открыт по маршруту
+// /dashboard/instructions/[id]/edit. В других точках (например, в редакторе
+// секций) — оставляем null, тогда модалка результата не сможет «увести»
+// пользователя через ?applyImageEdit, но in-editor apply через события
+// продолжит работать.
+const instructionId = computed<string | null>(() => {
+  if (!route.path.includes('/dashboard/instructions/')) return null
+  const id = route.params.id
+  return typeof id === 'string' ? id : null
+})
+
 function openMagic() {
   magicOpen.value = true
 }
-function applyMagic(url: string) {
+
+function applyNewSrc(url: string) {
   // Сбрасываем width / intrinsic dimensions — у нового изображения они
   // другие, иначе оно будет растянуто/обрезано.
   props.updateAttributes({
@@ -119,6 +176,44 @@ function applyMagic(url: string) {
     width: null,
     intrinsicWidth: null,
     intrinsicHeight: null
+  })
+}
+
+// Слушаем глобальный image-edit-apply: модалка результата шлёт jobId +
+// исходный src; первый <ResizableImageView>, у которого src совпадает,
+// применяет результат и подтверждает обратно событием image-edit-applied.
+// Это позволяет результату подъехать «сам» в открытый редактор, даже если
+// модалку результата кликнули с другой страницы.
+if (import.meta.client) {
+  const onApply = (e: Event) => {
+    const detail = (e as CustomEvent).detail as { jobId: string; sourceUrl: string; resultUrl: string }
+    if (!detail || detail.sourceUrl !== src.value) return
+    applyNewSrc(detail.resultUrl)
+    window.dispatchEvent(new CustomEvent('image-edit-applied', { detail: { jobId: detail.jobId } }))
+  }
+  onMounted(() => window.addEventListener('image-edit-apply', onApply as EventListener))
+  onBeforeUnmount(() => window.removeEventListener('image-edit-apply', onApply as EventListener))
+
+  // Пользователь пришёл сюда из другой страницы по «Заменить» — в query
+  // лежит applyImageEdit=<jobId>. Подбираем подходящий джоб из стора и
+  // переотправляем событие применения. Композабл сам потом ack-нет джоб.
+  onMounted(async () => {
+    const target = route.query.applyImageEdit
+    const jobId = typeof target === 'string' ? target : null
+    if (!jobId) return
+    // Дёргаем свежий список — джоб мог появиться позже, чем стор был
+    // последний раз обновлён. startPolling в layout-е тоже работает, но
+    // надёжнее сделать это явно перед попыткой применения.
+    await editJobsStore.refresh()
+    const job = editJobsStore.jobs.value.find((j) => j.id === jobId)
+    if (!job || job.status !== 'SUCCEEDED' || !job.resultUrl) return
+    if (job.sourceUrl !== src.value) return
+    applyNewSrc(job.resultUrl)
+    await editJobsStore.acknowledge(jobId)
+    // Чистим query, чтобы при следующей навигации повторно не применить.
+    const cleaned = { ...route.query }
+    delete cleaned.applyImageEdit
+    await navigateTo({ path: route.path, query: cleaned }, { replace: true })
   })
 }
 
@@ -246,6 +341,39 @@ function btnClass(active: boolean) {
         </div>
       </div>
 
+      <!-- Processing-оверлей. Активен, когда есть PENDING/PROCESSING джоб с
+           тем же sourceUrl. Позиционируется по фактическим bounds <img>
+           (imgRect) — wrapper из-за aspect-ratio + max-w-full бывает крупнее
+           реального изображения. Размытие исходника + тёмное затемнение
+           явно показывают, что картинка сейчас «занята», а карточка по
+           центру со спиннером — что именно происходит. pointer-events-none,
+           чтобы не съесть клики по тулбару/ресайз-хэндлу. -->
+      <div
+        v-if="isProcessing && loaded && imgRect"
+        contenteditable="false"
+        class="pointer-events-none absolute z-[5] overflow-hidden rounded-md"
+        :style="{
+          top: imgRect.top + 'px',
+          left: imgRect.left + 'px',
+          width: imgRect.width + 'px',
+          height: imgRect.height + 'px'
+        }"
+      >
+        <div class="mo-image-processing-veil absolute inset-0" />
+        <div class="relative flex h-full w-full items-center justify-center px-md">
+          <div class="flex items-center gap-3 rounded-xl bg-surface px-md py-sm shadow-card">
+            <span class="mo-image-processing-spinner relative inline-flex h-5 w-5 items-center justify-center">
+              <span class="absolute inset-0 rounded-full border-2 border-primary/25" />
+              <span class="absolute inset-0 rounded-full border-2 border-transparent border-t-primary" />
+            </span>
+            <div class="flex flex-col gap-0.5 leading-tight">
+              <span class="text-body-sm-md text-ink">ИИ генерирует изображение</span>
+              <span class="text-caption text-steel">Это занимает около минуты</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Error fallback — отдельный, чтобы не выглядеть как "вечная загрузка". -->
       <div
         v-else-if="errored"
@@ -273,7 +401,31 @@ function btnClass(active: boolean) {
     <ImageMagicModal
       v-model:open="magicOpen"
       :source-url="src"
-      @pick="applyMagic"
+      :instruction-id="instructionId"
     />
   </NodeViewWrapper>
 </template>
+
+<style scoped>
+/* Затемняющая «вуаль» поверх картинки на время ИИ-генерации. Размытие
+ * исходника гарантирует, что overlay читается и на светлых, и на тёмных,
+ * и на пёстрых картинках — заодно показывает, что картинка сейчас занята. */
+.mo-image-processing-veil {
+  background: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  backdrop-filter: blur(6px) saturate(110%);
+  -webkit-backdrop-filter: blur(6px) saturate(110%);
+}
+
+/* Круглый CSS-спиннер. border-t-primary крутится поверх лёгкого primary-кольца. */
+.mo-image-processing-spinner > :last-child {
+  animation: mo-image-spinner 0.9s linear infinite;
+}
+
+@keyframes mo-image-spinner {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mo-image-processing-spinner > :last-child { animation: none; }
+}
+</style>
