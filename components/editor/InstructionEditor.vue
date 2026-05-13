@@ -19,6 +19,7 @@ import { ResizableImage } from './extensions/ResizableImage'
 import { Highlight } from './extensions/Highlight'
 import { Columns, Column } from './extensions/Columns'
 import { BlockDragHandle } from './extensions/BlockDragHandle'
+import { AiPrompt } from './extensions/AiPrompt'
 import SlashMenu from './SlashMenu.vue'
 import type { TiptapDoc } from '~~/shared/types/instruction'
 
@@ -70,7 +71,8 @@ const editor = useEditor({
     TableHeader,
     TableCell,
     BlockDragHandle,
-    BlockId
+    BlockId,
+    AiPrompt
   ],
   editorProps: {
     attributes: {

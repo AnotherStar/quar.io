@@ -539,6 +539,22 @@ function canInsertTable() {
       <UiTooltip text="Отменить (⌘Z)"><button type="button" :class="btnClass(false)" :disabled="!canUndo()" @click="editor.chain().focus().undo().run()"><Icon name="lucide:undo-2" class="h-4 w-4" /></button></UiTooltip>
       <UiTooltip text="Повторить (⌘⇧Z)"><button type="button" :class="btnClass(false)" :disabled="!canRedo()" @click="editor.chain().focus().redo().run()"><Icon name="lucide:redo-2" class="h-4 w-4" /></button></UiTooltip>
     </div>
+
+    <!-- Группа 7: ИИ-помощник. Вставляет inline prompt-блок в текущее
+         место курсора — пользователь пишет промпт прямо в редакторе, выбирает
+         режим (текст / изображение) и жмёт «Сгенерировать». -->
+    <div class="toolbar-group toolbar-group--ai">
+      <UiTooltip text="ИИ-помощник: написать или нарисовать">
+        <button
+          type="button"
+          class="mo-toolbar-ai-btn"
+          @click="editor.chain().focus().insertAiPrompt('text').run()"
+        >
+          <Icon name="lucide:sparkles" class="h-4 w-4" />
+          <span class="text-body-sm">ИИ</span>
+        </button>
+      </UiTooltip>
+    </div>
   </div>
 </template>
 
@@ -570,5 +586,24 @@ function canInsertTable() {
 /* .popover-menu / .popover-item — общий стиль popover'ов dashboard'а
  * (вынесены в assets/css/global.css, потому что используются вне этого
  * компонента — Share popover на странице edit и т.д.). */
+
+/* AI-кнопка в тулбаре — фиолетовый акцент, выделяет ИИ-помощника на фоне
+ * остальных нейтральных групп. */
+.mo-toolbar-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #7c3aed, #c026d3);
+  color: #fff;
+  font-weight: 500;
+  transition: filter 0.12s;
+  box-shadow: 0 1px 4px -1px rgba(124, 58, 237, 0.35);
+}
+.mo-toolbar-ai-btn:hover {
+  filter: brightness(1.08);
+}
 </style>
 

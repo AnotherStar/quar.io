@@ -35,6 +35,8 @@ const COMMANDS: Cmd[] = [
   { id: 'module-ref', title: 'Модуль', hint: 'Вставить модуль (гарантия, чат...)', icon: 'lucide:puzzle', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertModuleRef().run() },
   { id: 'table', title: 'Таблица', hint: 'Таблица 3×3 с шапкой', icon: 'lucide:table', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
   { id: 'image', title: 'Изображение', hint: 'Загрузить картинку', icon: 'lucide:image', run: () => triggerImageUpload() },
+  { id: 'ai-text', title: 'ИИ: написать текст', hint: 'Подсказка для ИИ — сгенерировать текст или часть инструкции', icon: 'lucide:sparkles', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertAiPrompt('text').run() },
+  { id: 'ai-image', title: 'ИИ: нарисовать', hint: 'Подсказка для ИИ — сгенерировать изображение', icon: 'lucide:image-plus', run: (e) => e.chain().focus().deleteRange(currentRange.value!).insertAiPrompt('image').run() },
   { id: 'youtube', title: 'YouTube', hint: 'Встроить видео', icon: 'lucide:youtube', run: (e) => {
     const url = prompt('Ссылка на YouTube:')
     if (url) e.chain().focus().deleteRange(currentRange.value!).setYoutubeVideo({ src: url }).run()
