@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { user } = useAuthState()
+const { startTrial, loading: trialLoading } = useStartTrial()
 </script>
 
 <template>
@@ -22,7 +23,7 @@ const { user } = useAuthState()
           </template>
           <template v-else>
             <UiButton to="/auth/login" variant="ghost" size="sm">Войти</UiButton>
-            <UiButton to="/auth/register" variant="primary" size="sm">Попробовать бесплатно</UiButton>
+            <UiButton variant="primary" size="sm" :loading="trialLoading" @click="startTrial">Попробовать бесплатно</UiButton>
           </template>
         </div>
       </div>

@@ -57,6 +57,7 @@ Features deferred from MVP. Architecture is prepared for them — keep that cont
 - [ ] BullMQ + Redis для фоновых задач (аналитика-агрегаты, email, webhooks, AI)
 - [ ] Rate limiting на публичных эндпоинтах (analytics ingest, feedback)
 - [ ] CDN для медиа (CloudFront/Bunny перед MinIO/S3)
+- [ ] **S3 storage cleanup (orphaned objects)** — данные уже копятся: при AI-генерации из PDF браузер аплоадит ВСЕ извлечённые превью в S3, юзер потом использует малую часть; при image-edit старая версия остаётся. Срочности нет, ключи уже tenant-префиксованы (`${tenantId}/${shortId}.${ext}`), поэтому почистить можно в любой момент. План: (1) добавить `deleteObject(key)` и `listTenantObjects(tenantId)` в [server/utils/storage.ts](server/utils/storage.ts); (2) `findOrphanedKeys(tenantId)` = `ListObjectsV2(Prefix='{tenantId}/')` минус ссылки из `Instruction.draftContent` + всех `InstructionVersion.content` + `Section.content` + `Tenant.brandingLogoUrl` + `PrintBatch.pdfStorageKey`; (3) endpoint `/api/admin/storage-cleanup` с dry-run по умолчанию; (4) опционально cron. Защита: не трогать объекты моложе 1 часа (могут быть в процессе аплоада до save). `MediaAsset` оставить как audit log, не как источник правды для cleanup.
 - [ ] Backup-стратегия PostgreSQL
 - [ ] Sentry / OpenTelemetry
 - [ ] e2e тесты (Playwright) на критических сценариях: регистрация → создание инструкции → публикация → публичный просмотр

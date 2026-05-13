@@ -76,6 +76,7 @@ export interface PublicRenderPayload {
     modules: Record<string, ResolvedModuleRef>
   }
   planActive: boolean
+  ownerEmailVerified: boolean
 }
 
 export async function loadPublicByPath(tenantSlug: string, instructionSlug: string) {
@@ -195,6 +196,18 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
   const legalProfile = normalizeLegalProfile(instruction.tenant)
   const legal = await getPublicLegalPayload(instruction.tenant.id, instruction.tenant.name, legalProfile)
 
+  // The tenant counts as "verified" if at least one OWNER has confirmed their
+  // email. We show a red banner on public instructions otherwise. Cheap query
+  // — count is bounded to OWNER memberships of this tenant.
+  const verifiedOwnerCount = await prisma.membership.count({
+    where: {
+      tenantId: instruction.tenant.id,
+      role: 'OWNER',
+      user: { emailVerifiedAt: { not: null } }
+    }
+  })
+  const ownerEmailVerified = verifiedOwnerCount > 0
+
   return {
     instruction: {
       id: instruction.id,
@@ -216,6 +229,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
     sections,
     modules,
     refs: { sections: refSections, modules: refModules },
-    planActive
+    planActive,
+    ownerEmailVerified
   }
 }

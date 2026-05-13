@@ -2,6 +2,7 @@ import { registerSchema } from '~~/shared/schemas/auth'
 import { hashPassword, createSession } from '~~/server/utils/auth'
 import { prisma } from '~~/server/utils/prisma'
 import { isReservedSlug } from '~~/server/utils/slug'
+import { sendVerificationEmail } from '~~/server/utils/emailVerification'
 
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, registerSchema.parse)
@@ -37,5 +38,19 @@ export default defineEventHandler(async (event) => {
   })
 
   await createSession(event, result.user.id)
+
+  // Send verification email — non-blocking for the registration itself: if
+  // Resend hiccups, the user is still registered, can log in, and can resend
+  // from the dashboard banner.
+  try {
+    await sendVerificationEmail({
+      id: result.user.id,
+      email: result.user.email,
+      name: result.user.name
+    })
+  } catch (e) {
+    console.error('[register] verification email failed:', e)
+  }
+
   return { user: { id: result.user.id, email: result.user.email, name: result.user.name }, tenant: result.tenant }
 })

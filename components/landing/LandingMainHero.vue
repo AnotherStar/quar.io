@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const { startTrial, loading } = useStartTrial()
+</script>
+
 <template>
   <section class="relative bg-surface">
     <div class="container-page pb-[160px] pt-section-lg text-center md:pb-hero md:pt-hero">
@@ -12,7 +16,7 @@
     <div class="absolute bottom-0 left-1/2 z-20 w-full -translate-x-1/2 translate-y-1/2 px-md">
       <div class="mx-auto flex w-fit flex-col items-center gap-md rounded-2xl bg-canvas px-xl py-lg text-center shadow-2xl md:flex-row md:gap-xl md:py-md">
         <h2 class="text-h2 text-navy">QUAR — больше чем QR</h2>
-        <UiButton to="/auth/register" size="lg">
+        <UiButton size="lg" :loading="loading" @click="startTrial">
           Попробовать бесплатно
           <Icon name="lucide:arrow-right" class="h-5 w-5" />
         </UiButton>

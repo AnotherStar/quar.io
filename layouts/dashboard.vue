@@ -243,6 +243,7 @@ watch(() => route.fullPath, () => {
            внутри слота — он встанет вровень с brand-зоной сайдбара. -->
       <section class="dashboard-content min-w-0">
         <div class="dashboard-content-inner">
+          <DashboardEmailVerifyBanner />
           <slot />
         </div>
       </section>

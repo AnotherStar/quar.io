@@ -13,7 +13,17 @@ export default defineEventHandler(async (event) => {
     orderBy: { createdAt: 'asc' }
   })
   return {
-    user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, isAdmin: user.isAdmin },
+    user: {
+      id: user.id,
+      // Synthetic emails of anonymous-trial users (anon-*@anonymous.quar.io.local)
+      // не показываем — фронт всё равно покажет «Завершите регистрацию».
+      email: user.passwordHash ? user.email : '',
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      isAdmin: user.isAdmin,
+      emailVerified: !!user.emailVerifiedAt,
+      needsSignup: !user.passwordHash
+    },
     memberships: memberships.map((m) => ({
       role: m.role,
       tenant: {

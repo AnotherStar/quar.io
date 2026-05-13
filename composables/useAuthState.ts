@@ -3,7 +3,15 @@ interface AuthMembership {
   tenant: { id: string; slug: string; name: string; plan: string; brandingLogoUrl: string | null }
 }
 interface AuthMe {
-  user: { id: string; email: string; name: string | null; avatarUrl: string | null; isAdmin: boolean } | null
+  user: {
+    id: string
+    email: string
+    name: string | null
+    avatarUrl: string | null
+    isAdmin: boolean
+    emailVerified: boolean
+    needsSignup: boolean
+  } | null
   memberships: AuthMembership[]
 }
 

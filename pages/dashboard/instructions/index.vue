@@ -1,6 +1,5 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
-import { onClickOutside } from '@vueuse/core'
 
 const api = useApi()
 const { currentTenant } = useAuthState()
@@ -76,23 +75,56 @@ function publicUrlFor(i: any) {
   return `/${currentTenant.value?.slug}/${i.slug}`
 }
 
-// Per-row kebab menu — only one open at a time
+// Per-row kebab menu — only one open at a time.
+// Menu рендерится через <Teleport to="body">, потому что родительская
+// .overflow-x-auto на UiTable клипит и по вертикали (CSS-спека: при не-visible
+// overflow-x значение overflow-y тоже становится auto). Координаты берём из
+// getBoundingClientRect() кнопки → position: fixed.
 const openMenuId = ref<string | null>(null)
-const menuRefs = ref<Record<string, HTMLElement | null>>({})
-function bindMenu(el: any, id: string) { menuRefs.value[id] = el as HTMLElement }
+const menuPos = ref<{ top: number; right: number }>({ top: 0, right: 0 })
+const menuEl = ref<HTMLElement | null>(null)
+const buttonEls = new Map<string, HTMLElement>()
+
+function bindButton(el: any, id: string) {
+  if (el) buttonEls.set(id, el as HTMLElement)
+  else buttonEls.delete(id)
+}
+
+function toggleMenu(id: string, ev: MouseEvent) {
+  if (openMenuId.value === id) { openMenuId.value = null; return }
+  const btn = (ev.currentTarget as HTMLElement) ?? buttonEls.get(id)
+  if (!btn) return
+  const r = btn.getBoundingClientRect()
+  menuPos.value = { top: r.bottom + 4, right: Math.max(0, window.innerWidth - r.right) }
+  openMenuId.value = id
+}
+
+function closeMenu() { openMenuId.value = null }
+
+// Close on outside click / scroll / resize while menu is open.
 watch(openMenuId, (id) => {
   if (!id) return
-  // Close on outside click
-  const el = menuRefs.value[id]
-  if (!el) return
-  // Use document-level listener since onClickOutside on dynamic refs is awkward
   const onDocClick = (ev: MouseEvent) => {
-    if (!el.contains(ev.target as Node)) {
-      openMenuId.value = null
-      document.removeEventListener('mousedown', onDocClick)
-    }
+    const t = ev.target as Node
+    if (menuEl.value?.contains(t)) return
+    if (buttonEls.get(id)?.contains(t)) return
+    closeMenu()
   }
-  setTimeout(() => document.addEventListener('mousedown', onDocClick), 0)
+  const onScrollOrResize = () => closeMenu()
+  const stop = () => {
+    document.removeEventListener('mousedown', onDocClick)
+    window.removeEventListener('scroll', onScrollOrResize, true)
+    window.removeEventListener('resize', onScrollOrResize)
+  }
+  setTimeout(() => {
+    document.addEventListener('mousedown', onDocClick)
+    // capture=true ловит scroll и у вложенных контейнеров (например, overflow-x таблицы)
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+  }, 0)
+  const unwatch = watch(openMenuId, (next) => {
+    if (next !== id) { stop(); unwatch() }
+  })
 })
 
 async function archive(id: string) {
@@ -189,88 +221,18 @@ async function unarchive(id: string) {
                 <Icon name="lucide:bar-chart-3" class="h-4 w-4 text-steel" />
               </NuxtLink>
             </td>
-            <!-- Kebab menu with row actions -->
+            <!-- Kebab menu with row actions. Само меню рендерится через
+                 <Teleport> ниже одним инстансом для всей таблицы. -->
             <td class="align-top">
-              <div :ref="(el: any) => bindMenu(el, i.id)" class="relative">
-                <button
-                  type="button"
-                  class="grid h-7 w-7 place-items-center rounded-sm text-steel hover:bg-surface hover:text-ink"
-                  :title="'Действия'"
-                  @click.stop="openMenuId = openMenuId === i.id ? null : i.id"
-                >
-                  <Icon name="lucide:ellipsis-vertical" class="h-4 w-4" />
-                </button>
-                <div
-                  v-if="openMenuId === i.id"
-                  class="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-md border border-hairline bg-canvas shadow-modal"
-                >
-                  <NuxtLink
-                    :to="`/dashboard/instructions/${i.id}/edit`"
-                    class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
-                    @click="openMenuId = null"
-                  >
-                    <Icon name="lucide:pencil" class="h-4 w-4 text-steel" />
-                    Редактировать
-                  </NuxtLink>
-                  <button
-                    v-if="i.status === 'DRAFT'"
-                    type="button"
-                    disabled
-                    class="flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-body-sm text-muted"
-                    title="Черновик еще не опубликован"
-                  >
-                    <Icon name="lucide:eye-off" class="h-4 w-4" />
-                    Просмотр
-                  </button>
-                  <a
-                    v-else
-                    :href="publicUrlFor(i)"
-                    target="_blank"
-                    rel="noopener"
-                    class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
-                    @click="openMenuId = null"
-                  >
-                    <Icon name="lucide:eye" class="h-4 w-4 text-steel" />
-                    Просмотр
-                  </a>
-                  <NuxtLink
-                    :to="`/dashboard/instructions/${i.id}/analytics`"
-                    class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
-                    @click="openMenuId = null"
-                  >
-                    <Icon name="lucide:bar-chart-3" class="h-4 w-4 text-steel" />
-                    Аналитика
-                  </NuxtLink>
-                  <button
-                    type="button"
-                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface disabled:opacity-60"
-                    :disabled="duplicatingId === i.id"
-                    @click="duplicateInstruction(i.id)"
-                  >
-                    <Icon name="lucide:copy" class="h-4 w-4 text-steel" />
-                    {{ duplicatingId === i.id ? 'Копирую…' : 'Скопировать' }}
-                  </button>
-                  <hr class="border-hairline">
-                  <button
-                    v-if="i.status !== 'ARCHIVED'"
-                    type="button"
-                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-error hover:bg-surface"
-                    @click="archive(i.id)"
-                  >
-                    <Icon name="lucide:archive" class="h-4 w-4" />
-                    В архив
-                  </button>
-                  <button
-                    v-else
-                    type="button"
-                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface"
-                    @click="unarchive(i.id)"
-                  >
-                    <Icon name="lucide:archive-restore" class="h-4 w-4 text-steel" />
-                    Восстановить
-                  </button>
-                </div>
-              </div>
+              <button
+                :ref="(el: any) => bindButton(el, i.id)"
+                type="button"
+                class="grid h-7 w-7 place-items-center rounded-sm text-steel hover:bg-surface hover:text-ink"
+                title="Действия"
+                @click.stop="toggleMenu(i.id, $event)"
+              >
+                <Icon name="lucide:ellipsis-vertical" class="h-4 w-4" />
+              </button>
             </td>
           </tr>
         </tbody>
@@ -282,5 +244,89 @@ async function unarchive(id: string) {
       </p>
     </div>
     </Transition>
+
+    <!-- Kebab dropdown — единый инстанс, телепортированный к body, чтобы не
+         клиппиться внутри overflow-x контейнера таблицы. Координаты задаются
+         через position: fixed относительно нажатой кнопки. -->
+    <ClientOnly>
+      <Teleport to="body">
+        <div
+          v-if="openMenuId"
+          ref="menuEl"
+          class="fixed z-50 w-44 overflow-hidden rounded-md border border-hairline bg-canvas shadow-modal"
+          :style="{ top: menuPos.top + 'px', right: menuPos.right + 'px' }"
+        >
+          <template v-for="i in visible" :key="i.id">
+            <template v-if="openMenuId === i.id">
+              <NuxtLink
+                :to="`/dashboard/instructions/${i.id}/edit`"
+                class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
+                @click="closeMenu"
+              >
+                <Icon name="lucide:pencil" class="h-4 w-4 text-steel" />
+                Редактировать
+              </NuxtLink>
+              <button
+                v-if="i.status === 'DRAFT'"
+                type="button"
+                disabled
+                class="flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-body-sm text-muted"
+                title="Черновик еще не опубликован"
+              >
+                <Icon name="lucide:eye-off" class="h-4 w-4" />
+                Просмотр
+              </button>
+              <a
+                v-else
+                :href="publicUrlFor(i)"
+                target="_blank"
+                rel="noopener"
+                class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
+                @click="closeMenu"
+              >
+                <Icon name="lucide:eye" class="h-4 w-4 text-steel" />
+                Просмотр
+              </a>
+              <NuxtLink
+                :to="`/dashboard/instructions/${i.id}/analytics`"
+                class="flex items-center gap-2 px-3 py-2 text-body-sm hover:bg-surface"
+                @click="closeMenu"
+              >
+                <Icon name="lucide:bar-chart-3" class="h-4 w-4 text-steel" />
+                Аналитика
+              </NuxtLink>
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface disabled:opacity-60"
+                :disabled="duplicatingId === i.id"
+                @click="duplicateInstruction(i.id)"
+              >
+                <Icon name="lucide:copy" class="h-4 w-4 text-steel" />
+                {{ duplicatingId === i.id ? 'Копирую…' : 'Скопировать' }}
+              </button>
+              <hr class="border-hairline">
+              <button
+                v-if="i.status !== 'ARCHIVED'"
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm text-error hover:bg-surface"
+                @click="archive(i.id)"
+              >
+                <Icon name="lucide:archive" class="h-4 w-4" />
+                В архив
+              </button>
+              <button
+                v-else
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm hover:bg-surface"
+                @click="unarchive(i.id)"
+              >
+                <Icon name="lucide:archive-restore" class="h-4 w-4 text-steel" />
+                Восстановить
+              </button>
+            </template>
+          </template>
+        </div>
+      </Teleport>
+    </ClientOnly>
   </div>
 </template>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { startTrial, loading: trialLoading } = useStartTrial()
+
 const scenarios = [
   {
     icon: 'lucide:store',
@@ -6,8 +8,7 @@ const scenarios = [
     title: 'Продаю через маркетплейс',
     body: 'Wildberries, Ozon, Яндекс Маркет — после покупки клиент никак не связан с вами, а вы платите за это 30-50% комиссии с каждого заказа. У вас нет возможности повторно продать товар или рассказать о новинках.',
     solution: 'quar.io: Клиент попадает напрямую к вам. Возможность повторной покупки без комиссии. Данные клиента у вас.',
-    cta: 'Забрать клиента с маркетплейса',
-    href: '/auth/register'
+    cta: 'Забрать клиента с маркетплейса'
   },
   {
     icon: 'lucide:package',
@@ -15,8 +16,7 @@ const scenarios = [
     title: 'Мне нужны понятные инструкции',
     body: 'Инструкция по сборке, настройка электроники, процесс подготовки к использованию. Покупатели пишут «непонятно» в отзывах, возвращают, ставят три звезды. Но чаще всего проблема в том, что инструкция не понятна.',
     solution: 'quar.io: Понятная онлайн инструкция по QR. Обновляется без перепечатки тиражей и всегда актуальна.',
-    cta: 'Оцифровать инструкцию',
-    href: '/auth/register'
+    cta: 'Оцифровать инструкцию'
   }
 ]
 
@@ -51,7 +51,7 @@ const iconTone = {
             {{ scenario.solution }}
           </p>
           <div class="mt-auto pt-xl">
-            <UiButton :to="scenario.href" class="uppercase tracking-wide" variant="primary" block>
+            <UiButton class="uppercase tracking-wide" variant="primary" :loading="trialLoading" block @click="startTrial">
               {{ scenario.cta }}
               <Icon name="lucide:arrow-right" class="h-4 w-4" />
             </UiButton>

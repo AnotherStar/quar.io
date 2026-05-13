@@ -67,7 +67,23 @@ useHeadingAnchors('.js-instruction-content')
 </script>
 
 <template>
-  <div :style="brandingStyle">
+  <div :style="brandingStyle" class="flex min-h-screen flex-col">
+    <!-- Soft warning shown until the tenant owner verifies their email.
+         Content stays fully functional underneath — это «trust nudge», не блок. -->
+    <div
+      v-if="data && !data.ownerEmailVerified"
+      class="bg-tint-peach text-charcoal"
+      role="status"
+    >
+      <div class="container-page py-sm flex items-start gap-3 text-body-sm">
+        <Icon name="lucide:info" class="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+        <p>
+          Владелец этой страницы пока не подтвердил email. Информация может оказаться
+          недостоверной — относитесь к ней с осторожностью.
+        </p>
+      </div>
+    </div>
+
     <header class="border-b border-hairline">
       <div class="container-page flex items-center justify-between py-md">
         <div class="flex items-center gap-3">
@@ -79,7 +95,7 @@ useHeadingAnchors('.js-instruction-content')
     </header>
 
     <main
-      class="container-page py-section grid grid-cols-1 gap-section"
+      class="container-page py-section grid grid-cols-1 gap-section flex-1"
       :class="hasSidebar ? 'md:grid-cols-[1fr_280px]' : ''"
     >
       <article id="instruction-root" class="prose-mo" :class="hasSidebar ? '' : 'mx-auto w-full max-w-[760px]'">

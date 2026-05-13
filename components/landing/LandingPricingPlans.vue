@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { startTrial, loading: trialLoading } = useStartTrial()
+
 type Plan = {
   name: string
   price: string
@@ -8,7 +10,9 @@ type Plan = {
   variant: 'default' | 'highlight' | 'premium'
   badge?: string
   cta: string
-  to: string
+  // Если задан `to` — это обычная навигация (например, на /pricing). Если
+  // нет — кнопка триггерит trial-сценарий.
+  to?: string
 }
 
 const plans: Plan[] = [
@@ -19,8 +23,7 @@ const plans: Plan[] = [
     copy: 'Проверить 5–10 товаров и понять, где инструкция влияет на вопросы, отзывы и повторный заказ.',
     features: ['AI-оцифровка первых инструкций', 'Публичные QR-ссылки', 'Базовая аналитика', 'Отчёт по проблемным шагам'],
     variant: 'default',
-    cta: 'Попробовать бесплатно',
-    to: '/auth/register'
+    cta: 'Попробовать бесплатно'
   },
   {
     name: 'Каталог',
@@ -30,8 +33,7 @@ const plans: Plan[] = [
     features: ['До 100 инструкций', 'Reusable sections', 'Команда и роли', 'Модули feedback и warranty'],
     variant: 'highlight',
     badge: 'Популярный',
-    cta: 'Попробовать бесплатно',
-    to: '/auth/register'
+    cta: 'Попробовать бесплатно'
   },
   {
     name: 'Бренд',
@@ -118,10 +120,21 @@ const plans: Plan[] = [
           </p>
 
           <UiButton
+            v-if="plan.to"
             class="mt-xl"
             :to="plan.to"
             :variant="plan.variant === 'premium' ? 'on-dark' : 'primary'"
             block
+          >
+            {{ plan.cta }}
+          </UiButton>
+          <UiButton
+            v-else
+            class="mt-xl"
+            :variant="plan.variant === 'premium' ? 'on-dark' : 'primary'"
+            :loading="trialLoading"
+            block
+            @click="startTrial"
           >
             {{ plan.cta }}
           </UiButton>
