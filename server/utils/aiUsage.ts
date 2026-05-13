@@ -9,7 +9,7 @@
 // model.
 import { prisma } from './prisma'
 
-export type AiFeature = 'instruction-generation' | 'image-edit'
+export type AiFeature = 'instruction-generation' | 'image-edit' | 'image-generate'
 export type AiUsageStatus = 'success' | 'error' | 'aborted'
 
 export interface RecordAiUsageInput {

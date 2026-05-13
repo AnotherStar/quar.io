@@ -5,6 +5,7 @@ import type { PrintTemplateListItem } from '~~/shared/schemas/printBatch'
 
 const api = useApi()
 const router = useRouter()
+const route = useRoute()
 const { currentTenant } = useAuthState()
 
 const templatesKey = computed(() => `print-templates-${currentTenant.value?.id ?? 'none'}`)
@@ -23,7 +24,7 @@ const { data: availData, refresh: refreshAvail } = await useAsyncData(
 )
 const available = computed(() => availData.value?.available ?? 0)
 
-const selectedTemplate = ref<string | null>(null)
+const selectedTemplate = ref<string | null>(typeof route.query.template === 'string' ? route.query.template : null)
 const count = ref(100)
 const submitting = ref(false)
 const error = ref<string | null>(null)
@@ -65,6 +66,10 @@ async function submit() {
           <Icon name="lucide:arrow-left" class="h-4 w-4" />
           <span class="hidden md:inline">К списку тиражей</span>
         </UiButton>
+        <UiButton variant="secondary" to="/dashboard/print/templates/new">
+          <Icon name="lucide:palette" class="h-4 w-4" />
+          <span class="hidden md:inline">Редактор стикера</span>
+        </UiButton>
       </template>
     </PageHeader>
 
@@ -95,7 +100,7 @@ async function submit() {
             @click="selectedTemplate = t.code"
           >
             <div class="flex h-32 items-center justify-center rounded-md bg-surface">
-              <img v-if="t.previewUrl" :src="t.previewUrl" :alt="t.name" class="h-28 w-auto">
+              <img v-if="t.previewUrl" :src="t.previewUrl" :alt="t.name" class="max-h-28 max-w-full object-contain">
               <Icon v-else name="lucide:image" class="h-10 w-10 text-stone" />
             </div>
             <div class="mt-md space-y-1">

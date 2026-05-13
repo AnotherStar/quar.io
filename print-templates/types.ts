@@ -49,4 +49,5 @@ export interface PrintRenderContext {
 export interface PrintTemplate {
   manifest: PrintTemplateManifest
   render: (ctx: PrintRenderContext) => Promise<Buffer> | Buffer
+  renderPreview?: (ctx: PrintRenderContext) => Promise<Buffer> | Buffer
 }

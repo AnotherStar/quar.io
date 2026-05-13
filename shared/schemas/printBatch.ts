@@ -6,6 +6,34 @@ export const printBatchCreateSchema = z.object({
 })
 export type PrintBatchCreateInput = z.infer<typeof printBatchCreateSchema>
 
+const hexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/)
+
+export const printTemplateDesignCreateSchema = z.object({
+  name: z.string().min(1).max(100),
+  backgroundUrl: z.string().min(1).max(1000),
+  backgroundMimeType: z.string().min(1).max(200).optional().nullable(),
+  backgroundWidthPx: z.number().int().min(1).max(20000),
+  backgroundHeightPx: z.number().int().min(1).max(20000),
+  widthMm: z.number().min(10).max(500),
+  heightMm: z.number().min(10).max(500),
+  backgroundXmm: z.number().min(-1000).max(1000),
+  backgroundYmm: z.number().min(-1000).max(1000),
+  backgroundWidthMm: z.number().min(1).max(1000),
+  backgroundHeightMm: z.number().min(1).max(1000),
+  qrXmm: z.number().min(0).max(500),
+  qrYmm: z.number().min(0).max(500),
+  qrSizeMm: z.number().min(8).max(300),
+  qrDarkColor: hexColorSchema,
+  qrLightColor: hexColorSchema
+}).refine((v) => v.qrXmm + v.qrSizeMm <= v.widthMm, {
+  message: 'QR выходит за правый край',
+  path: ['qrXmm']
+}).refine((v) => v.qrYmm + v.qrSizeMm <= v.heightMm, {
+  message: 'QR выходит за нижний край',
+  path: ['qrYmm']
+})
+export type PrintTemplateDesignCreateInput = z.infer<typeof printTemplateDesignCreateSchema>
+
 // Снапшот manifest'а шаблона, который сохраняется в PrintBatch.templateSnapshot.
 // Если код шаблона в репо изменится (или шаблон будет удалён), мы всё равно
 // сможем показать тираж в списке и понять, из чего он собирался.
@@ -37,4 +65,5 @@ export interface PrintTemplateListItem {
   size: { widthMm: number; heightMm: number }
   previewUrl: string | null
   version: number
+  kind?: 'system' | 'custom'
 }

@@ -38,7 +38,6 @@ onMounted(async () => {
 
       <template v-else-if="state === 'ok'">
         <h1 class="text-h4 text-ink">Email подтверждён</h1>
-        <p class="mt-3 text-body text-charcoal">Спасибо! Теперь красная плашка с ваших инструкций исчезнет.</p>
         <UiButton class="mt-6" to="/dashboard" block>Перейти в личный кабинет</UiButton>
       </template>
 

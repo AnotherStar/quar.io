@@ -3,6 +3,7 @@ import { requireTenant } from '~~/server/utils/tenant'
 import { prisma } from '~~/server/utils/prisma'
 import { uploadObject } from '~~/server/utils/storage'
 import { getPrintTemplate } from '~~/print-templates/registry'
+import { customPrintTemplate, parseCustomTemplateCode } from '~~/print-templates/custom'
 import { printBatchCreateSchema, type PrintTemplateSnapshot } from '~~/shared/schemas/printBatch'
 import type { QrPrintRunEntry } from '~~/shared/schemas/qrCode'
 
@@ -10,7 +11,10 @@ export default defineEventHandler(async (event) => {
   const { tenant, user } = await requireTenant(event, { minRole: 'EDITOR' })
   const body = await readValidatedBody(event, printBatchCreateSchema.parse)
 
-  const template = getPrintTemplate(body.templateCode)
+  const customId = parseCustomTemplateCode(body.templateCode)
+  const template = customId
+    ? await loadCustomTemplate(tenant.id, customId)
+    : getPrintTemplate(body.templateCode)
   if (!template) {
     throw createError({ statusCode: 404, statusMessage: 'Шаблон не найден' })
   }
@@ -121,3 +125,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Не удалось сгенерировать PDF: ' + (e?.message ?? 'unknown') })
   }
 })
+
+async function loadCustomTemplate(tenantId: string, id: string) {
+  const record = await prisma.printTemplateDesign.findFirst({
+    where: { id, tenantId, archivedAt: null }
+  })
+  return record ? customPrintTemplate(record) : undefined
+}

@@ -95,13 +95,21 @@
     @apply border-b border-hairline text-caption text-steel uppercase;
   }
   .ui-table thead th {
-    @apply pb-sm font-normal;
+    @apply pb-sm px-xs font-normal;
   }
   .ui-table tbody tr {
     @apply border-b border-hairline-soft;
   }
   .ui-table tbody td {
-    @apply py-sm;
+    @apply py-sm px-xs;
+  }
+  .ui-table thead th:first-child,
+  .ui-table tbody td:first-child {
+    @apply pl-0;
+  }
+  .ui-table thead th:last-child,
+  .ui-table tbody td:last-child {
+    @apply pr-0;
   }
 }
 
