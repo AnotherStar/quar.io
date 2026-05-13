@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'blank', middleware: 'guest' })
 
-const form = reactive({ email: '', password: '', tenantName: '', tenantSlug: '' })
+const form = reactive({ email: '', password: '', tenantName: '', tenantSlug: '', acceptedTerms: false })
 const error = ref<string | null>(null)
 const loading = ref(false)
 const tryingAnonymous = ref(false)
@@ -66,9 +66,17 @@ async function tryWithoutRegistration() {
         <UiInput v-model="form.tenantName" label="Название компании или бренда" required />
         <UiInput v-model="form.tenantSlug" label="Ваша ссылка" :prefix="`quar.io/`" hint="Латиница, цифры, дефис" required @input="onSlugInput" />
 
+        <label class="flex items-start gap-2 text-body-sm text-charcoal">
+          <input v-model="form.acceptedTerms" type="checkbox" class="mt-1 h-4 w-4 shrink-0 rounded border-hairline-strong" required>
+          <span>
+            Я принимаю
+            <NuxtLink to="/legal/terms" target="_blank" class="text-link hover:underline">пользовательское соглашение</NuxtLink>.
+          </span>
+        </label>
+
         <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
 
-        <UiButton type="submit" :loading="loading" block>Создать аккаунт и войти</UiButton>
+        <UiButton type="submit" :loading="loading" :disabled="!form.acceptedTerms" block>Создать аккаунт и войти</UiButton>
 
         <p class="text-body-sm text-steel">
           После создания аккаунта мы отправим письмо для подтверждения email. В личный кабинет вы попадёте сразу — подтвердить почту можно позже.
@@ -85,7 +93,9 @@ async function tryWithoutRegistration() {
         Попробовать без регистрации
       </UiButton>
       <p class="mt-2 text-caption text-steel text-center">
-        Мы создадим временный trial-аккаунт. Завершить регистрацию (задать email и пароль) можно в любой момент из дашборда.
+        Мы создадим временный trial-аккаунт. Нажимая кнопку, вы принимаете
+        <NuxtLink to="/legal/terms" target="_blank" class="text-link hover:underline">пользовательское соглашение</NuxtLink>.
+        Завершить регистрацию (задать email и пароль) можно в любой момент из дашборда.
       </p>
 
       <p class="mt-6 text-body-sm text-steel">

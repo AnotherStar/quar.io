@@ -248,6 +248,11 @@ const trialBlocked = computed(() =>
       <Transition name="tab-content" mode="out-in">
         <!-- ── Tab: Профиль ──────────────────────────────────────────── -->
         <div v-if="tab === 'profile'" key="profile" class="space-y-xl">
+          <!-- Плашка «завершите регистрацию / подтвердите email». Раньше висела
+               в шапке дашборда; теперь — отдельным блоком над карточкой профиля,
+               а в сайдбаре дополнительно горит attention-бейдж. -->
+          <DashboardEmailVerifyBanner />
+
           <div class="rounded-lg bg-surface p-xl">
             <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
               <div>
@@ -255,7 +260,7 @@ const trialBlocked = computed(() =>
                   <Icon name="lucide:user-round" class="h-5 w-5 text-navy opacity-50" />
                   <h3 class="text-h4 text-navy">Профиль</h3>
                 </div>
-                <p class="mt-md text-body text-charcoal">Email: {{ user?.email }}</p>
+                <p class="mt-md text-body text-charcoal">Email: {{ user?.email || '—' }}</p>
                 <p class="text-body text-charcoal">Имя: {{ user?.name ?? '—' }}</p>
               </div>
               <UiButton variant="secondary" :loading="loggingOut" @click="logout">

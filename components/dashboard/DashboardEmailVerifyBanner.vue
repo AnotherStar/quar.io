@@ -1,19 +1,26 @@
 <script setup lang="ts">
-// Top-of-dashboard nudge. Has two modes:
-//   1. needsSignup (anonymous trial-account)  — приоритетный, красный баннер,
-//      ведёт на /auth/complete для дозаполнения email/пароля.
-//   2. !emailVerified                          — мягкая красная плашка с
-//      кнопкой повторной отправки письма верификации.
+// Top-of-dashboard nudge. Two modes (приоритетный first):
+//   1. needsSignup   — анонимный trial-аккаунт, ведём на /auth/complete.
+//   2. !emailVerified — обычный аккаунт без подтверждённой почты, кнопка
+//                       повторной отправки письма.
+// Стилистически — мягкий tint (bg-tint-peach), без бордера, primary-кнопка,
+// в духе UiAlert. На мобиле кнопка переезжает под текст, иконка не «гуляет».
 
 const { user, refresh } = useAuthState()
 
 const sending = ref(false)
 const sent = ref(false)
 const error = ref<string | null>(null)
+const completeModalOpen = ref(false)
 
 const needsSignup = computed(() => !!user.value?.needsSignup)
 const needsVerify = computed(() => !!user.value && !user.value.needsSignup && !user.value.emailVerified)
 const visible = computed(() => needsSignup.value || needsVerify.value)
+
+function onSignupSuccess() {
+  completeModalOpen.value = false
+  // Стейт уже свежий — refresh() сделан внутри формы.
+}
 
 async function resend() {
   if (sending.value) return
@@ -36,30 +43,43 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="visible" class="mb-md rounded-md border border-[#f1c2c2] bg-[#fde0e0] px-md py-sm text-[#8a1212]">
-    <!-- Анонимный trial: задавим email/пароль -->
-    <div v-if="needsSignup" class="flex flex-wrap items-center gap-sm">
-      <Icon name="lucide:user-plus" class="h-5 w-5 shrink-0" />
-      <p class="text-body-sm-md flex-1 min-w-[220px]">
-        Вы в режиме <span class="font-medium">trial-аккаунта</span>. Завершите регистрацию (email и пароль) — иначе вы не сможете
-        войти повторно, а на ваших публичных инструкциях будет висеть красная плашка для покупателей.
-      </p>
-      <UiButton size="sm" variant="dark" to="/auth/complete">Завершить регистрацию</UiButton>
-    </div>
-
-    <!-- Полноценный аккаунт без подтверждённой почты -->
-    <template v-else>
-      <div class="flex flex-wrap items-center gap-sm">
-        <Icon name="lucide:mail-warning" class="h-5 w-5 shrink-0" />
-        <p class="text-body-sm-md flex-1 min-w-[220px]">
-          Подтвердите email <span class="font-medium">{{ user!.email }}</span> — пока он не подтверждён, на ваших публичных
-          инструкциях показывается красная плашка для покупателей.
+  <div v-if="visible" class="rounded-md bg-tint-peach px-md py-sm text-charcoal">
+    <!-- На мобиле column, на sm+ — иконка/текст слева, кнопка справа. -->
+    <div class="flex flex-col gap-sm sm:flex-row sm:items-center">
+      <div class="flex min-w-0 flex-1 items-start gap-sm">
+        <Icon
+          :name="needsSignup ? 'lucide:user-plus' : 'lucide:mail-warning'"
+          class="mt-0.5 h-5 w-5 shrink-0 text-warning"
+        />
+        <p v-if="needsSignup" class="text-body-sm leading-snug">
+          Вы в режиме <span class="font-medium">тестового аккаунта</span>. Завершите регистрацию чтобы ваши данные сохранились. Инструкции без подтвержденного email автоматически удаляются через 24 часа.
         </p>
-        <UiButton size="sm" variant="dark" :loading="sending" :disabled="sent" @click="resend">
+        <p v-else class="text-body-sm leading-snug">
+          Подтвердите email <span class="font-medium">{{ user!.email }}</span> — пока он не подтверждён, на ваших 
+          инструкциях будет выводиться предупреждение о необходимости подтверждения email.
+        </p>
+      </div>
+
+      <div class="shrink-0 sm:ml-md">
+        <UiButton v-if="needsSignup" size="sm" variant="primary" @click="completeModalOpen = true">
+          Завершить регистрацию
+        </UiButton>
+        <UiButton v-else size="sm" variant="primary" :loading="sending" :disabled="sent" @click="resend">
           {{ sent ? 'Письмо отправлено' : 'Отправить письмо' }}
         </UiButton>
       </div>
-      <p v-if="error" class="mt-2 text-body-sm">{{ error }}</p>
-    </template>
+    </div>
+
+    <p v-if="error && !needsSignup" class="mt-2 text-body-sm">{{ error }}</p>
   </div>
+
+  <!-- Модалка дозаполнения — открывается прямо в дашборде, без смены layout.
+       Раньше тут была навигация на /auth/complete, но переход между layouts
+       (dashboard → blank) с двойным transition давал «белый экран». -->
+  <UiModal v-model:open="completeModalOpen" title="Завершите регистрацию" size="sm">
+    <p class="mb-md text-body-sm text-charcoal">
+      Задайте email и пароль — без них вы не сможете войти в trial-аккаунт повторно.
+    </p>
+    <AuthCompleteSignupForm @success="onSignupSuccess" />
+  </UiModal>
 </template>

@@ -34,6 +34,9 @@ async function submit() {
         <UiInput v-model="form.password" type="password" label="Пароль" autocomplete="current-password" required />
         <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
         <UiButton type="submit" :loading="loading" block>Войти</UiButton>
+        <NuxtLink to="/auth/forgot" class="text-body-sm text-link text-center hover:underline">
+          Забыли пароль?
+        </NuxtLink>
       </form>
 
       <p class="mt-6 text-body-sm text-steel">

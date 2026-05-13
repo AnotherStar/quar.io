@@ -13,8 +13,11 @@ function appUrl() {
   return process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:4200'
 }
 
+// Namespace hash by purpose так чтобы verification-токен нельзя было
+// «случайно» употребить на endpoint'е сброса пароля и наоборот (хэш не сойдётся
+// при попытке consume на чужом эндпоинте).
 function hashToken(token: string) {
-  return createHash('sha256').update(token).digest('hex')
+  return createHash('sha256').update(`email-verify:${token}`).digest('hex')
 }
 
 export async function createVerificationToken(userId: string): Promise<string> {
@@ -39,7 +42,7 @@ export async function sendVerificationEmail(user: { id: string; email: string; n
       <h1 style="font-size:22px;margin:0 0 16px">Подтвердите email на quar.io</h1>
       <p style="font-size:15px;line-height:1.5;margin:0 0 16px">${greeting}</p>
       <p style="font-size:15px;line-height:1.5;margin:0 0 24px">
-        Подтвердите ваш адрес — это снимет красную плашку с публичных страниц инструкций и нужно для будущих уведомлений.
+        Подтвердите ваш адрес
       </p>
       <p style="margin:0 0 24px">
         <a href="${link}" style="display:inline-block;background:#0039df;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:500">

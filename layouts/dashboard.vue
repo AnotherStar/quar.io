@@ -58,6 +58,25 @@ const adminNavItems = computed(() =>
 const isActive = (to: string, exact?: boolean) =>
   exact ? route.path === to : route.path.startsWith(to)
 
+// ── Sidebar badges ───────────────────────────────────────────────────────
+// Бейджи для пунктов навигации. Сейчас «Настройки» получает attention-бейдж,
+// если пользователю надо завершить регистрацию или подтвердить email — эти
+// действия раньше жили в плашке поверх контента, теперь — там, где собраны
+// настройки профиля. Для других пунктов помощник готов под расширение
+// (например, счётчик новых отзывов / pending-обзоров и т.п.).
+type SidebarBadge = { kind: 'attention' | 'count'; value?: number; title?: string }
+
+const settingsBadge = computed<SidebarBadge | null>(() => {
+  if (user.value?.needsSignup) return { kind: 'attention', title: 'Завершите регистрацию' }
+  if (user.value && !user.value.emailVerified) return { kind: 'attention', title: 'Подтвердите email' }
+  return null
+})
+
+function badgeFor(to: string): SidebarBadge | null {
+  if (to === '/dashboard/settings') return settingsBadge.value
+  return null
+}
+
 watch(() => route.fullPath, () => {
   mobileMenuOpen.value = false
 })
@@ -143,7 +162,7 @@ watch(() => route.fullPath, () => {
                 :to="i.to"
                 :title="sidebarCollapsed ? i.label : undefined"
                 :class="[
-                  'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
+                  'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
                   isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
                 ]"
               >
@@ -152,6 +171,16 @@ watch(() => route.fullPath, () => {
                   class="dashboard-fade-label truncate"
                   :class="sidebarCollapsed ? 'is-hidden' : ''"
                 >{{ i.label }}</span>
+                <SidebarBadge
+                  v-if="badgeFor(i.to) && !sidebarCollapsed"
+                  v-bind="badgeFor(i.to)!"
+                  class="ml-auto"
+                />
+                <span
+                  v-if="badgeFor(i.to) && sidebarCollapsed"
+                  class="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-error ring-2 ring-surface"
+                  :title="badgeFor(i.to)!.title"
+                />
               </NuxtLink>
 
               <template v-if="moduleNavItems.length">
@@ -162,7 +191,7 @@ watch(() => route.fullPath, () => {
                   :to="i.to"
                   :title="sidebarCollapsed ? i.label : undefined"
                   :class="[
-                    'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
+                    'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
                     isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
                   ]"
                 >
@@ -171,6 +200,16 @@ watch(() => route.fullPath, () => {
                     class="dashboard-fade-label truncate"
                     :class="sidebarCollapsed ? 'is-hidden' : ''"
                   >{{ i.label }}</span>
+                  <SidebarBadge
+                    v-if="badgeFor(i.to) && !sidebarCollapsed"
+                    v-bind="badgeFor(i.to)!"
+                    class="ml-auto"
+                  />
+                  <span
+                    v-if="badgeFor(i.to) && sidebarCollapsed"
+                    class="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-error ring-2 ring-surface"
+                    :title="badgeFor(i.to)!.title"
+                  />
                 </NuxtLink>
               </template>
 
@@ -182,7 +221,7 @@ watch(() => route.fullPath, () => {
                   :to="i.to"
                   :title="sidebarCollapsed ? i.label : undefined"
                   :class="[
-                    'flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
+                    'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
                     isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
                   ]"
                 >
@@ -191,6 +230,16 @@ watch(() => route.fullPath, () => {
                     class="dashboard-fade-label truncate"
                     :class="sidebarCollapsed ? 'is-hidden' : ''"
                   >{{ i.label }}</span>
+                  <SidebarBadge
+                    v-if="badgeFor(i.to) && !sidebarCollapsed"
+                    v-bind="badgeFor(i.to)!"
+                    class="ml-auto"
+                  />
+                  <span
+                    v-if="badgeFor(i.to) && sidebarCollapsed"
+                    class="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-error ring-2 ring-surface"
+                    :title="badgeFor(i.to)!.title"
+                  />
                 </NuxtLink>
               </template>
             </nav>
@@ -202,11 +251,11 @@ watch(() => route.fullPath, () => {
             <div v-if="currentTenant || user" class="dashboard-sidebar-footer">
               <NuxtLink
                 to="/dashboard/settings"
-                class="dashboard-sidebar-footer-row rounded-md transition-colors duration-200 ease-out"
+                class="dashboard-sidebar-footer-row relative rounded-md transition-colors duration-200 ease-out"
                 :class="isActive('/dashboard/settings')
                   ? 'bg-primary text-on-primary'
                   : 'text-charcoal hover:bg-hairline-soft hover:text-ink'"
-                :title="sidebarCollapsed ? 'Настройки' : undefined"
+                :title="sidebarCollapsed ? (settingsBadge?.title ?? 'Настройки') : undefined"
               >
                 <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
                 <span
@@ -215,6 +264,16 @@ watch(() => route.fullPath, () => {
                 >
                   Настройки
                 </span>
+                <SidebarBadge
+                  v-if="settingsBadge && !sidebarCollapsed"
+                  v-bind="settingsBadge"
+                  class="ml-auto"
+                />
+                <span
+                  v-if="settingsBadge && sidebarCollapsed"
+                  class="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-error ring-2 ring-surface"
+                  :title="settingsBadge.title"
+                />
               </NuxtLink>
 
               <hr class="my-xs border-hairline" />
@@ -243,7 +302,6 @@ watch(() => route.fullPath, () => {
            внутри слота — он встанет вровень с brand-зоной сайдбара. -->
       <section class="dashboard-content min-w-0">
         <div class="dashboard-content-inner">
-          <DashboardEmailVerifyBanner />
           <slot />
         </div>
       </section>
@@ -274,6 +332,7 @@ watch(() => route.fullPath, () => {
             >
               <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
               <span class="truncate">{{ i.label }}</span>
+              <SidebarBadge v-if="badgeFor(i.to)" v-bind="badgeFor(i.to)!" class="ml-auto" />
             </NuxtLink>
             <template v-if="moduleNavItems.length">
               <hr class="my-sm border-hairline-soft" />
@@ -288,6 +347,7 @@ watch(() => route.fullPath, () => {
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
                 <span class="truncate">{{ i.label }}</span>
+                <SidebarBadge v-if="badgeFor(i.to)" v-bind="badgeFor(i.to)!" class="ml-auto" />
               </NuxtLink>
             </template>
             <template v-if="adminNavItems.length">
@@ -303,6 +363,7 @@ watch(() => route.fullPath, () => {
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
                 <span class="truncate">{{ i.label }}</span>
+                <SidebarBadge v-if="badgeFor(i.to)" v-bind="badgeFor(i.to)!" class="ml-auto" />
               </NuxtLink>
             </template>
           </nav>
@@ -316,6 +377,7 @@ watch(() => route.fullPath, () => {
             >
               <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
               <span class="truncate text-body-sm">Настройки</span>
+              <SidebarBadge v-if="settingsBadge" v-bind="settingsBadge" class="ml-auto" />
             </NuxtLink>
 
             <hr class="my-xs border-hairline" />

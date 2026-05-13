@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/tokens.css', '~/assets/css/global.css'],
   runtimeConfig: {
     sessionSecret: process.env.NUXT_SESSION_SECRET || 'dev-secret-change-me-please-32-bytes-min',
-    reservedSlugs: process.env.NUXT_RESERVED_SLUGS || 'api,admin,dashboard,auth,login,register,pricing,help,docs,about,terms,privacy,blog,settings,billing,embed,assets,public,_nuxt,s',
+    reservedSlugs: process.env.NUXT_RESERVED_SLUGS || 'api,admin,dashboard,auth,login,register,pricing,help,docs,about,terms,privacy,blog,settings,billing,embed,assets,public,_nuxt,s,legal',
     storage: {
       driver: process.env.STORAGE_DRIVER || 'local',
       localDir: process.env.LOCAL_UPLOAD_DIR || '.data/uploads'

@@ -14,12 +14,18 @@ const { startTrial, loading } = useStartTrial()
       </p>
     </div>
     <div class="absolute bottom-0 left-1/2 z-20 w-full -translate-x-1/2 translate-y-1/2 px-md">
-      <div class="mx-auto flex w-fit flex-col items-center gap-md rounded-2xl bg-canvas px-xl py-lg text-center shadow-2xl md:flex-row md:gap-xl md:py-md">
-        <h2 class="text-h2 text-navy">QUAR — больше чем QR</h2>
-        <UiButton size="lg" :loading="loading" @click="startTrial">
-          Попробовать бесплатно
-          <Icon name="lucide:arrow-right" class="h-5 w-5" />
-        </UiButton>
+      <div class="mx-auto flex w-fit flex-col items-center gap-md rounded-2xl bg-canvas px-xl py-lg text-center shadow-2xl md:py-md">
+        <div class="flex flex-col items-center gap-md md:flex-row md:gap-xl">
+          <h2 class="text-h2 text-navy">QUAR — больше чем QR</h2>
+          <UiButton size="lg" :loading="loading" @click="startTrial">
+            Попробовать бесплатно
+            <Icon name="lucide:arrow-right" class="h-5 w-5" />
+          </UiButton>
+        </div>
+        <p class="text-caption text-steel">
+          Нажимая кнопку, вы принимаете
+          <NuxtLink to="/legal/terms" class="text-link hover:underline">пользовательское соглашение</NuxtLink>.
+        </p>
       </div>
     </div>
   </section>

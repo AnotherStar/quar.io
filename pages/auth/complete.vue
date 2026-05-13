@@ -1,56 +1,20 @@
 <script setup lang="ts">
-// «Дорегистрация» анонимного trial-аккаунта: задаём email/пароль и при желании
-// переименовываем компанию + slug. После успеха ведём в дашборд.
-definePageMeta({ layout: 'blank', middleware: 'auth' })
+// Standalone-страница для дозаполнения trial-аккаунта. Основной in-app вход —
+// модалка из дашборд-баннера, см. <DashboardCompleteSignupModal>. Эта страница
+// остаётся ради deep-link'ов / прямых заходов по URL.
+definePageMeta({
+  layout: 'blank',
+  middleware: [
+    'auth',
+    function () {
+      const { user } = useAuthState()
+      if (user.value && !user.value.needsSignup) return navigateTo('/dashboard')
+    }
+  ]
+})
 
-const { user, currentTenant, refresh } = useAuthState()
-
-// Если юзер сюда зашёл уже с полноценным аккаунтом — отправляем в дашборд,
-// делать тут больше нечего.
-if (user.value && !user.value.needsSignup) {
+async function onSuccess() {
   await navigateTo('/dashboard')
-}
-
-const form = reactive({
-  email: '',
-  password: '',
-  tenantName: currentTenant.value?.name ?? '',
-  tenantSlug: currentTenant.value?.slug ?? ''
-})
-const error = ref<string | null>(null)
-const loading = ref(false)
-const slugTouched = ref(false)
-
-function slugify(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
-}
-
-watch(() => form.tenantName, (n) => {
-  if (!slugTouched.value) form.tenantSlug = slugify(n)
-})
-
-function onSlugInput() { slugTouched.value = true }
-
-async function submit() {
-  error.value = null
-  loading.value = true
-  try {
-    await $fetch('/api/auth/complete-signup', {
-      method: 'POST',
-      body: {
-        email: form.email,
-        password: form.password,
-        tenantName: form.tenantName || undefined,
-        tenantSlug: form.tenantSlug || undefined
-      }
-    })
-    await refresh()
-    await navigateTo('/dashboard')
-  } catch (e: any) {
-    error.value = e?.data?.statusMessage ?? e?.statusMessage ?? 'Не удалось завершить регистрацию'
-  } finally {
-    loading.value = false
-  }
 }
 </script>
 
@@ -65,21 +29,7 @@ async function submit() {
         Задайте email и пароль — без них вы не сможете войти в trial-аккаунт повторно.
       </p>
 
-      <form class="mt-8 grid gap-4" @submit.prevent="submit">
-        <UiInput v-model="form.email" type="email" label="Email" autocomplete="email" required />
-        <UiInput v-model="form.password" type="password" label="Пароль" hint="Минимум 8 символов" autocomplete="new-password" required />
-        <hr class="border-hairline">
-        <UiInput v-model="form.tenantName" label="Название компании или бренда" />
-        <UiInput v-model="form.tenantSlug" label="Ваша ссылка" :prefix="`quar.io/`" hint="Латиница, цифры, дефис" @input="onSlugInput" />
-
-        <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
-
-        <UiButton type="submit" :loading="loading" block>Сохранить и продолжить</UiButton>
-      </form>
-
-      <p class="mt-6 text-body-sm text-steel text-center">
-        <NuxtLink to="/dashboard" class="text-link hover:underline">Пока не нужно</NuxtLink>
-      </p>
+      <AuthCompleteSignupForm class="mt-8" @success="onSuccess" />
     </div>
   </div>
 </template>
