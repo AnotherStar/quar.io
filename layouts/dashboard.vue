@@ -15,6 +15,9 @@ useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 // layout-а — отсюда обновляется состояние useImageEditJobs(), которое читают
 // ImageMagicModal и ImageEditJobResultModal.
 const imageEditJobs = useImageEditJobs()
+// Глобальный поллер джобов массового импорта инструкций. Шлёт тост, как только
+// очередной импорт завершается (см. useInstructionImportJobs).
+const importJobs = useInstructionImportJobs()
 // Глобальный поллер счётчиков для сайдбар-бейджей inbox-модулей. См.
 // useModuleBadges — поллит /api/modules/badges и хранит counts/total
 // в общем useState, чтобы и сайдбар, и мобильная гамбургер-кнопка
@@ -24,6 +27,7 @@ const { total: moduleBadgesTotal } = moduleBadges
 onMounted(() => {
   if (user.value) {
     imageEditJobs.startPolling()
+    importJobs.startPolling()
     moduleBadges.startPolling()
   }
 })
@@ -32,9 +36,11 @@ watch(
   (id) => {
     if (id) {
       imageEditJobs.startPolling()
+      importJobs.startPolling()
       moduleBadges.startPolling()
     } else {
       imageEditJobs.stopPolling()
+      importJobs.stopPolling()
       moduleBadges.stopPolling()
     }
   }
@@ -47,6 +53,7 @@ watch(
 )
 onBeforeUnmount(() => {
   imageEditJobs.stopPolling()
+  importJobs.stopPolling()
   moduleBadges.stopPolling()
 })
 
@@ -382,6 +389,10 @@ watch(() => route.fullPath, () => {
          любой страницы дашборда, как только в БД появляется завершённый
          джоб без acknowledgedAt (см. useImageEditJobs). -->
     <ImageEditJobResultModal />
+
+    <!-- Глобальные тосты. Источник — useToast(); UiToaster телепортируется
+         в body и рисует список в правом нижнем углу. -->
+    <UiToaster />
 
     <!-- Mobile overlay menu -->
     <Transition name="dashboard-mobile-menu">

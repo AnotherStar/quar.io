@@ -11,6 +11,7 @@ import { prisma } from './prisma'
 
 export type AiFeature =
   | 'instruction-generation'
+  | 'instruction-import'
   | 'image-edit'
   | 'image-generate'
   | 'inline-prompt-text'

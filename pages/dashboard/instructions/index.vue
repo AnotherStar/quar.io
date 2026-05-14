@@ -14,8 +14,26 @@ const { data, refresh } = await useAsyncData(
   }
 )
 
-const tab = ref<'active' | 'archive'>('active')
+const tab = ref<'active' | 'archive' | 'import'>('active')
 const search = ref('')
+
+// Ссылка на панель импорта — нужна, чтобы из header-кнопки «Импортировать
+// файлы» открыть скрытый <input type=file> внутри панели.
+const importPanelRef = ref<{ openFilePicker: () => void; uploading: boolean } | null>(null)
+function openImportPicker() {
+  importPanelRef.value?.openFilePicker()
+}
+const importUploading = computed(() => importPanelRef.value?.uploading ?? false)
+
+// Счётчик активных задач импорта — показываем рядом с лейблом вкладки, чтобы
+// пользователь не упускал из виду фоновую обработку, находясь на других
+// вкладках.
+const importJobs = useInstructionImportJobs()
+const importActiveCount = computed(() =>
+  importJobs.jobs.value.filter(
+    (j) => j.status === 'QUEUED' || j.status === 'PAUSED' || j.status === 'PROCESSING'
+  ).length
+)
 
 const baseList = computed(() => {
   const list = data.value?.instructions ?? []
@@ -151,7 +169,15 @@ async function unarchive(id: string) {
   <div>
     <PageHeader icon="lucide:file-text" title="Инструкции">
       <template #actions>
-        <UiButton :loading="creating" @click="createNew">
+        <UiButton
+          v-if="tab === 'import'"
+          :loading="importUploading"
+          @click="openImportPicker"
+        >
+          <Icon name="lucide:upload" class="h-4 w-4" />
+          Импортировать файлы
+        </UiButton>
+        <UiButton v-else :loading="creating" @click="createNew">
           <Icon name="lucide:plus" class="h-4 w-4" />
           Создать
         </UiButton>
@@ -165,11 +191,12 @@ async function unarchive(id: string) {
         v-model="tab"
         :tabs="[
           { value: 'active', label: 'Активные', count: counts.active },
-          { value: 'archive', label: 'Архив', count: counts.archive }
+          { value: 'archive', label: 'Архив', count: counts.archive },
+          { value: 'import', label: 'Импорт', count: importActiveCount || undefined }
         ]"
       />
 
-      <div class="relative w-full max-w-sm">
+      <div v-if="tab !== 'import'" class="relative w-full max-w-sm">
         <Icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel" />
         <input
           v-model="search"
@@ -182,7 +209,8 @@ async function unarchive(id: string) {
 
     <Transition name="tab-content" mode="out-in">
     <div :key="tab" class="mt-xl">
-      <UiTable v-if="visible.length">
+      <InstructionsImportPanel v-if="tab === 'import'" ref="importPanelRef" />
+      <UiTable v-else-if="visible.length">
         <thead>
           <tr>
             <th class="text-left">Инструкция</th>

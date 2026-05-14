@@ -35,6 +35,7 @@ model User {
   aiImageEditJobs AiImageEditJob[]
   payments      Payment[]
   moduleSeen   ModuleSeen[]
+  instructionImportJobs InstructionImportJob[]
 }
 
 model Session {
@@ -112,6 +113,7 @@ model Tenant {
   aiImageEditJobs     AiImageEditJob[]
   payments            Payment[]
   moduleSeen          ModuleSeen[]
+  instructionImportJobs InstructionImportJob[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -332,6 +334,7 @@ model Instruction {
   activationQrCodes     ActivationQrCode[]
   consentEvents         ConsentEvent[]
   aiImageEditJobs       AiImageEditJob[]
+  importJob             InstructionImportJob?
 
   @@unique([tenantId, slug])
   @@unique([tenantId, productBarcode])
@@ -1005,4 +1008,62 @@ model ModuleSeen {
 
   @@unique([userId, tenantId, moduleCode])
   @@index([tenantId, moduleCode])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Массовый импорт инструкций
+// Один файл (PDF / изображение) — один джоб. Воркер крутится в Nitro с лимитом
+// параллельных задач = 3. Дедуп по sha256 файла в рамках tenant'а: повторный
+// аплоад того же файла не создаёт новый джоб (UI показывает тост). QUEUED-
+// джоб можно поставить на паузу или возобновить; во время PROCESSING — нет.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum InstructionImportJobStatus {
+  QUEUED
+  PAUSED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+model InstructionImportJob {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdById     String?
+  createdBy       User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  // S3-ключ исходного файла + метаданные. fileHash — sha256 hex, используется
+  // для дедупа в рамках tenant'а.
+  fileKey         String
+  fileName        String
+  fileMimeType    String
+  fileSize        Int
+  fileHash        String
+
+  // Заполняется, как только воркер начинает обработку — создаём DRAFT-
+  // инструкцию первым шагом, чтобы UI мог дать ссылку на неё ещё до того,
+  // как генерация контента закончится.
+  instructionId   String?  @unique
+  instruction     Instruction? @relation(fields: [instructionId], references: [id], onDelete: SetNull)
+
+  status          InstructionImportJobStatus @default(QUEUED)
+  // Машинно-читаемая стадия для UI ("extracting-images" | "generating" | …).
+  // Человекочитаемый перевод собирается на клиенте.
+  stage           String?
+  progressPercent Int?
+
+  // Подтверждение пользователем результата — аналог acknowledgedAt у
+  // AiImageEditJob. После клика "ок, видел" мы перестаём показывать тост
+  // на эту job при логине / перезагрузке страницы.
+  acknowledgedAt  DateTime?
+
+  errorMessage    String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, fileHash])
 }
