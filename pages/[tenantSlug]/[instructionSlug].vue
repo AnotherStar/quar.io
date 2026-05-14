@@ -26,10 +26,59 @@ provide('publicRefs', {
 })
 provide('publicLegal', data.value!.legal)
 
+// SEO: canonical, Open Graph и JSON-LD HowTo. Канонический URL строится от
+// публичного app URL, чтобы при заходе по короткой ссылке /s/<shortId> (которая
+// делает 302 на этот же путь) поисковики всё равно склеивали трафик на
+// /<tenantSlug>/<instructionSlug>.
+const { public: publicCfg } = useRuntimeConfig()
+const appUrl = (publicCfg.appUrl as string).replace(/\/$/, '')
+const canonicalUrl = computed(
+  () => `${appUrl}/${data.value!.tenant.slug}/${data.value!.instruction.slug}`
+)
+const ogImage = computed(() => data.value!.tenant.branding?.logoUrl || `${appUrl}/icons/icon-512.png`)
+const pageTitle = computed(
+  () => `${data.value!.instruction.title} — ${data.value!.tenant.name}`
+)
+const pageDescription = computed(() => data.value!.instruction.description ?? '')
+
 useHead({
-  title: () => `${data.value!.instruction.title} — ${data.value!.tenant.name}`,
-  meta: [{ name: 'description', content: () => data.value!.instruction.description ?? '' }],
-  htmlAttrs: { lang: () => data.value!.instruction.language }
+  title: () => pageTitle.value,
+  meta: [
+    { name: 'description', content: () => pageDescription.value },
+    { property: 'og:type', content: 'article' },
+    { property: 'og:title', content: () => pageTitle.value },
+    { property: 'og:description', content: () => pageDescription.value },
+    { property: 'og:url', content: () => canonicalUrl.value },
+    { property: 'og:image', content: () => ogImage.value },
+    { property: 'og:site_name', content: () => data.value!.tenant.name },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: () => pageTitle.value },
+    { name: 'twitter:description', content: () => pageDescription.value },
+    { name: 'twitter:image', content: () => ogImage.value }
+  ],
+  link: [{ rel: 'canonical', href: () => canonicalUrl.value }],
+  htmlAttrs: { lang: () => data.value!.instruction.language },
+  script: [
+    {
+      type: 'application/ld+json',
+      key: 'ld-instruction',
+      innerHTML: () =>
+        JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'HowTo',
+          name: data.value!.instruction.title,
+          description: data.value!.instruction.description ?? undefined,
+          inLanguage: data.value!.instruction.language,
+          url: canonicalUrl.value,
+          datePublished: data.value!.instruction.publishedAt ?? undefined,
+          publisher: {
+            '@type': 'Organization',
+            name: data.value!.tenant.name,
+            logo: data.value!.tenant.branding?.logoUrl || undefined
+          }
+        })
+    }
+  ]
 })
 
 // Branding override (paid plan only)

@@ -1,14 +1,19 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'blank' })
 
+const { public: publicCfg } = useRuntimeConfig()
+const appUrl = (publicCfg.appUrl as string).replace(/\/$/, '')
+const investorsDescription =
+  'Investor pitch for quar.io: QR-ready mobile instructions that protect marketplace product ratings.'
 useHead({
   title: 'quar.io — investor pitch',
   meta: [
-    {
-      name: 'description',
-      content: 'Investor pitch for quar.io: QR-ready mobile instructions that protect marketplace product ratings.'
-    }
-  ]
+    { name: 'description', content: investorsDescription },
+    { property: 'og:title', content: 'quar.io — investor pitch' },
+    { property: 'og:description', content: investorsDescription },
+    { property: 'og:url', content: `${appUrl}/investors` }
+  ],
+  link: [{ rel: 'canonical', href: `${appUrl}/investors` }]
 })
 
 const problemSignals = [

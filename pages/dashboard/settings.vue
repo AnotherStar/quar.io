@@ -528,7 +528,7 @@ function formatPaymentDate(value: string) {
             <div class="mt-md flex flex-wrap items-center gap-3">
               <UiButton :disabled="!canManageCompany" @click="openTopup">
                 <Icon name="lucide:plus" class="h-4 w-4" />
-                Пополнить на {{ TOPUP_AMOUNT_RUB.toLocaleString('ru-RU') }} ₽
+                Пополнить
               </UiButton>
               <span v-if="!canManageCompany" class="text-caption text-steel">
                 Пополнять счёт может только владелец.

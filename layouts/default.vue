@@ -16,6 +16,7 @@ const { startTrial, loading: trialLoading } = useStartTrial()
           <NuxtLink to="/#trust" class="text-body-sm-md text-[#808080] hover:text-ink">Нам доверяют</NuxtLink>
           <NuxtLink to="/#how" class="text-body-sm-md text-[#808080] hover:text-ink">Как это работает</NuxtLink>
           <NuxtLink to="/#pricing" class="text-body-sm-md text-[#808080] hover:text-ink">Тарифы</NuxtLink>
+          <NuxtLink to="/blog" class="text-body-sm-md text-[#808080] hover:text-ink">Блог</NuxtLink>
         </nav>
         <div class="flex items-center gap-3">
           <template v-if="user">
@@ -45,6 +46,7 @@ const { startTrial, loading: trialLoading } = useStartTrial()
             <NuxtLink to="/#trust">Нам доверяют</NuxtLink>
             <NuxtLink to="/#how">Как это работает</NuxtLink>
             <NuxtLink to="/#pricing">Тарифы</NuxtLink>
+            <NuxtLink to="/blog">Блог</NuxtLink>
           </div>
         </div>
       </div>

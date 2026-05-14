@@ -1,6 +1,16 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useHead({ title: 'Пользовательское соглашение — quar.io' })
+const { public: publicCfg } = useRuntimeConfig()
+const appUrl = (publicCfg.appUrl as string).replace(/\/$/, '')
+useHead({
+  title: 'Пользовательское соглашение — quar.io',
+  meta: [
+    { name: 'description', content: 'Пользовательское соглашение сервиса quar.io.' },
+    { property: 'og:title', content: 'Пользовательское соглашение — quar.io' },
+    { property: 'og:url', content: `${appUrl}/legal/terms` }
+  ],
+  link: [{ rel: 'canonical', href: `${appUrl}/legal/terms` }]
+})
 </script>
 
 <template>
