@@ -234,6 +234,69 @@ const trialBlocked = computed(() =>
   !!billingData.value?.trial?.trialUsedAt
   || (billingData.value?.plan !== 'free' && billingData.value?.status === 'active')
 )
+
+// ── Пополнение бонусного счёта ───────────────────────────────────────────
+const TOPUP_AMOUNT_RUB = 5000
+const paymentModalOpen = ref(false)
+const topupSuccess = ref(false)
+
+function openTopup() {
+  topupSuccess.value = false
+  paymentModalOpen.value = true
+}
+
+async function onTopupSuccess() {
+  topupSuccess.value = true
+  await Promise.all([refreshBilling(), refreshPayments()])
+}
+
+const formattedBonusBalance = computed(() => {
+  const value = billingData.value?.bonusBalance ?? 0
+  return `${value.toLocaleString('ru-RU')} ₽`
+})
+
+// ── История платежей ─────────────────────────────────────────────────────
+type PaymentRow = {
+  id: string
+  kind: string
+  amount: number
+  status: string
+  cardLast4: string | null
+  description: string | null
+  createdAt: string
+}
+
+const paymentsKey = computed(() => `billing-payments-${currentTenant.value?.id ?? 'none'}`)
+const { data: paymentsData, refresh: refreshPayments } = await useAsyncData(
+  paymentsKey,
+  () => api<{ payments: PaymentRow[] }>('/api/billing/payments'),
+  {
+    default: () => ({ payments: [] }),
+    watch: [() => currentTenant.value?.id]
+  }
+)
+
+const paymentKindLabels: Record<string, string> = {
+  bonus_topup: 'Пополнение бонусного счёта',
+  subscription: 'Списание за подписку',
+  refund: 'Возврат'
+}
+
+const paymentStatusLabels: Record<string, { label: string; variant: 'tag-green' | 'tag-orange' | 'tag-gray' }> = {
+  succeeded: { label: 'Успешно', variant: 'tag-green' },
+  pending: { label: 'В обработке', variant: 'tag-orange' },
+  failed: { label: 'Ошибка', variant: 'tag-gray' }
+}
+
+function formatPaymentAmount(p: PaymentRow) {
+  const sign = p.kind === 'refund' ? '−' : '+'
+  return `${sign}${p.amount.toLocaleString('ru-RU')} ₽`
+}
+
+function formatPaymentDate(value: string) {
+  const d = new Date(value)
+  return d.toLocaleString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
 </script>
 
 <template>
@@ -452,9 +515,93 @@ const trialBlocked = computed(() =>
             </p>
           </div>
 
-          <UiAlert kind="info" title="Биллинг ещё не подключён">
-            Реальная оплата (Stripe / ЮKassa) — в TODO. Сейчас доступен только триал.
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex flex-wrap items-start justify-between gap-md">
+              <div>
+                <div class="flex items-center gap-3">
+                  <Icon name="lucide:wallet" class="h-5 w-5 text-navy opacity-50" />
+                  <h3 class="text-h4 text-navy">Бонусный счёт</h3>
+                </div>
+                <p class="mt-sm text-body text-slate">
+                  Пополняйте счёт заранее — при продлении подписки оплата сначала списывается отсюда,
+                  и только если бонусов не хватает, дёргается ваша карта.
+                </p>
+              </div>
+              <div class="text-right">
+                <p class="text-caption-bold text-steel uppercase tracking-wide">Доступно</p>
+                <p class="mt-2 text-h2 text-navy">{{ formattedBonusBalance }}</p>
+              </div>
+            </div>
+            <UiAlert v-if="topupSuccess" kind="success" class="mt-md">
+              Платёж прошёл, баланс пополнен.
+            </UiAlert>
+            <div class="mt-md flex flex-wrap items-center gap-3">
+              <UiButton :disabled="!canManageCompany" @click="openTopup">
+                <Icon name="lucide:plus" class="h-4 w-4" />
+                Пополнить на {{ TOPUP_AMOUNT_RUB.toLocaleString('ru-RU') }} ₽
+              </UiButton>
+              <span v-if="!canManageCompany" class="text-caption text-steel">
+                Пополнять счёт может только владелец.
+              </span>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-surface p-xl">
+            <div class="flex items-center gap-3">
+              <Icon name="lucide:receipt" class="h-5 w-5 text-navy opacity-50" />
+              <h3 class="text-h4 text-navy">История платежей</h3>
+            </div>
+            <p v-if="!paymentsData?.payments.length" class="mt-md text-body-sm text-steel">
+              Платежей пока нет. После первого пополнения здесь появятся транзакции.
+            </p>
+            <div v-else class="mt-md">
+              <UiTable min-width="640px">
+                <thead>
+                  <tr>
+                    <th class="text-left">Дата</th>
+                    <th class="text-left">Операция</th>
+                    <th class="text-left">Карта</th>
+                    <th class="text-left">Статус</th>
+                    <th class="text-right">Сумма</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in paymentsData.payments" :key="p.id">
+                    <td class="whitespace-nowrap text-body-sm text-charcoal tabular-nums">
+                      {{ formatPaymentDate(p.createdAt) }}
+                    </td>
+                    <td class="text-body-sm text-charcoal">
+                      {{ p.description || paymentKindLabels[p.kind] || p.kind }}
+                    </td>
+                    <td class="whitespace-nowrap text-body-sm text-steel tabular-nums">
+                      <span v-if="p.cardLast4">•••• {{ p.cardLast4 }}</span>
+                      <span v-else>—</span>
+                    </td>
+                    <td>
+                      <UiBadge :variant="(paymentStatusLabels[p.status]?.variant) || 'tag-gray'">
+                        {{ paymentStatusLabels[p.status]?.label || p.status }}
+                      </UiBadge>
+                    </td>
+                    <td class="whitespace-nowrap text-right text-body-sm-md tabular-nums"
+                        :class="p.kind === 'refund' ? 'text-error' : 'text-navy'">
+                      {{ formatPaymentAmount(p) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </UiTable>
+            </div>
+          </div>
+
+          <UiAlert kind="info" title="Тестовый платёжный шлюз">
+            Сейчас работает имитация оплаты с фиксированной тестовой картой —
+            настоящие списания не происходят. Реальный шлюз (ЮKassa / Stripe) подключим следующим шагом.
           </UiAlert>
+
+          <PaymentModal
+            v-model:open="paymentModalOpen"
+            :amount="TOPUP_AMOUNT_RUB"
+            @success="onTopupSuccess"
+          />
         </div>
       </Transition>
     </div>

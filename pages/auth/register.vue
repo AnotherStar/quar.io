@@ -7,6 +7,7 @@ const loading = ref(false)
 const tryingAnonymous = ref(false)
 const slugTouched = ref(false)
 const { refresh } = useAuthState()
+const { track } = useTrackGoal()
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
@@ -25,9 +26,11 @@ function onSlugInput() {
 async function submit() {
   error.value = null
   loading.value = true
+  track('signup_started')
   try {
     await $fetch('/api/auth/register', { method: 'POST', body: form })
     await refresh()
+    track('signup_completed')
     await navigateTo('/dashboard')
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? e?.statusMessage ?? 'Не удалось зарегистрироваться'
@@ -42,6 +45,7 @@ async function tryWithoutRegistration() {
   try {
     await $fetch('/api/auth/anonymous-start', { method: 'POST' })
     await refresh()
+    track('trial_started')
     await navigateTo('/dashboard')
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? e?.statusMessage ?? 'Не удалось создать trial-аккаунт'

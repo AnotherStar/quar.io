@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
     status: sub?.status ?? 'inactive',
     currentPeriodEnd: sub?.currentPeriodEnd ?? null,
     features,
-    trial
+    trial,
+    bonusBalance: tenant.bonusBalance ?? 0
   }
 })

@@ -4,6 +4,7 @@ definePageMeta({ layout: 'blank' })
 const route = useRoute()
 const token = (route.query.token as string | undefined) ?? ''
 const { refresh } = useAuthState()
+const { track } = useTrackGoal()
 
 const state = ref<'pending' | 'ok' | 'error'>('pending')
 const message = ref<string | null>(null)
@@ -17,6 +18,7 @@ onMounted(async () => {
   try {
     await $fetch('/api/auth/verify-email', { method: 'POST', body: { token } })
     state.value = 'ok'
+    track('email_verified')
     await refresh()
   } catch (e: any) {
     state.value = 'error'

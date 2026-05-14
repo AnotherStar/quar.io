@@ -5,6 +5,7 @@ const email = ref('')
 const loading = ref(false)
 const sent = ref(false)
 const error = ref<string | null>(null)
+const { track } = useTrackGoal()
 
 async function submit() {
   error.value = null
@@ -12,6 +13,7 @@ async function submit() {
   try {
     await $fetch('/api/auth/forgot-password', { method: 'POST', body: { email: email.value } })
     sent.value = true
+    track('password_recovery_started')
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? e?.statusMessage ?? 'Не удалось отправить письмо'
   } finally {

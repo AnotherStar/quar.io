@@ -9,6 +9,7 @@ const route = useRoute()
 const id = route.params.id as string
 const api = useApi()
 const { currentTenant, currentRole } = useAuthState()
+const { track } = useTrackGoal()
 const instructionKey = computed(() => `instruction-${currentTenant.value?.id ?? 'none'}-${id}`)
 
 const { data, refresh, pending, error } = await useAsyncData(
@@ -114,6 +115,7 @@ async function publish() {
   try {
     await api(`/api/instructions/${id}/publish`, { method: 'POST' })
     await refresh()
+    track('instruction_published')
     localChangedAfterPublish.value = false
   } catch (e: any) {
     alert(e?.data?.statusMessage ?? 'Не удалось опубликовать')
@@ -522,6 +524,7 @@ async function runStream(files: File[], userPrompt: string) {
     if (generationUsage.value) {
       generationStatus.value = 'Генерация завершена'
     }
+    track('editor_ai_used', { source: 'file_generation', files: files.length })
   } catch (e: any) {
     if (isGenerationAbortError(e)) {
       streamError.value = null

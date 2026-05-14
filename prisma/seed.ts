@@ -28,7 +28,7 @@ async function main() {
       features: {
         maxInstructions: 50,
         customSections: true,
-        modules: ['warranty-registration', 'faq', 'feedback'],
+        modules: ['warranty-registration', 'faq', 'feedback', 'chat-consultant'],
         customDomain: false,
         analyticsRetentionDays: 365,
         teamMembers: 3,
@@ -80,15 +80,21 @@ async function main() {
     },
     {
       code: 'chat-consultant',
-      name: 'Чат с консультантом',
-      description: 'Кнопка чата на странице инструкции (интеграция с внешним чатом).',
+      name: 'Чат с поддержкой',
+      description: 'Telegram-чат поддержки: покупатель пишет боту клиента, операторы отвечают из закрытой группы и из дашборда.',
       version: '1.0.0',
-      requiresPlan: 'business',
+      requiresPlan: 'plus',
       configSchema: {
         type: 'object',
         properties: {
-          provider: { type: 'string', enum: ['intercom', 'crisp', 'custom'], default: 'crisp' },
-          siteId: { type: 'string' }
+          botToken: { type: 'string' },
+          botUsername: { type: 'string' },
+          supportChatId: { type: 'string' },
+          workingHours: { type: 'string', default: 'Пн–Пт 10:00–19:00' },
+          buttonLabel: { type: 'string', default: 'Задать вопрос в Telegram' },
+          welcomeMessage: { type: 'string', default: 'Здравствуйте! Напишите ваш вопрос, мы ответим здесь.' },
+          closedMessage: { type: 'string', default: 'Спасибо за обращение! Если вопрос останется, напишите нам снова.' },
+          webhookSecret: { type: 'string' }
         }
       }
     },

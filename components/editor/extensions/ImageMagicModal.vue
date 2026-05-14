@@ -17,6 +17,7 @@ const emit = defineEmits<{
 
 const api = useApi()
 const editJobs = useImageEditJobs()
+const { track } = useTrackGoal()
 
 const prompt = ref('')
 const isSubmitting = ref(false)
@@ -61,6 +62,7 @@ async function generate() {
       completedAt: null
     })
     submitted.value = true
+    track('editor_ai_used', { source: 'image_magic' })
     // Авто-закрытие, чтобы юзер действительно вернулся к работе. Достаточно
     // ~2.5 сек, чтобы текст-подтверждение успели прочитать.
     setTimeout(() => emit('update:open', false), 2500)

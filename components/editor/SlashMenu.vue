@@ -83,6 +83,7 @@ function pick(cmd: Cmd) {
 }
 
 function triggerImageUpload() {
+  const { track } = useTrackGoal()
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
@@ -92,6 +93,7 @@ function triggerImageUpload() {
     try {
       const { url } = await uploadFile(file)
       props.editor.chain().focus().deleteRange(currentRange.value!).setImage({ src: url }).run()
+      track('editor_image_uploaded', { source: 'slash_menu' })
     } catch (e) {
       alert('Не удалось загрузить: ' + (e as Error).message)
     }

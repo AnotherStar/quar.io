@@ -79,6 +79,19 @@ export interface PublicRenderPayload {
   ownerEmailVerified: boolean
 }
 
+const PRIVATE_MODULE_CONFIG_KEYS = new Set([
+  'botToken',
+  'supportChatId',
+  'webhookSecret'
+])
+
+function publicModuleConfig(moduleCode: string, config: Record<string, unknown>) {
+  if (moduleCode !== 'chat-consultant') return config
+  return Object.fromEntries(
+    Object.entries(config).filter(([key]) => !PRIVATE_MODULE_CONFIG_KEYS.has(key))
+  )
+}
+
 export async function loadPublicByPath(tenantSlug: string, instructionSlug: string) {
   return loadPublic({ tenantSlug, instructionSlug })
 }
@@ -150,10 +163,10 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
       name: a.tenantModuleConfig.module.name,
       slot: a.slot,
       position: a.position,
-      config: {
+      config: publicModuleConfig(a.tenantModuleConfig.module.code, {
         ...(a.tenantModuleConfig.config as Record<string, unknown>),
         ...(a.configOverride as Record<string, unknown>)
-      }
+      })
     }))
 
   // Inline refs embedded in the TipTap doc — same plan-gating applies
@@ -180,7 +193,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
         tenantModuleConfigId: r.id,
         code: r.module.code,
         name: r.module.name,
-        config: r.config as Record<string, unknown>
+        config: publicModuleConfig(r.module.code, r.config as Record<string, unknown>)
       }
     }
   }

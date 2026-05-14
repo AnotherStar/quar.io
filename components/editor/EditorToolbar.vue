@@ -54,7 +54,7 @@ interface ModuleRow {
   code: string
   name: string
   allowedByPlan: boolean
-  tenantConfig: { id: string; enabled: boolean } | null
+  tenantConfig: { id: string; enabled: boolean; config?: Record<string, unknown> } | null
 }
 
 const sectionsList = ref<SectionRow[]>([])
@@ -72,7 +72,7 @@ onMounted(async () => {
       api<{ modules: ModuleRow[] }>('/api/modules').catch(() => ({ modules: [] }))
     ])
     sectionsList.value = s.sections ?? []
-    modulesList.value = (m.modules ?? []).filter((mod) => mod.allowedByPlan && mod.tenantConfig?.enabled)
+    modulesList.value = (m.modules ?? []).filter((mod) => mod.allowedByPlan)
   } catch {
     // noop
   }
@@ -83,7 +83,18 @@ function insertSection(id: string) {
   closeMenus()
 }
 
-function insertModule(tenantConfigId: string) {
+async function ensureModuleEnabled(module: ModuleRow) {
+  if (module.tenantConfig?.enabled && module.tenantConfig.id) return module.tenantConfig.id
+  const res = await api<{ tenantConfig: { id: string; enabled: boolean; config?: Record<string, unknown> } }>(
+    `/api/modules/${module.code}`,
+    { method: 'PUT', body: { enabled: true, config: module.tenantConfig?.config ?? {} } }
+  )
+  module.tenantConfig = res.tenantConfig
+  return res.tenantConfig.id
+}
+
+async function insertModule(module: ModuleRow) {
+  const tenantConfigId = await ensureModuleEnabled(module)
   props.editor.chain().focus().insertModuleRef(tenantConfigId).run()
   closeMenus()
 }
@@ -168,6 +179,7 @@ function insertTableSized(rows: number, cols: number) {
 }
 
 function uploadImage() {
+  const { track } = useTrackGoal()
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
@@ -196,6 +208,7 @@ function uploadImage() {
         })
         return replaced
       })
+      track('editor_image_uploaded', { source: 'toolbar' })
     } catch (e) {
       // Откат — удалить placeholder'а с blob URL.
       props.editor.commands.command(({ tr, state }) => {
@@ -503,8 +516,9 @@ function canInsertTable() {
         </div>
       </div>
 
-      <!-- Модуль: подменю со списком подключённых модулей (фильтрация по
-           allowedByPlan + tenantConfig.enabled в onMounted). -->
+      <!-- Модуль: подменю со списком доступных на тарифе модулей. Если модуль
+           ещё не включён, первый клик включает tenantConfig и сразу вставляет
+           moduleRef в документ. -->
       <div class="relative">
         <UiTooltip text="Вставить модуль" :disabled="showModulesMenu">
           <button type="button" :class="[btnClass(false), 'px-2 gap-1.5']" @click="togglePopover('modules')">
@@ -519,11 +533,11 @@ function canInsertTable() {
             :key="m.id"
             type="button"
             class="popover-item"
-            :disabled="!m.tenantConfig?.id"
-            @click="m.tenantConfig?.id && insertModule(m.tenantConfig.id)"
+            @click="insertModule(m)"
           >
             <Icon name="lucide:puzzle" class="h-4 w-4 text-steel" />
             <span class="truncate">{{ m.name }}</span>
+            <span v-if="!m.tenantConfig?.enabled" class="ml-auto text-caption text-steel">включить</span>
           </button>
           <p v-if="!modulesList.length" class="px-3 py-2 text-body-sm text-steel">
             Нет подключённых модулей.
@@ -606,4 +620,3 @@ function canInsertTable() {
   filter: brightness(1.08);
 }
 </style>
-

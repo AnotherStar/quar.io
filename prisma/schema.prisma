@@ -33,6 +33,7 @@ model User {
   magicLinks   MagicLink[]
   aiUsageEvents AiUsageEvent[]
   aiImageEditJobs AiImageEditJob[]
+  payments      Payment[]
 }
 
 model Session {
@@ -82,6 +83,11 @@ model Tenant {
   supportPhone        String?
   supportTelegram     String?
 
+  // Бонусный счёт компании, в рублях. Пополняется через /api/billing/topup и
+  // списывается в первую очередь при продлении подписки — реальная оплата
+  // дёргается только если бонусов не хватает на следующий период.
+  bonusBalance        Int      @default(0)
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -93,6 +99,8 @@ model Tenant {
   apiKeys             ApiKey[]
   mediaAssets         MediaAsset[]
   productGroups       ProductGroup[]
+  supportCustomers    SupportCustomer[]
+  supportTickets      SupportTicket[]
   activationQrCodes   ActivationQrCode[]
   printBatches        PrintBatch[]
   printTemplateDesigns PrintTemplateDesign[]
@@ -101,6 +109,7 @@ model Tenant {
   consentEvents       ConsentEvent[]
   aiUsageEvents       AiUsageEvent[]
   aiImageEditJobs     AiImageEditJob[]
+  payments            Payment[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,6 +238,28 @@ model Subscription {
   @@index([planId])
 }
 
+// История платежей tenant'а. Пока поддерживает только пополнение бонусного
+// счёта тестовой картой; когда подключим реальный шлюз, сюда же будут падать
+// списания подписки и возвраты — отсюда `kind` и `status`.
+model Payment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  kind        String   @default("bonus_topup")        // bonus_topup | subscription | refund
+  amount      Int                                      // rubles
+  status      String   @default("succeeded")          // succeeded | failed | pending
+  cardLast4   String?
+  description String?
+  externalRef String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Product Groups (groups translations of one product's instructions)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -294,6 +325,8 @@ model Instruction {
   blockFeedback     BlockFeedback[]
   warrantyRegistrations WarrantyRegistration[]
   feedbackSubmissions   FeedbackSubmission[]
+  supportCustomers      SupportCustomer[]
+  supportTickets        SupportTicket[]
   activationQrCodes     ActivationQrCode[]
   consentEvents         ConsentEvent[]
   aiImageEditJobs       AiImageEditJob[]
@@ -717,6 +750,116 @@ model FeedbackSubmission {
 
   @@index([instructionId])
   @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Telegram-backed support chat
+// Each tenant brings its own bot token and support group in the
+// chat-consultant module config. Telegram buyers are deliberately separated
+// from SaaS User accounts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum SupportTicketStatus {
+  OPEN
+  PENDING
+  CLOSED
+}
+
+enum SupportMessageSender {
+  CUSTOMER
+  OPERATOR
+  SYSTEM
+}
+
+enum SupportMessageMediaKind {
+  TEXT
+  PHOTO
+  DOCUMENT
+}
+
+model SupportCustomer {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  instructionId  String?
+  instruction    Instruction? @relation(fields: [instructionId], references: [id], onDelete: SetNull)
+
+  telegramUserId String
+  chatId         String
+  username       String?
+  firstName      String?
+  lastName       String?
+  lastStartedAt  DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tickets        SupportTicket[]
+
+  @@unique([tenantId, telegramUserId])
+  @@index([tenantId])
+  @@index([instructionId])
+}
+
+model SupportTicket {
+  id                         String              @id @default(cuid())
+  tenantId                   String
+  tenant                     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  instructionId              String?
+  instruction                Instruction?         @relation(fields: [instructionId], references: [id], onDelete: SetNull)
+  customerId                 String
+  customer                   SupportCustomer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  status                     SupportTicketStatus @default(OPEN)
+  assignedOperatorTelegramId String?
+  assignedOperatorName       String?
+  closedAt                   DateTime?
+
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
+
+  messages                   SupportMessage[]
+  messageMaps                SupportMessageMap[]
+
+  @@index([tenantId, status, updatedAt])
+  @@index([instructionId])
+  @@index([customerId, status])
+}
+
+model SupportMessage {
+  id                String                  @id @default(cuid())
+  ticketId          String
+  ticket            SupportTicket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender            SupportMessageSender
+  text              String?
+  mediaKind         SupportMessageMediaKind @default(TEXT)
+  mediaFileId       String?
+  mediaFileName     String?
+  mediaUrl          String?
+  telegramChatId    String?
+  telegramMessageId String?
+  operatorUserId    String?
+  operatorName      String?
+  metadata          Json                    @default("{}")
+  createdAt         DateTime                @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([telegramChatId, telegramMessageId])
+}
+
+model SupportMessageMap {
+  id                String        @id @default(cuid())
+  ticketId          String
+  ticket            SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  supportChatId     String
+  supportMessageId  String
+  customerChatId    String
+  customerMessageId String?
+  createdAt         DateTime      @default(now())
+
+  @@unique([supportChatId, supportMessageId])
+  @@index([ticketId])
+  @@index([customerChatId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

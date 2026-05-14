@@ -15,7 +15,10 @@ export default defineEventHandler(async (event) => {
     const total = performance.now() - t0
     const t = getPrismaTimings()
     const dbTotal = t.queries.reduce((s, q) => s + q.ms, 0)
-    const summary = `${event.node.req.method} ${url} → ${event.node.res.statusCode}  total=${total.toFixed(0)}ms  db=${dbTotal.toFixed(0)}ms (${t.queries.length} queries)  app=${(total - dbTotal).toFixed(0)}ms`
+    // Query timings are summed, so parallel Prisma calls can exceed wall time.
+    // Keep the useful signal without printing confusing negative app time.
+    const appMs = Math.max(0, total - dbTotal)
+    const summary = `${event.node.req.method} ${url} → ${event.node.res.statusCode}  total=${total.toFixed(0)}ms  db(sum)=${dbTotal.toFixed(0)}ms (${t.queries.length} queries)  app≈${appMs.toFixed(0)}ms`
     console.log(`[timing] ${summary}`)
     if (t.queries.length && total > 500) {
       // Per-query breakdown only when slow, to avoid log spam

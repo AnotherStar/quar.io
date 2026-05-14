@@ -1,6 +1,13 @@
 <script setup lang="ts">
 useHead({ title: 'Тарифы — quar.io' })
 
+const { track } = useTrackGoal()
+onMounted(() => track('pricing_view'))
+
+function onTierClick(code: string) {
+  track('pricing_plan_selected', { code })
+}
+
 const tiers = [
   {
     code: 'pilot',
@@ -71,7 +78,7 @@ const tiers = [
         </div>
         <p class="mt-md text-h2">{{ t.price }}</p>
         <p class="text-caption text-steel">{{ t.sub }}</p>
-        <UiButton to="/auth/register" class="mt-md" block :variant="t.featured ? 'primary' : 'secondary'">
+        <UiButton to="/auth/register" class="mt-md" block :variant="t.featured ? 'primary' : 'secondary'" @click="onTierClick(t.code)">
           {{ t.code === 'pilot' ? 'Запустить триал' : 'Обсудить пакет' }}
         </UiButton>
         <ul class="mt-md space-y-2">

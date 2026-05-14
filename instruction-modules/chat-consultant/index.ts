@@ -3,33 +3,39 @@ import type { ModuleDefinition } from '~~/modules-sdk/types'
 const definition: ModuleDefinition = {
   manifest: {
     code: 'chat-consultant',
-    name: 'Чат с консультантом',
-    description: 'Кнопка чата на публичной странице инструкции (заглушка для интеграции с внешним чатом).',
+    name: 'Чат с поддержкой',
+    description: 'Telegram-чат поддержки: покупатель пишет боту клиента, операторы отвечают из закрытой группы и из дашборда.',
     version: '1.0.0',
-    requiresPlan: 'business',
+    requiresPlan: 'plus',
     configSchema: {
       type: 'object',
       properties: {
-        provider: { type: 'string', enum: ['intercom', 'crisp', 'custom'], default: 'crisp' },
-        siteId: { type: 'string' }
+        botToken: { type: 'string' },
+        botUsername: { type: 'string' },
+        supportChatId: { type: 'string' },
+        workingHours: { type: 'string', default: 'Пн–Пт 10:00–19:00' },
+        buttonLabel: { type: 'string', default: 'Задать вопрос в Telegram' },
+        welcomeMessage: { type: 'string', default: 'Здравствуйте! Напишите ваш вопрос, мы ответим здесь.' },
+        closedMessage: { type: 'string', default: 'Спасибо за обращение! Если вопрос останется, напишите нам снова.' },
+        webhookSecret: { type: 'string' }
       }
     },
     configFields: [
-      {
-        key: 'provider',
-        label: 'Провайдер',
-        type: 'select',
-        default: 'crisp',
-        options: [
-          { value: 'crisp', label: 'Crisp' },
-          { value: 'intercom', label: 'Intercom' },
-          { value: 'custom', label: 'Custom' }
-        ]
-      },
-      { key: 'siteId', label: 'Site ID', type: 'string' }
+      { key: 'botToken', label: 'Telegram bot token', type: 'string', required: true },
+      { key: 'botUsername', label: 'Bot username', type: 'string', required: true },
+      { key: 'supportChatId', label: 'ID группы поддержки', type: 'string', required: true },
+      { key: 'workingHours', label: 'Часы работы', type: 'string', default: 'Пн–Пт 10:00–19:00' },
+      { key: 'buttonLabel', label: 'Текст кнопки', type: 'string', default: 'Задать вопрос в Telegram' },
+      { key: 'welcomeMessage', label: 'Приветствие в боте', type: 'string', default: 'Здравствуйте! Напишите ваш вопрос, мы ответим здесь.' },
+      { key: 'closedMessage', label: 'Сообщение при закрытии', type: 'string', default: 'Спасибо за обращение! Если вопрос останется, напишите нам снова.' }
     ]
   },
-  PublicComponent: () => import('./Public.vue')
+  PublicComponent: () => import('./Public.vue'),
+  dashboardNavItem: {
+    to: '/dashboard/modules/support',
+    label: 'Поддержка',
+    icon: 'lucide:messages-square'
+  }
 }
 
 export default definition

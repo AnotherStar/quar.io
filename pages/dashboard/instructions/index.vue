@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const api = useApi()
 const { currentTenant } = useAuthState()
+const { track } = useTrackGoal()
 const instructionsKey = computed(() => `instructions-${currentTenant.value?.id ?? 'none'}`)
 const { data, refresh } = await useAsyncData(
   instructionsKey,
@@ -50,6 +51,7 @@ async function createNew() {
       method: 'POST',
       body: { title: 'Без названия', slug, language: 'ru' }
     })
+    track('instruction_created')
     await navigateTo(`/dashboard/instructions/${instruction.id}/edit`)
   } catch (e: any) {
     createError.value = e?.data?.statusMessage ?? 'Ошибка'

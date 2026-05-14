@@ -5,6 +5,8 @@ const route = useRoute()
 const id = route.params.id as string
 const api = useApi()
 const { currentTenant } = useAuthState()
+const { track } = useTrackGoal()
+onMounted(() => track('analytics_viewed', { instructionId: id }))
 
 const [{ data: stats }, { data: feedback }] = await Promise.all([
   useAsyncData(

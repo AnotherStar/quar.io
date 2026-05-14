@@ -9,6 +9,7 @@ const props = defineProps(nodeViewProps)
 
 const route = useRoute()
 const api = useApi()
+const { track } = useTrackGoal()
 
 const prompt = ref((props.node.attrs.prompt as string) ?? '')
 const mode = ref<AiPromptMode>((props.node.attrs.mode as AiPromptMode) ?? 'text')
@@ -154,6 +155,8 @@ async function generate() {
 
     if (!replaceSelfWith(nodes)) {
       errorMsg.value = 'Не удалось вставить результат в редактор'
+    } else {
+      track('editor_ai_used', { source: 'inline_prompt', mode: mode.value })
     }
   } catch (e: any) {
     errorMsg.value = e?.data?.statusMessage || e?.message || 'Не удалось сгенерировать'

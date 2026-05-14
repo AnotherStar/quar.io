@@ -3,6 +3,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const api = useApi()
 const { currentTenant } = useAuthState()
+const { track } = useTrackGoal()
 const modulesKey = computed(() => `modules-${currentTenant.value?.id ?? 'none'}`)
 const { data, refresh } = await useAsyncData(
   modulesKey,
@@ -15,6 +16,8 @@ const { data, refresh } = await useAsyncData(
 
 async function toggle(code: string, enabled: boolean, config: object) {
   await api(`/api/modules/${code}`, { method: 'PUT', body: { enabled, config } })
+  // Цель только на переходе off → on, чтобы выключения не пушили шум.
+  if (enabled) track('module_added', { code })
   await refresh()
 }
 </script>
@@ -63,6 +66,14 @@ async function toggle(code: string, enabled: boolean, config: object) {
             size="sm"
             variant="ghost"
             to="/dashboard/modules/feedback"
+          >
+            Настроить →
+          </UiButton>
+          <UiButton
+            v-if="m.code === 'chat-consultant' && m.allowedByPlan"
+            size="sm"
+            variant="ghost"
+            to="/dashboard/modules/support"
           >
             Настроить →
           </UiButton>
