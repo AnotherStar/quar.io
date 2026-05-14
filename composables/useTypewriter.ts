@@ -29,6 +29,26 @@ function aiBlockToNode(b: AiBlock): any {
       }
     case 'safety':
       return { type: 'safetyBlock', attrs: { severity: b.severity }, content: [{ type: 'text', text: b.text }] }
+    case 'toggle':
+      return {
+        type: 'toggle',
+        attrs: { open: false },
+        content: [
+          {
+            type: 'toggleSummary',
+            content: b.summary ? [{ type: 'text', text: b.summary }] : []
+          },
+          {
+            type: 'toggleContent',
+            content: [
+              {
+                type: 'paragraph',
+                content: b.text ? [{ type: 'text', text: b.text }] : []
+              }
+            ]
+          }
+        ]
+      }
     case 'image_placeholder':
       return { type: 'safetyBlock', attrs: { severity: 'info' }, content: [{ type: 'text', text: `📷 ${b.description}` }] }
   }

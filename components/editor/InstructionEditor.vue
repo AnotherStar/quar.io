@@ -13,6 +13,7 @@ import TableHeader from '@tiptap/extension-table-header'
 import TableCell from '@tiptap/extension-table-cell'
 import { BlockId } from './extensions/BlockId'
 import { SafetyBlock } from './extensions/SafetyBlock'
+import { Toggle, ToggleSummary, ToggleContent } from './extensions/Toggle'
 import { SectionRef } from './extensions/SectionRef'
 import { ModuleRef } from './extensions/ModuleRef'
 import { ResizableImage } from './extensions/ResizableImage'
@@ -62,6 +63,9 @@ const editor = useEditor({
       defaultAlignment: 'left'
     }),
     SafetyBlock,
+    Toggle,
+    ToggleSummary,
+    ToggleContent,
     Highlight,
     ...(props.disableSectionRefs ? [] : [SectionRef, ModuleRef]),
     Columns,

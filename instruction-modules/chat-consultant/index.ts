@@ -4,7 +4,7 @@ const definition: ModuleDefinition = {
   manifest: {
     code: 'chat-consultant',
     name: 'Чат с поддержкой',
-    description: 'Telegram-чат поддержки: покупатель пишет боту клиента, операторы отвечают из закрытой группы и из дашборда.',
+    description: 'Telegram-чат поддержки. Включается одним переключателем сразу на все инструкции и показывается плавающей иконкой в правом нижнем углу страницы.',
     version: '1.0.0',
     requiresPlan: 'plus',
     configSchema: {

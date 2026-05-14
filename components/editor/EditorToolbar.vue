@@ -72,7 +72,11 @@ onMounted(async () => {
       api<{ modules: ModuleRow[] }>('/api/modules').catch(() => ({ modules: [] }))
     ])
     sectionsList.value = s.sections ?? []
-    modulesList.value = (m.modules ?? []).filter((mod) => mod.allowedByPlan)
+    // chat-consultant включается тенантом сразу на все инструкции и
+    // показывается плавающей кнопкой — добавлять его блоком в документ нельзя.
+    modulesList.value = (m.modules ?? []).filter(
+      (mod) => mod.allowedByPlan && mod.code !== 'chat-consultant'
+    )
   } catch {
     // noop
   }
@@ -465,6 +469,16 @@ function canInsertTable() {
         </template>
       </div>
     </div>
+
+    <UiTooltip text="Сворачиваемый блок">
+      <button
+        type="button"
+        :class="btnClass(isActive('toggle'))"
+        @click="editor.chain().focus().insertToggle().run()"
+      >
+        <Icon name="lucide:chevron-right" class="h-4 w-4" />
+      </button>
+    </UiTooltip>
 
     <!-- Safety blocks -->
     <div class="relative">

@@ -15,6 +15,7 @@ import TableHeader from '@tiptap/extension-table-header'
 import TableCell from '@tiptap/extension-table-cell'
 import { BlockId } from '~/components/editor/extensions/BlockId'
 import { SafetyBlock } from '~/components/editor/extensions/SafetyBlock'
+import { Toggle, ToggleSummary, ToggleContent } from '~/components/editor/extensions/Toggle'
 import { SectionRefPublic } from '~/components/editor/extensions/SectionRefPublic'
 import { ModuleRefPublic } from '~/components/editor/extensions/ModuleRefPublic'
 import { ResizableImage } from '~/components/editor/extensions/ResizableImage'
@@ -34,6 +35,9 @@ const editor = useEditor({
     Youtube.configure({ controls: true, nocookie: true, width: 720, height: 405 }),
     TextAlign.configure({ types: ['heading', 'paragraph'], alignments: ['left', 'center', 'right', 'justify'] }),
     SafetyBlock,
+    Toggle,
+    ToggleSummary,
+    ToggleContent,
     SectionRefPublic,
     ModuleRefPublic,
     Columns,

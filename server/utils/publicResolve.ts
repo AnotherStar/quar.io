@@ -60,6 +60,11 @@ export interface PublicRenderPayload {
       publishedAt: Date
     }>
   }
+  // Tenant-wide chat-consultant: shows a floating button in the bottom-right
+  // corner on every public instruction page. Not attached per-instruction.
+  globalChat: {
+    config: Record<string, unknown>
+  } | null
   // slot-attached (legacy / "always show before/after")
   sections: Array<{ id: string; name: string; slot: string; position: number; content: unknown }>
   modules: Array<{
@@ -154,9 +159,16 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
       }))
     : []
 
-  // Modules from slots
+  // Modules from slots.
+  // chat-consultant больше не привязывается к инструкции: он включается сразу
+  // на все инструкции и показывается плавающей кнопкой (см. globalChat ниже).
+  // Старые InstructionModuleAttachment с этим кодом просто игнорируем.
   const modules = instruction.moduleAttachments
-    .filter((a) => a.tenantModuleConfig.enabled && planAllowsModule(features, a.tenantModuleConfig.module.code))
+    .filter((a) =>
+      a.tenantModuleConfig.enabled
+      && a.tenantModuleConfig.module.code !== 'chat-consultant'
+      && planAllowsModule(features, a.tenantModuleConfig.module.code)
+    )
     .map((a) => ({
       attachmentId: a.id,
       code: a.tenantModuleConfig.module.code,
@@ -189,11 +201,34 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
     })
     for (const r of rows) {
       if (!planAllowsModule(features, r.module.code)) continue
+      // chat-consultant в inline-блоках тоже больше не рендерится — он живёт
+      // только как плавающая кнопка (globalChat).
+      if (r.module.code === 'chat-consultant') continue
       refModules[r.id] = {
         tenantModuleConfigId: r.id,
         code: r.module.code,
         name: r.module.name,
         config: publicModuleConfig(r.module.code, r.config as Record<string, unknown>)
+      }
+    }
+  }
+
+  // Tenant-wide chat-consultant. Включается одним переключателем в дашборде
+  // и показывается плавающей кнопкой на всех публичных инструкциях этого
+  // тенанта, если тариф разрешает.
+  let globalChat: PublicRenderPayload['globalChat'] = null
+  if (planAllowsModule(features, 'chat-consultant')) {
+    const chatConfig = await prisma.tenantModuleConfig.findFirst({
+      where: {
+        tenantId: instruction.tenant.id,
+        enabled: true,
+        module: { code: 'chat-consultant' }
+      },
+      select: { config: true }
+    })
+    if (chatConfig) {
+      globalChat = {
+        config: publicModuleConfig('chat-consultant', chatConfig.config as Record<string, unknown>)
       }
     }
   }
@@ -242,6 +277,7 @@ async function loadPublic(opts: { tenantSlug?: string; instructionSlug?: string;
     sections,
     modules,
     refs: { sections: refSections, modules: refModules },
+    globalChat,
     planActive,
     ownerEmailVerified
   }

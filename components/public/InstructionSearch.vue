@@ -68,11 +68,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 <template>
   <div>
     <button
-      class="fixed bottom-6 left-6 z-30 grid h-12 w-12 place-items-center rounded-full bg-canvas text-ink shadow-card border border-hairline hover:bg-surface"
+      type="button"
+      class="instruction-search-launcher"
+      aria-label="Поиск по инструкции"
       title="Поиск (⌘K)"
       @click="open = true"
     >
-      🔍
+      <Icon name="lucide:search" class="h-6 w-6" />
     </button>
     <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 px-4 pt-[12vh]" @click.self="open = false">
       <div class="w-full max-w-xl rounded-lg border border-hairline bg-canvas p-md shadow-modal">
@@ -100,6 +102,44 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Pair with the chat launcher in <GlobalChatWidget>: same surface, same size,
+ * sits immediately to its left so both corner controls read as a row. Both
+ * launchers use a flat surface fill — no shadow, no border — to stay quiet
+ * and not compete for the eye over the actual content. */
+.instruction-search-launcher {
+  position: fixed;
+  right: 88px;
+  bottom: 20px;
+  z-index: 60;
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  color: var(--color-steel);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.instruction-search-launcher:hover {
+  background: var(--color-hairline);
+  color: var(--color-charcoal);
+}
+
+.instruction-search-launcher:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 639px) {
+  .instruction-search-launcher {
+    right: 80px;
+    bottom: 16px;
+  }
+}
+</style>
 
 <style>
 .search-highlight {

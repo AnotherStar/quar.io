@@ -37,9 +37,11 @@ const TEXT_SYSTEM_PROMPT = `Ты — встроенный ИИ-помощник 
 - Не повторять то, что уже написано выше или ниже в документе
 - Не выдумывать характеристики, артикулы, гарантии и цены — если данных нет, описывай общими формулировками
 
-Используй те же типы блоков, что и основной генератор инструкций (heading, paragraph, bullet_list, numbered_list, task_list, quote, code_block, table, safety, image_placeholder). Не используй image — у тебя нет URL картинок (для изображений пользователь выберет режим "image" отдельно). Не вставляй section/module refs.
+Используй те же типы блоков, что и основной генератор инструкций (heading, paragraph, bullet_list, numbered_list, task_list, quote, code_block, table, safety, toggle, image_placeholder). Не используй image — у тебя нет URL картинок (для изображений пользователь выберет режим "image" отдельно). Не вставляй section/module refs.
 
-Технические правила JSON: строгая схема — каждое поле обязательно. Для неиспользуемых полей: level=0, text="", items=[], taskItems=[], rows=[], hasHeaderRow=false, severity="", description="", url="", codeLanguage="", links=[]. Поле slug всегда пустая строка. Поле title — короткий заголовок ответа (не отображается, используется как метка), description — пустая строка, language — язык документа.`
+Тип toggle — это сворачиваемая секция: summary всегда видна (короткий заголовок-вопрос или название раздела), text раскрывается по клику. Используй для FAQ-стиля, опциональных деталей и длинных пояснений, которые засоряют основной поток.
+
+Технические правила JSON: строгая схема — каждое поле обязательно. Для неиспользуемых полей: level=0, text="", summary="", items=[], taskItems=[], rows=[], hasHeaderRow=false, severity="", description="", url="", codeLanguage="", links=[]. Поле slug всегда пустая строка. Поле title — короткий заголовок ответа (не отображается, используется как метка), description — пустая строка, language — язык документа.`
 
 const IMAGE_SYSTEM_PREFIX = `Ты — встроенный помощник, который генерирует одну иллюстрацию для конкретного места в инструкции к товару. Тебе передан запрос пользователя и краткий контекст из соседних блоков. На выходе нужен один промпт для модели генерации изображений: подробное визуальное описание сцены (что в кадре, ракурс, стиль, фон), без вступлений и комментариев. Стиль — фотореалистичный/чистый, без текста на картинке (если пользователь явно не попросил).`
 
@@ -332,6 +334,13 @@ function summarizeContext(doc: any, instr: { title: string; description: string 
     if (node.type === 'safetyBlock') {
       const sev = node.attrs?.severity || 'warning'
       lines.push(`[${sev}] ${collectText(node)}`)
+      return
+    }
+    if (node.type === 'toggle') {
+      const children = Array.isArray(node.content) ? node.content : []
+      const summary = collectText(children[0])
+      const body = collectText(children[1])
+      if (summary || body) lines.push(`▸ ${summary}${body ? `\n   ${body}` : ''}`)
       return
     }
     if (node.type === 'image') {

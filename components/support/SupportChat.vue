@@ -52,11 +52,22 @@ function senderLabel(message: SupportChatMessage) {
   return 'Система'
 }
 
+const canSubmit = computed(() => !props.disabled && !props.loading && (Boolean(draft.value.trim()) || Boolean(props.attachmentName)))
+
 function submit() {
-  const value = draft.value.trim()
-  if (!value && !props.attachmentName) return
-  emit('submit', value)
+  if (!canSubmit.value) return
+  emit('submit', draft.value.trim())
   draft.value = ''
+}
+
+// Enter — отправляет, Shift+Enter — перевод строки. На мобильных IME (когда
+// идёт композиция кандидата) Enter не должен отправлять, иначе подтверждение
+// символа улетает как сообщение.
+function onTextareaKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Enter' || event.shiftKey) return
+  if (event.isComposing || event.keyCode === 229) return
+  event.preventDefault()
+  submit()
 }
 
 function onFileChange(event: Event) {
@@ -146,29 +157,35 @@ onMounted(scrollToBottom)
         />
       </div>
 
-      <textarea
-        v-model="draft"
-        rows="2"
-        :disabled="disabled || loading"
-        class="support-chat__textarea"
-        :placeholder="placeholder"
-      />
+      <div class="support-chat__composer" :class="allowAttachments ? 'support-chat__composer--with-attach' : ''">
+        <textarea
+          v-model="draft"
+          rows="2"
+          :disabled="disabled || loading"
+          class="support-chat__textarea"
+          :placeholder="placeholder"
+          @keydown="onTextareaKeydown"
+        />
 
-      <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
-
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <label v-if="allowAttachments" class="support-chat__attach">
+        <label v-if="allowAttachments" class="support-chat__attach" :title="attachmentName || 'Прикрепить файл'">
           <Icon name="lucide:paperclip" class="h-4 w-4" />
-          <span class="truncate">{{ attachmentName || 'Файл или фото' }}</span>
+          <span v-if="attachmentName" class="support-chat__attach-name">{{ attachmentName }}</span>
           <input ref="fileInput" type="file" class="hidden" @change="onFileChange" />
         </label>
-        <span v-else />
 
-        <UiButton type="submit" size="sm" :loading="loading" :disabled="disabled || (!draft.trim() && !attachmentName)">
-          <Icon name="lucide:send" class="h-4 w-4" />
-          {{ submitLabel }}
-        </UiButton>
+        <button
+          type="submit"
+          class="support-chat__send"
+          :disabled="!canSubmit"
+          :aria-label="submitLabel"
+          :title="`${submitLabel} — Enter`"
+        >
+          <Icon v-if="loading" name="lucide:loader-2" class="h-4 w-4 animate-spin" />
+          <Icon v-else name="lucide:send-horizontal" class="h-4 w-4" />
+        </button>
       </div>
+
+      <UiAlert v-if="error" kind="error">{{ error }}</UiAlert>
     </form>
   </div>
 </template>
@@ -244,11 +261,41 @@ onMounted(scrollToBottom)
   @apply mt-sm grid shrink-0 gap-2;
 }
 
+.support-chat__composer {
+  @apply relative rounded-md border border-hairline bg-canvas transition-colors focus-within:border-primary;
+}
+
 .support-chat__textarea {
-  @apply w-full resize-y rounded-md border border-hairline bg-canvas px-md py-sm text-body-sm outline-none focus:border-primary;
+  /* Правый паддинг даёт место для круглой кнопки «Отправить»,
+   * левый — для скрепки (только когда allowAttachments). */
+  @apply block w-full resize-y rounded-md bg-transparent px-md py-sm pr-12 text-body-sm outline-none;
+  box-sizing: border-box;
+  min-height: 72px;
+  max-height: 240px;
+}
+
+.support-chat__composer--with-attach .support-chat__textarea {
+  @apply pl-11;
 }
 
 .support-chat__attach {
-  @apply inline-flex max-w-[240px] cursor-pointer items-center gap-2 text-body-sm text-charcoal;
+  @apply absolute left-1.5 bottom-1.5 inline-flex max-w-[180px] cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-body-sm text-steel transition-colors hover:bg-surface hover:text-ink;
+}
+
+.support-chat__attach-name {
+  @apply max-w-[120px] truncate;
+}
+
+.support-chat__send {
+  @apply absolute right-1.5 bottom-1.5 inline-grid h-9 w-9 place-items-center rounded-full text-canvas transition-colors;
+  background: var(--color-primary, #2563eb);
+}
+
+.support-chat__send:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.support-chat__send:disabled {
+  @apply cursor-not-allowed bg-hairline text-steel;
 }
 </style>

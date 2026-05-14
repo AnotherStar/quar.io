@@ -91,9 +91,6 @@ function saveConfig() {
 function cancelConfig() {
   configModalOpen.value = false
 }
-function onConfigKey(e: KeyboardEvent) {
-  if (e.key === 'Escape') cancelConfig()
-}
 
 onMounted(ensureLoaded)
 </script>
@@ -145,46 +142,35 @@ onMounted(ensureLoaded)
       </div>
     </div>
 
-    <!-- Per-instance config modal. Rendered as a Teleport so it sits above
+    <!-- Per-instance config modal. UiModal teleports to body so it sits above
          the editor and never inherits its `not-prose` / `pointer-events-none`
          wrappers. -->
-    <Teleport v-if="configModalOpen" to="body">
-      <div
-        class="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-ink/40 p-md backdrop-blur-sm"
-        contenteditable="false"
-        @click.self="cancelConfig"
-        @keydown="onConfigKey"
-      >
-        <div class="my-xl w-full max-w-[640px] rounded-lg border border-hairline bg-canvas shadow-modal">
-          <header class="flex items-center justify-between gap-md border-b border-hairline px-xl py-md">
-            <div class="min-w-0">
-              <h3 class="truncate text-h4 text-ink">Настройка модуля</h3>
-              <p v-if="current" class="mt-0.5 truncate text-body-sm text-steel">{{ current.name }}</p>
-            </div>
-            <button
-              type="button"
-              class="grid h-8 w-8 place-items-center rounded-sm text-steel hover:bg-surface"
-              title="Закрыть"
-              @click="cancelConfig"
-            >
-              <Icon name="lucide:x" class="h-4 w-4" />
-            </button>
-          </header>
-          <div class="px-xl py-md">
-            <ClientOnly>
-              <component
-                :is="editorConfigComponent"
-                v-if="editorConfigComponent"
-                v-model="configDraft"
-              />
-            </ClientOnly>
-          </div>
-          <footer class="flex items-center justify-end gap-2 border-t border-hairline px-xl py-md">
-            <UiButton variant="ghost" @click="cancelConfig">Отмена</UiButton>
-            <UiButton variant="primary" @click="saveConfig">Сохранить</UiButton>
-          </footer>
+    <UiModal
+      :open="configModalOpen"
+      size="lg"
+      @update:open="(v) => { if (!v) cancelConfig() }"
+    >
+      <template #header>
+        <div class="min-w-0">
+          <h2 class="truncate text-h4 text-navy">Настройка модуля</h2>
+          <p v-if="current" class="mt-0.5 truncate text-body-sm text-steel">{{ current.name }}</p>
         </div>
-      </div>
-    </Teleport>
+      </template>
+
+      <ClientOnly>
+        <component
+          :is="editorConfigComponent"
+          v-if="editorConfigComponent"
+          v-model="configDraft"
+        />
+      </ClientOnly>
+
+      <template #footer>
+        <div class="flex items-center justify-end gap-sm">
+          <UiButton variant="ghost" @click="cancelConfig">Отмена</UiButton>
+          <UiButton variant="primary" @click="saveConfig">Сохранить</UiButton>
+        </div>
+      </template>
+    </UiModal>
   </NodeViewWrapper>
 </template>

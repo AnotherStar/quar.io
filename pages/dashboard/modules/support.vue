@@ -299,10 +299,21 @@ onBeforeUnmount(() => {
           <div v-if="loadingTicket" class="p-md text-body-sm text-steel">Загружаем обращение…</div>
           <template v-else-if="selected">
             <div class="flex flex-wrap items-start justify-between gap-md border-b border-hairline pb-md">
-              <div>
+              <div class="min-w-0">
                 <h2 class="text-h4 text-ink">{{ customerName(selected) }}</h2>
-                <p class="mt-1 text-body-sm text-steel">
-                  {{ selected.instruction?.title || 'Инструкция не определена' }}
+                <a
+                  v-if="selected.instruction && currentTenant?.slug"
+                  :href="`/${currentTenant.slug}/${selected.instruction.slug}`"
+                  target="_blank"
+                  rel="noopener"
+                  class="mt-1 inline-flex max-w-full items-center gap-1 text-body-sm text-link hover:underline"
+                  :title="selected.instruction.title"
+                >
+                  <span class="truncate">{{ selected.instruction.title }}</span>
+                  <Icon name="lucide:external-link" class="h-3.5 w-3.5 shrink-0" />
+                </a>
+                <p v-else class="mt-1 text-body-sm text-steel">
+                  Инструкция не определена
                 </p>
               </div>
               <div class="flex items-center gap-2">

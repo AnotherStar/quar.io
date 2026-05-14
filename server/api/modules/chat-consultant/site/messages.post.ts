@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '~~/server/utils/prisma'
 import { effectiveFeatures, planAllowsModule } from '~~/server/utils/plan'
-import { isModuleAttachedToPublished } from '~~/server/utils/moduleAttached'
 import {
   getChatModuleConfig,
   sendTicketToSupportGroup,
@@ -32,9 +31,18 @@ export default defineEventHandler(async (event) => {
   if (!planAllowsModule(features, 'chat-consultant')) {
     throw createError({ statusCode: 402, statusMessage: 'Модуль недоступен на текущем тарифе' })
   }
-  const attached = await isModuleAttachedToPublished(instruction.id, 'chat-consultant')
-  if (!attached) {
-    throw createError({ statusCode: 404, statusMessage: 'Модуль не подключён к инструкции' })
+  // Чат включается на уровне тенанта, без привязки к конкретной инструкции —
+  // проверяем только TenantModuleConfig.enabled.
+  const tenantChat = await prisma.tenantModuleConfig.findFirst({
+    where: {
+      tenantId: instruction.tenantId,
+      enabled: true,
+      module: { code: 'chat-consultant' }
+    },
+    select: { id: true }
+  })
+  if (!tenantChat) {
+    throw createError({ statusCode: 404, statusMessage: 'Чат поддержки не включён' })
   }
 
   const key = webSupportCustomerKey(body.sessionId)

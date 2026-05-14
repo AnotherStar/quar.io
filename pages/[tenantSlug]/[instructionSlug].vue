@@ -147,8 +147,33 @@ useHeadingAnchors('.js-instruction-content')
       class="container-page py-section grid grid-cols-1 gap-section flex-1"
       :class="hasSidebar ? 'md:grid-cols-[1fr_280px]' : ''"
     >
-      <article id="instruction-root" class="prose-mo" :class="hasSidebar ? '' : 'mx-auto w-full max-w-[760px]'">
-        <h1 class="text-h1 text-ink mb-8">{{ data!.instruction.title }}</h1>
+      <!-- Relative wrapper anchors the absolute margin-TOC to the article column.
+           On xl+ without a sidebar, the centered article leaves enough whitespace
+           on the left for a sticky TOC; below that we fall back to an inline TOC
+           rendered under the title inside <article>. -->
+      <div :class="hasSidebar ? 'relative' : 'relative mx-auto w-full max-w-[760px]'">
+        <ClientOnly>
+          <aside
+            v-if="!hasSidebar"
+            class="absolute inset-y-0 right-full hidden w-[260px] pr-14 xl:block"
+          >
+            <div class="sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto">
+              <InstructionToc root-selector=".js-instruction-content" />
+            </div>
+          </aside>
+        </ClientOnly>
+
+        <article id="instruction-root" class="prose-mo">
+          <h1 class="text-h1 text-ink mb-8">{{ data!.instruction.title }}</h1>
+
+          <!-- Inline TOC fallback for viewports too narrow to fit a margin rail
+               (everything below xl, plus any layout that has a right sidebar). -->
+          <ClientOnly>
+            <InstructionToc
+              root-selector=".js-instruction-content"
+              :class="['mb-8 hidden md:block', hasSidebar ? '' : 'xl:hidden']"
+            />
+          </ClientOnly>
 
         <template v-for="s in beforeSlots.sections" :key="s.id">
           <SectionRenderer :name="s.name" :content="s.content as object" />
@@ -188,7 +213,8 @@ useHeadingAnchors('.js-instruction-content')
             :viewer-session-id="sessionId"
           />
         </template>
-      </article>
+        </article>
+      </div>
 
       <aside v-if="sidebarSlots.sections.length || sidebarSlots.modules.length" class="space-y-md">
         <template v-for="s in sidebarSlots.sections" :key="s.id">
@@ -232,6 +258,12 @@ useHeadingAnchors('.js-instruction-content')
       />
       <InstructionSearch root-selector="#instruction-root" />
       <PublicCookieNotice :legal="data!.legal" />
+      <GlobalChatWidget
+        v-if="data!.globalChat"
+        :instruction-id="data!.instruction.id"
+        :config="data!.globalChat.config"
+        :viewer-session-id="sessionId"
+      />
     </ClientOnly>
   </div>
 </template>
@@ -249,6 +281,10 @@ useHeadingAnchors('.js-instruction-content')
 .prose-mo ol:not([data-type='taskList']) { @apply list-decimal pl-6 mb-4; }
 .prose-mo [data-module] ul,
 .prose-mo [data-module] ol { @apply list-none pl-0 mb-0; }
+/* TOC sits inside .prose-mo on small screens — strip the prose bullets and
+ * link styling so the inline TOC matches its desktop margin twin. */
+.prose-mo [data-toc] ul { @apply list-none pl-0 mb-0; }
+.prose-mo [data-toc] a { @apply no-underline; color: inherit; }
 .prose-mo blockquote { @apply border-l-4 border-hairline-strong pl-4 italic text-charcoal my-4; }
 .prose-mo img { @apply rounded-md max-w-full my-4; }
 .prose-mo iframe { @apply rounded-md max-w-full my-4; }

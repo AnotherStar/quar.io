@@ -17,6 +17,38 @@ const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
+// Переключалка режимов с «едущим» индикатором — мини-копия UiSegmentedTabs,
+// чтобы не тянуть его стилизацию (серый фон / белая плашка), но сохранить
+// поведение. Индикатор позиционируется по offsetLeft/offsetWidth активной
+// кнопки и пересчитывается через ResizeObserver.
+const modeTabs = [
+  { value: 'text', label: 'Сгенерировать текст' },
+  { value: 'image', label: 'Сгенерировать изображение' }
+] as const
+const modeContainerRef = ref<HTMLElement | null>(null)
+const modeBtnRefs = ref<HTMLButtonElement[]>([])
+const modeIndicator = reactive({ left: 0, width: 0, ready: false })
+
+function setModeBtnRef(el: Element | ComponentPublicInstance | null, i: number) {
+  if (el instanceof HTMLButtonElement) modeBtnRefs.value[i] = el
+}
+
+function measureModeIndicator() {
+  const idx = modeTabs.findIndex((t) => t.value === mode.value)
+  const btn = modeBtnRefs.value[idx < 0 ? 0 : idx]
+  if (!btn) return
+  modeIndicator.left = btn.offsetLeft
+  modeIndicator.width = btn.offsetWidth
+  modeIndicator.ready = true
+}
+
+let modeRO: ResizeObserver | null = null
+
+watch(mode, async () => {
+  await nextTick()
+  measureModeIndicator()
+})
+
 function persistPrompt() {
   // Persist prompt text into the doc so a page reload doesn't drop it.
   // We only write on blur to avoid hammering the autosave on every keystroke.
@@ -48,6 +80,18 @@ onMounted(() => {
   // Brand-new prompt block opens focused so the user can start typing.
   if (!prompt.value) focusTextarea()
   else autosize()
+
+  nextTick(measureModeIndicator)
+  if (typeof ResizeObserver !== 'undefined' && modeContainerRef.value) {
+    modeRO = new ResizeObserver(measureModeIndicator)
+    modeRO.observe(modeContainerRef.value)
+    for (const btn of modeBtnRefs.value) if (btn) modeRO.observe(btn)
+  }
+})
+
+onBeforeUnmount(() => {
+  modeRO?.disconnect()
+  modeRO = null
 })
 
 watch(prompt, autosize)
@@ -180,125 +224,176 @@ function onKeydown(e: KeyboardEvent) {
   <NodeViewWrapper class="mo-ai-prompt my-3 not-prose" data-type="ai-prompt">
     <div class="mo-ai-prompt__box" contenteditable="false">
       <div class="mo-ai-prompt__header">
-        <div class="flex items-center gap-2">
-          <Icon name="lucide:sparkles" class="h-4 w-4" />
-          <span class="text-caption-bold uppercase tracking-wide">ИИ-помощник</span>
-        </div>
-        <div class="mo-ai-prompt__mode">
-          <button
-            type="button"
-            :class="['mo-ai-prompt__mode-btn', mode === 'text' && 'mo-ai-prompt__mode-btn--active']"
-            :disabled="loading"
-            @click="setMode('text')"
-          >
-            <Icon name="lucide:type" class="h-3.5 w-3.5" />
-            Текст
-          </button>
-          <button
-            type="button"
-            :class="['mo-ai-prompt__mode-btn', mode === 'image' && 'mo-ai-prompt__mode-btn--active']"
-            :disabled="loading"
-            @click="setMode('image')"
-          >
-            <Icon name="lucide:image" class="h-3.5 w-3.5" />
-            Изображение
-          </button>
-        </div>
-        <button
-          type="button"
-          class="mo-ai-prompt__close"
-          :disabled="loading"
-          title="Удалить блок"
-          @click="deleteBlock"
-        >
-          <Icon name="lucide:x" class="h-4 w-4" />
-        </button>
+        <Icon name="lucide:sparkles" class="h-4 w-4" />
+        <span class="text-caption-bold uppercase tracking-wide">ИИ-помощник</span>
       </div>
 
-      <textarea
-        ref="textareaRef"
-        v-model="prompt"
-        :placeholder="mode === 'image'
-          ? 'Опишите изображение, которое нужно сгенерировать…'
-          : 'Опишите, какой текст или часть инструкции нужно написать…'"
-        :disabled="loading"
-        class="mo-ai-prompt__textarea"
-        rows="2"
-        spellcheck="false"
-        @blur="persistPrompt"
-        @keydown="onKeydown"
-      />
+      <div class="mo-ai-prompt__composer">
+        <textarea
+          ref="textareaRef"
+          v-model="prompt"
+          :placeholder="mode === 'image'
+            ? 'Опишите изображение, которое нужно сгенерировать…'
+            : 'Опишите, какой текст или часть инструкции нужно написать…'"
+          :disabled="loading"
+          class="mo-ai-prompt__textarea"
+          rows="2"
+          spellcheck="false"
+          @blur="persistPrompt"
+          @keydown="onKeydown"
+        />
+
+        <div class="mo-ai-prompt__bar">
+          <div
+            ref="modeContainerRef"
+            class="mo-ai-prompt__mode"
+            role="tablist"
+            aria-label="Что сгенерировать"
+          >
+            <span
+              aria-hidden="true"
+              class="mo-ai-prompt__mode-indicator"
+              :style="{
+                left: `${modeIndicator.left}px`,
+                width: `${modeIndicator.width}px`,
+                opacity: modeIndicator.ready ? 1 : 0
+              }"
+            />
+            <button
+              v-for="(t, i) in modeTabs"
+              :key="t.value"
+              :ref="(el) => setModeBtnRef(el, i)"
+              type="button"
+              role="tab"
+              :aria-selected="mode === t.value"
+              :class="['mo-ai-prompt__mode-btn', mode === t.value && 'mo-ai-prompt__mode-btn--active']"
+              :disabled="loading"
+              @click="setMode(t.value)"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="mo-ai-prompt__send"
+            :disabled="loading || !prompt.trim()"
+            :title="loading
+              ? (mode === 'image' ? 'Генерирую изображение…' : 'Генерирую текст…')
+              : (mode === 'image' ? 'Сгенерировать изображение — ⌘+Enter' : 'Сгенерировать текст — ⌘+Enter')"
+            :aria-label="mode === 'image' ? 'Сгенерировать изображение' : 'Сгенерировать текст'"
+            @click="generate"
+          >
+            <Icon
+              :name="loading ? 'lucide:loader-2' : 'lucide:send-horizontal'"
+              :class="['h-4 w-4', loading && 'animate-spin']"
+            />
+          </button>
+        </div>
+      </div>
 
       <div v-if="errorMsg" class="mo-ai-prompt__error">{{ errorMsg }}</div>
-
-      <div class="mo-ai-prompt__footer">
-        <span class="mo-ai-prompt__hint">
-          {{ loading
-            ? (mode === 'image' ? 'Генерирую изображение…' : 'Генерирую текст…')
-            : '⌘+Enter — сгенерировать' }}
-        </span>
-        <button
-          type="button"
-          class="mo-ai-prompt__submit"
-          :disabled="loading || !prompt.trim()"
-          @click="generate"
-        >
-          <Icon
-            :name="loading ? 'lucide:loader-2' : 'lucide:sparkles'"
-            :class="['h-4 w-4', loading && 'animate-spin']"
-          />
-          {{ loading ? 'Подождите' : 'Сгенерировать' }}
-        </button>
-      </div>
     </div>
   </NodeViewWrapper>
 </template>
 
 <style scoped>
-/* Purple-themed prompt block — visually distinct from the rest of the
- * instruction so the author immediately sees it's "scaffolding" that will
- * be replaced after generation. */
+/* Purple-themed prompt block. Только тонированный фон, без обводок —
+ * композер внутри тоже без рамки. Паддинги привязаны к токенам spacing
+ * (xs=8 / sm=12 / md=16). */
 .mo-ai-prompt__box {
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 12px; /* sm */
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(217, 70, 239, 0.06));
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  box-shadow: 0 1px 0 rgba(139, 92, 246, 0.05);
   color: #6d28d9;
 }
 
 .mo-ai-prompt__header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 8px; /* xs */
+  margin-bottom: 8px; /* xs */
   color: #7c3aed;
 }
 
-.mo-ai-prompt__mode {
-  display: inline-flex;
+/* Composer: textarea + нижняя панель «режимы + отправка». Без рамки,
+ * фон белый, разделение визуальное только через цвет. */
+.mo-ai-prompt__composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* xs */
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px; /* sm */
+}
+
+.mo-ai-prompt__textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  min-height: 72px;
+  max-height: 320px;
+  border: 0;
+  background: transparent;
+  color: #4c1d95;
+  font-size: 15px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+.mo-ai-prompt__textarea::placeholder {
+  color: #a78bfa;
+  opacity: 1;
+}
+.mo-ai-prompt__textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mo-ai-prompt__bar {
+  display: flex;
   align-items: center;
-  margin-left: auto;
-  padding: 2px;
+  justify-content: space-between;
+  gap: 12px; /* sm */
+}
+
+/* Сегментированный переключатель с «едущим» индикатором — поведение
+ * скопировано с UiSegmentedTabs, стилизация под фиолетовую тему. */
+.mo-ai-prompt__mode {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  padding: 3px;
   border-radius: 8px;
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(139, 92, 246, 0.10);
+}
+.mo-ai-prompt__mode-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 6px;
+  background: #7c3aed;
+  transition: left 300ms ease-out, width 300ms ease-out, opacity 200ms ease-out;
+  pointer-events: none;
 }
 .mo-ai-prompt__mode-btn {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  justify-content: center;
+  height: 30px;
+  padding: 0 12px; /* sm */
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   color: #6d28d9;
-  transition: background 0.12s, color 0.12s;
-}
-.mo-ai-prompt__mode-btn:hover:not(:disabled) {
-  background: rgba(139, 92, 246, 0.16);
+  background: transparent;
+  transition: color 0.18s ease-out;
+  white-space: nowrap;
 }
 .mo-ai-prompt__mode-btn--active {
-  background: #7c3aed !important;
   color: #fff;
 }
 .mo-ai-prompt__mode-btn:disabled {
@@ -306,90 +401,32 @@ function onKeydown(e: KeyboardEvent) {
   cursor: not-allowed;
 }
 
-.mo-ai-prompt__close {
+.mo-ai-prompt__send {
   display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  color: #7c3aed;
-  transition: background 0.12s, color 0.12s;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #7c3aed, #c026d3);
+  color: #fff;
+  transition: filter 0.12s, background 0.12s;
+  box-shadow: 0 2px 8px -2px rgba(124, 58, 237, 0.4);
 }
-.mo-ai-prompt__close:hover:not(:disabled) {
-  background: rgba(139, 92, 246, 0.16);
+.mo-ai-prompt__send:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
-.mo-ai-prompt__close:disabled {
-  opacity: 0.4;
+.mo-ai-prompt__send:disabled {
   cursor: not-allowed;
-}
-
-.mo-ai-prompt__textarea {
-  width: 100%;
-  min-height: 60px;
-  max-height: 320px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  color: #6d28d9;
-  font-size: 15px;
-  line-height: 1.5;
-  resize: none;
-  outline: none;
-  transition: border-color 0.12s, background 0.12s;
-}
-.mo-ai-prompt__textarea::placeholder {
-  color: rgba(139, 92, 246, 0.55);
-}
-.mo-ai-prompt__textarea:focus {
-  border-color: #7c3aed;
-  background: #fff;
-}
-.mo-ai-prompt__textarea:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  background: rgba(139, 92, 246, 0.25);
+  box-shadow: none;
 }
 
 .mo-ai-prompt__error {
-  margin-top: 8px;
-  padding: 8px 10px;
+  margin-top: 8px; /* xs */
+  padding: 8px 12px; /* xs sm */
   border-radius: 6px;
   background: rgba(220, 38, 38, 0.08);
   color: #b91c1c;
   font-size: 13px;
-}
-
-.mo-ai-prompt__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 10px;
-}
-.mo-ai-prompt__hint {
-  font-size: 12px;
-  color: rgba(139, 92, 246, 0.7);
-}
-
-.mo-ai-prompt__submit {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #7c3aed, #c026d3);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 500;
-  transition: filter 0.12s, opacity 0.12s;
-  box-shadow: 0 2px 8px -2px rgba(124, 58, 237, 0.4);
-}
-.mo-ai-prompt__submit:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
-.mo-ai-prompt__submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
 }
 </style>
