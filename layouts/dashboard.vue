@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { moduleRegistry } from '~~/modules-sdk/registry'
+import { isBadgeModuleCode } from '~~/shared/constants/moduleBadges'
 
 const { user, currentTenant } = useAuthState()
 const route = useRoute()
@@ -7,21 +8,47 @@ const api = useApi()
 const sidebarCollapsed = ref(false)
 const mobileMenuOpen = ref(false)
 
+// Кабинет не должен индексироваться: данные приватные и часто за авторизацией.
+useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
+
 // Глобальный поллер AI image-edit джобов. Запускается один раз на mount
 // layout-а — отсюда обновляется состояние useImageEditJobs(), которое читают
 // ImageMagicModal и ImageEditJobResultModal.
 const imageEditJobs = useImageEditJobs()
+// Глобальный поллер счётчиков для сайдбар-бейджей inbox-модулей. См.
+// useModuleBadges — поллит /api/modules/badges и хранит counts/total
+// в общем useState, чтобы и сайдбар, и мобильная гамбургер-кнопка
+// читали одни и те же значения.
+const moduleBadges = useModuleBadges()
+const { total: moduleBadgesTotal } = moduleBadges
 onMounted(() => {
-  if (user.value) imageEditJobs.startPolling()
+  if (user.value) {
+    imageEditJobs.startPolling()
+    moduleBadges.startPolling()
+  }
 })
 watch(
   () => user.value?.id,
   (id) => {
-    if (id) imageEditJobs.startPolling()
-    else imageEditJobs.stopPolling()
+    if (id) {
+      imageEditJobs.startPolling()
+      moduleBadges.startPolling()
+    } else {
+      imageEditJobs.stopPolling()
+      moduleBadges.stopPolling()
+    }
   }
 )
-onBeforeUnmount(() => imageEditJobs.stopPolling())
+// При смене текущего tenant'а счётчики предыдущего стирать смысла нет —
+// next refresh подъедет в течение пары секунд, и значения сами обновятся.
+watch(
+  () => currentTenant.value?.id,
+  () => moduleBadges.refresh()
+)
+onBeforeUnmount(() => {
+  imageEditJobs.stopPolling()
+  moduleBadges.stopPolling()
+})
 
 // Core nav items. «Настройки» сюда не входят — они доступны через клик по
 // user-row в footer сайдбара. Пункт «Модули» помечен exact:true, чтобы на
@@ -62,15 +89,26 @@ const moduleNavItems = computed(() => {
     .map((m) => ({ ...m.dashboardNavItem!, code: m.manifest.code }))
 })
 
+// Маршрут → код модуля. Нужен, чтобы из общего хелпера badgeFor(to) уметь
+// достать count именно для бейдж-несущего модуля. Перечень модулей, у
+// которых вообще бывает inbox-бейдж, задан в shared/constants/moduleBadges.
+const moduleRouteToCode = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const item of moduleNavItems.value) {
+    if (isBadgeModuleCode(item.code)) map[item.to] = item.code
+  }
+  return map
+})
+
 // Admin-only пункт меню. Виден только пользователям с глобальным флагом
 // isAdmin — обычные пользователи его не должны видеть вообще, поэтому
 // рендерим через v-if, а не просто disable.
+// «Интерфейс» (витрина UI) живёт внутри /dashboard/admin как одна из кнопок
+// панели — отдельным пунктом сайдбара не висит, чтобы не засорять навигацию
+// обычным юзерам и админам тоже (туда нечасто заходят).
 const adminNavItems = computed(() =>
   user.value?.isAdmin
-    ? [
-        { to: '/dashboard/admin', label: 'Админ', icon: 'lucide:shield-check', exact: true },
-        { to: '/dashboard/admin/ui', label: 'Интерфейс', icon: 'lucide:palette' }
-      ]
+    ? [{ to: '/dashboard/admin', label: 'Админ', icon: 'lucide:shield-check' }]
     : []
 )
 
@@ -93,6 +131,11 @@ const settingsBadge = computed<SidebarBadge | null>(() => {
 
 function badgeFor(to: string): SidebarBadge | null {
   if (to === '/dashboard/settings') return settingsBadge.value
+  const code = moduleRouteToCode.value[to]
+  if (code) {
+    const count = moduleBadges.counts.value[code] ?? 0
+    if (count > 0) return { kind: 'count', value: count, title: `${count} новых` }
+  }
   return null
 }
 
@@ -108,7 +151,9 @@ watch(() => route.fullPath, () => {
        вертикальный скролл. -->
   <div class="bg-canvas min-h-[100svh]">
     <!-- Мобильная фикс-кнопка для открытия меню. На md+ скрыта, потому что
-         сайдбар уже виден постоянно. -->
+         сайдбар уже виден постоянно. Когда меню закрыто и есть непросмотренные
+         сообщения/тикеты/регистрации в модулях, показываем общий счётчик —
+         поэлементные бейджи доступны только внутри развёрнутого меню. -->
     <button
       type="button"
       class="dashboard-mobile-toggle md:hidden"
@@ -118,6 +163,11 @@ watch(() => route.fullPath, () => {
       @click="mobileMenuOpen = !mobileMenuOpen"
     >
       <Icon :name="mobileMenuOpen ? 'lucide:x' : 'lucide:menu'" class="h-5 w-5" />
+      <span
+        v-if="!mobileMenuOpen && moduleBadgesTotal > 0"
+        class="dashboard-mobile-toggle-badge"
+        :title="`${moduleBadgesTotal} новых`"
+      >{{ moduleBadgesTotal > 99 ? '99+' : moduleBadgesTotal }}</span>
     </button>
 
     <div
@@ -159,10 +209,12 @@ watch(() => route.fullPath, () => {
               :aria-expanded="!sidebarCollapsed"
               @click="sidebarCollapsed = !sidebarCollapsed"
             >
-              <Icon
-                :name="sidebarCollapsed ? 'lucide:chevron-right' : 'lucide:chevron-left'"
-                class="h-4 w-4 shrink-0"
-              />
+              <span class="grid h-4 w-4 shrink-0 place-items-center">
+                <Icon
+                  :name="sidebarCollapsed ? 'lucide:chevron-right' : 'lucide:chevron-left'"
+                  class="block h-4 w-4"
+                />
+              </span>
               <span
                 class="dashboard-fade-label"
                 :class="sidebarCollapsed ? 'is-hidden' : ''"
@@ -185,7 +237,7 @@ watch(() => route.fullPath, () => {
                   isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                 ]"
               >
-                <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+                <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                 <span
                   class="dashboard-fade-label truncate"
                   :class="sidebarCollapsed ? 'is-hidden' : ''"
@@ -214,7 +266,7 @@ watch(() => route.fullPath, () => {
                     isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                   ]"
                 >
-                  <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+                  <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                   <span
                     class="dashboard-fade-label truncate"
                     :class="sidebarCollapsed ? 'is-hidden' : ''"
@@ -244,7 +296,7 @@ watch(() => route.fullPath, () => {
                     isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                   ]"
                 >
-                  <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+                  <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                   <span
                     class="dashboard-fade-label truncate"
                     :class="sidebarCollapsed ? 'is-hidden' : ''"
@@ -276,7 +328,7 @@ watch(() => route.fullPath, () => {
                   : 'text-charcoal hover:bg-hairline hover:text-ink'"
                 :title="sidebarCollapsed ? (settingsBadge?.title ?? 'Настройки') : undefined"
               >
-                <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
+                <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon name="lucide:settings" class="block h-4 w-4" /></span>
                 <span
                   class="dashboard-fade-label text-body-sm"
                   :class="sidebarCollapsed ? 'is-hidden' : ''"
@@ -304,7 +356,7 @@ watch(() => route.fullPath, () => {
                 class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors duration-200 ease-out hover:bg-hairline hover:text-ink"
                 :title="sidebarCollapsed ? 'Поддержка' : undefined"
               >
-                <Icon name="lucide:life-buoy" class="h-4 w-4 shrink-0 text-steel" />
+                <span class="grid h-4 w-4 shrink-0 place-items-center text-steel"><Icon name="lucide:life-buoy" class="block h-4 w-4" /></span>
                 <span
                   class="dashboard-fade-label text-body-sm"
                   :class="sidebarCollapsed ? 'is-hidden' : ''"
@@ -354,7 +406,7 @@ watch(() => route.fullPath, () => {
                 isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
               ]"
             >
-              <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+              <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
               <span class="truncate">{{ i.label }}</span>
               <SidebarBadge v-if="badgeFor(i.to)" v-bind="badgeFor(i.to)!" class="ml-auto" />
             </NuxtLink>
@@ -369,7 +421,7 @@ watch(() => route.fullPath, () => {
                   isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                 ]"
               >
-                <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+                <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                 <span class="truncate">{{ i.label }}</span>
                 <SidebarBadge v-if="badgeFor(i.to)" v-bind="badgeFor(i.to)!" class="ml-auto" />
               </NuxtLink>
@@ -385,7 +437,7 @@ watch(() => route.fullPath, () => {
                   isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                 ]"
               >
-                <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
+                <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                 <span class="truncate">{{ i.label }}</span>
                 <SidebarBadge v-if="badgeFor(i.to)" v-bind="badgeFor(i.to)!" class="ml-auto" />
               </NuxtLink>
@@ -399,7 +451,7 @@ watch(() => route.fullPath, () => {
                 ? 'bg-primary text-on-primary'
                 : 'text-charcoal hover:bg-hairline hover:text-ink'"
             >
-              <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
+              <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon name="lucide:settings" class="block h-4 w-4" /></span>
               <span class="truncate text-body-sm">Настройки</span>
               <SidebarBadge v-if="settingsBadge" v-bind="settingsBadge" class="ml-auto" />
             </NuxtLink>
@@ -412,7 +464,7 @@ watch(() => route.fullPath, () => {
               rel="noopener"
               class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors hover:bg-hairline hover:text-ink"
             >
-              <Icon name="lucide:life-buoy" class="h-4 w-4 shrink-0 text-steel" />
+              <span class="grid h-4 w-4 shrink-0 place-items-center text-steel"><Icon name="lucide:life-buoy" class="block h-4 w-4" /></span>
               <span class="truncate text-body-sm">Поддержка</span>
             </a>
           </div>
@@ -509,11 +561,15 @@ watch(() => route.fullPath, () => {
   margin-top: 8px;
 }
 
+/* Footer-row выравниваем в ту же колонку, что и nav-item: x-padding 12px
+ * (= px-sm) и gap 12px (= gap-3). Иначе иконки футера дрейфовали на 2-4px
+ * относительно основной навигации. Высота остаётся компактнее (32px), чтобы
+ * футер не доминировал над списком. */
 .dashboard-sidebar-footer-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: 12px;
+  padding: 6px 12px;
   min-height: 32px;
 }
 
@@ -540,10 +596,8 @@ watch(() => route.fullPath, () => {
   pointer-events: none;
 }
 
-/* В footer-row gap=8px, поэтому компенсация margin-left другая. */
-.dashboard-sidebar-footer-row .dashboard-fade-label.is-hidden {
-  margin-left: -8px;
-}
+/* В footer-row тот же gap=12px, что и в nav-item — компенсация одинаковая.
+ * Если когда-нибудь снова разойдутся, нужно вернуть отдельный override. */
 
 /* Контент: padding-top 12px такой же, как у .dashboard-sidebar — благодаря
  * этому первый блок страницы (header-row высотой 64px) стартует на той же
@@ -583,6 +637,29 @@ watch(() => route.fullPath, () => {
   backdrop-filter: blur(10px) saturate(160%);
   color: var(--color-charcoal);
   border: 0;
+}
+
+/* Бейдж в углу мобильной гамбургер-кнопки: суммарный счётчик inbox-модулей.
+ * Вылезает за пределы кнопки на 4px вверх-вправо, чтобы не наезжать на
+ * иконку меню. Цвета — primary/on-primary, как у count-варианта обычного
+ * SidebarBadge. min-width 18px + padding делает «99+» читаемым. */
+.dashboard-mobile-toggle-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--color-canvas);
 }
 
 @media (min-width: 768px) {

@@ -34,6 +34,7 @@ model User {
   aiUsageEvents AiUsageEvent[]
   aiImageEditJobs AiImageEditJob[]
   payments      Payment[]
+  moduleSeen   ModuleSeen[]
 }
 
 model Session {
@@ -110,6 +111,7 @@ model Tenant {
   aiUsageEvents       AiUsageEvent[]
   aiImageEditJobs     AiImageEditJob[]
   payments            Payment[]
+  moduleSeen          ModuleSeen[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -984,4 +986,23 @@ model AiUsageEvent {
 
   @@index([tenantId, createdAt])
   @@index([tenantId, feature, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sidebar badges: per-user, per-tenant "last seen" timestamp for inbox-style
+// modules (feedback, chat-consultant, warranty-registration). The badges
+// endpoint counts items created after lastSeenAt; visiting the module page
+// upserts lastSeenAt = now() and clears the badge.
+// ─────────────────────────────────────────────────────────────────────────────
+model ModuleSeen {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  moduleCode  String
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([userId, tenantId, moduleCode])
+  @@index([tenantId, moduleCode])
 }

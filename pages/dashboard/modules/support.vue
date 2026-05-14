@@ -235,8 +235,13 @@ function setAttachment(file: File | null) {
   selectedFile.value = file
 }
 
+// Сбрасываем счётчик новых тикетов в сайдбар-бейдже — оператор зашёл в
+// раздел поддержки, всё что было до этого момента считаем просмотренным.
+const moduleBadges = useModuleBadges()
+
 onMounted(() => {
   listPollTimer = setInterval(() => refreshTickets().catch(() => null), 5000)
+  moduleBadges.markSeen('chat-consultant')
 })
 
 onBeforeUnmount(() => {

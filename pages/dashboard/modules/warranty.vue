@@ -60,6 +60,13 @@ const { data: modulesData, refresh: refreshModules } = await useAsyncData(
 const module_ = computed(() => modulesData.value?.modules.find((m) => m.code === 'warranty-registration') ?? null)
 
 const tab = ref<'registrations' | 'settings'>('registrations')
+
+// Сбрасываем счётчик «новых регистраций» в сайдбаре — пользователь открыл
+// страницу модуля, всё, что было до этого момента, считается просмотренным.
+const moduleBadges = useModuleBadges()
+onMounted(() => {
+  moduleBadges.markSeen('warranty-registration')
+})
 const enabled = ref(false)
 const form = reactive<WarrantyConfig>({ ...DEFAULTS })
 const saving = ref(false)

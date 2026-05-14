@@ -83,6 +83,13 @@ const saveOk = ref(false)
 
 const tab = ref<'submissions' | 'settings'>('submissions')
 
+// Сбрасываем счётчик «новых сообщений» в сайдбаре — пользователь открыл страницу
+// модуля, всё, что было до этого момента, считается просмотренным.
+const moduleBadges = useModuleBadges()
+onMounted(() => {
+  moduleBadges.markSeen('feedback')
+})
+
 async function save() {
   saving.value = true
   saveError.value = null
@@ -129,7 +136,7 @@ function downloadCsv() {
 
 <template>
   <div>
-    <PageHeader icon="lucide:message-square" title="Обратная связь" />
+    <PageHeader icon="lucide:mail" title="Обратная связь" />
 
     <UiAlert v-if="!module_" kind="warning" title="Модуль не найден" class="mt-sm">
       Похоже, манифест не загружен в БД. Запустите <code>pnpm prisma db seed</code>.
