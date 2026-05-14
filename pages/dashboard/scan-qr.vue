@@ -57,7 +57,7 @@ function openPdf() {
     <div class="flex flex-col justify-between gap-md md:flex-row md:items-end">
       <div>
         <h1 class="text-h2 text-ink">Пикнуть QR</h1>
-        <p class="mt-1 max-w-2xl text-body text-slate">
+        <p class="mt-1 max-w-2xl text-body text-steel">
           Печатайте свободные QR заранее, а при сборке заказа привязывайте первый попавшийся QR к инструкции по ШК товара.
         </p>
       </div>

@@ -175,7 +175,7 @@ async function unarchive(id: string) {
           v-model="search"
           type="text"
           placeholder="Поиск по названию или URL"
-          class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+          class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-hairline-strong outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
         >
       </div>
     </div>
@@ -272,7 +272,7 @@ async function unarchive(id: string) {
                 v-if="i.status === 'DRAFT'"
                 type="button"
                 disabled
-                class="flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-body-sm text-muted"
+                class="flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-body-sm text-hairline-strong"
                 title="Черновик еще не опубликован"
               >
                 <Icon name="lucide:eye-off" class="h-4 w-4" />

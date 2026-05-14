@@ -17,7 +17,7 @@ const benefits = [
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-caption-bold uppercase text-steel">Почему quar.io?</p>
         <h2 class="mt-3 text-h3 text-navy text-balance md:text-h2">Инструкция становится не просто PDF-файлом, а инструментом для дополнительных продаж и работы с репутацией</h2>
-        <p class="mt-md text-h5 font-medium leading-[1.55] text-slate text-balance">
+        <p class="mt-md text-h5 font-medium leading-[1.55] text-steel text-balance">
           Покупатель открывает упаковку и в этот момент он максимально вовлечён в ваш товар: используйте это преимущество.
         </p>
       </div>
@@ -28,7 +28,7 @@ const benefits = [
             <Icon :name="item.icon" class="h-5 w-5" />
           </div>
           <h3 class="self-center text-h5 text-navy">{{ item.title }}</h3>
-          <p class="col-start-2 mt-sm text-body text-slate">{{ item.copy }}</p>
+          <p class="col-start-2 mt-sm text-body text-steel">{{ item.copy }}</p>
         </article>
       </div>
     </div>

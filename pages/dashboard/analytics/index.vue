@@ -228,7 +228,7 @@ function closeVisit() {
               <Icon name="lucide:scan-line" class="h-5 w-5 text-navy opacity-50" />
               <h2 class="text-h4 text-navy">Источник захода</h2>
             </div>
-            <ul class="mt-md divide-y divide-hairline-soft">
+            <ul class="mt-md divide-y divide-hairline">
               <li v-for="r in overview?.byEntrySource" :key="r.source" class="flex items-center justify-between py-sm text-body-sm">
                 <UiBadge :variant="r.source === 'qr' ? 'tag-green' : r.source === 'utm' ? 'tag-orange' : 'tag-gray'">
                   {{ entrySourceLabel[r.source] ?? r.source }}
@@ -244,7 +244,7 @@ function closeVisit() {
               <Icon name="lucide:tag" class="h-5 w-5 text-navy opacity-50" />
               <h2 class="text-h4 text-navy">UTM-источники</h2>
             </div>
-            <ul class="mt-md divide-y divide-hairline-soft">
+            <ul class="mt-md divide-y divide-hairline">
               <li v-for="r in overview?.byUtmSource" :key="r.utmSource" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="text-charcoal">{{ r.utmSource }}</span>
                 <span class="tabular-nums text-steel">{{ r.count }}</span>
@@ -258,7 +258,7 @@ function closeVisit() {
               <Icon name="lucide:globe" class="h-5 w-5 text-navy opacity-50" />
               <h2 class="text-h4 text-navy">По странам</h2>
             </div>
-            <ul class="mt-md max-h-[280px] divide-y divide-hairline-soft overflow-y-auto">
+            <ul class="mt-md max-h-[280px] divide-y divide-hairline overflow-y-auto">
               <li v-for="r in overview?.byCountry" :key="r.country" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="text-charcoal">{{ r.country }}</span>
                 <span class="tabular-nums text-steel">{{ r.count }}</span>
@@ -272,7 +272,7 @@ function closeVisit() {
               <Icon name="lucide:monitor-smartphone" class="h-5 w-5 text-navy opacity-50" />
               <h2 class="text-h4 text-navy">По устройствам</h2>
             </div>
-            <ul class="mt-md divide-y divide-hairline-soft">
+            <ul class="mt-md divide-y divide-hairline">
               <li v-for="r in overview?.byDevice" :key="r.deviceType" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="capitalize text-charcoal">{{ r.deviceType }}</span>
                 <span class="tabular-nums text-steel">{{ r.count }}</span>
@@ -370,7 +370,7 @@ function closeVisit() {
                 <UiBadge :variant="v.entrySource === 'qr' ? 'tag-green' : v.entrySource === 'utm' ? 'tag-orange' : 'tag-gray'">
                   {{ entrySourceLabel[v.entrySource ?? 'unknown'] ?? v.entrySource }}
                 </UiBadge>
-                <UiBadge v-if="v.isReturning" variant="tag-purple" class="ml-1">↻</UiBadge>
+                <UiBadge v-if="v.isReturning" variant="tag-blue" class="ml-1">↻</UiBadge>
               </td>
               <td class="whitespace-nowrap text-body-sm text-charcoal">
                 {{ v.country || '—' }}<span v-if="v.city" class="text-steel">, {{ v.city }}</span>
@@ -507,10 +507,10 @@ function closeVisit() {
         <!-- Цели -->
         <div v-if="detail.visit.goals?.length">
           <h4 class="text-caption-bold mb-2 uppercase tracking-wide text-steel">Цели</h4>
-          <ul class="divide-y divide-hairline-soft">
+          <ul class="divide-y divide-hairline">
             <li v-for="g in detail.visit.goals" :key="g.id" class="flex items-center justify-between gap-md py-2 text-body-sm">
               <div class="flex items-center gap-2">
-                <UiBadge variant="tag-purple">{{ g.code }}</UiBadge>
+                <UiBadge variant="tag-blue">{{ g.code }}</UiBadge>
                 <span v-if="g.meta" class="font-mono text-caption text-steel">{{ JSON.stringify(g.meta) }}</span>
               </div>
               <span class="tabular-nums text-steel">{{ formatDateTime(g.createdAt) }}</span>
@@ -521,7 +521,7 @@ function closeVisit() {
         <!-- Чтение блоков -->
         <div v-if="detail.blockDwell?.length">
           <h4 class="text-caption-bold mb-2 uppercase tracking-wide text-steel">Время на блоках</h4>
-          <ul class="divide-y divide-hairline-soft">
+          <ul class="divide-y divide-hairline">
             <li v-for="b in detail.blockDwell.slice(0, 10)" :key="b.blockId" class="flex items-center justify-between py-2 text-body-sm">
               <span class="font-mono text-caption text-charcoal">{{ b.blockId }}</span>
               <span class="text-steel"><span class="tabular-nums text-ink">{{ formatDuration(b.totalMs) }}</span> · {{ b.views }} показ(а)</span>

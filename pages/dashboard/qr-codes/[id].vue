@@ -164,7 +164,7 @@ function copy(text: string) {
       <div class="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
         <div>
           <h1 class="text-h2 text-ink">QR /s/{{ code.shortId }}</h1>
-          <p class="mt-1 text-body text-slate">
+          <p class="mt-1 text-body text-steel">
             Создан {{ new Date(code.createdAt).toLocaleDateString() }} · Обновлён {{ new Date(code.updatedAt).toLocaleDateString() }}
           </p>
         </div>
@@ -172,7 +172,7 @@ function copy(text: string) {
           <UiBadge :variant="code.instruction ? 'tag-green' : 'tag-orange'">
             {{ code.instruction ? 'Привязан' : 'Свободен' }}
           </UiBadge>
-          <UiBadge v-if="code.firstPrintedAt" variant="tag-purple">Напечатан</UiBadge>
+          <UiBadge v-if="code.firstPrintedAt" variant="tag-blue">Напечатан</UiBadge>
         </div>
       </div>
     </div>
@@ -207,7 +207,7 @@ function copy(text: string) {
       <div class="flex items-start justify-between gap-md">
         <div>
           <h2 class="text-h4 text-ink">Привязка к инструкции</h2>
-          <p v-if="code.instruction" class="mt-1 text-body text-slate">
+          <p v-if="code.instruction" class="mt-1 text-body text-steel">
             <NuxtLink :to="`/dashboard/instructions/${code.instruction.id}/edit`" class="text-link hover:underline">
               {{ code.instruction.title }}
             </NuxtLink>
@@ -215,7 +215,7 @@ function copy(text: string) {
               ШК {{ code.instruction.productBarcode || '—' }} · {{ code.instruction.status }}
             </span>
           </p>
-          <p v-else class="mt-1 text-body text-slate">QR ещё не связан с инструкцией.</p>
+          <p v-else class="mt-1 text-body text-steel">QR ещё не связан с инструкцией.</p>
         </div>
         <div class="flex flex-col gap-sm">
           <UiButton v-if="code.instruction" variant="secondary" size="sm" :loading="saving" @click="unbind">
@@ -235,13 +235,13 @@ function copy(text: string) {
         <div
           v-for="run in [...code.printRuns].reverse()"
           :key="run.batchId + run.printedAt"
-          class="flex items-center justify-between rounded-md border border-hairline-soft px-md py-sm"
+          class="flex items-center justify-between rounded-md border border-hairline px-md py-sm"
         >
           <div>
             <p class="text-body-md text-ink">{{ run.designLabel }}</p>
             <p class="text-caption text-steel">{{ new Date(run.printedAt).toLocaleString() }}</p>
           </div>
-          <UiBadge variant="tag-purple">Партия {{ run.batchId.slice(0, 8) }}</UiBadge>
+          <UiBadge variant="tag-blue">Партия {{ run.batchId.slice(0, 8) }}</UiBadge>
         </div>
       </div>
       <p v-else class="mt-md text-body text-steel">QR ещё не печатали.</p>
@@ -269,7 +269,7 @@ function copy(text: string) {
           <button
             v-for="instr in searchResults.instructions"
             :key="instr.id"
-            class="flex w-full flex-col items-start gap-1 border-b border-hairline-soft px-md py-sm text-left hover:bg-surface"
+            class="flex w-full flex-col items-start gap-1 border-b border-hairline px-md py-sm text-left hover:bg-surface"
             @click="rebind(instr.id)"
           >
             <span class="text-body-md text-ink">{{ instr.title }}</span>

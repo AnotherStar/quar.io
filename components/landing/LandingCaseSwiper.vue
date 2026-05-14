@@ -139,7 +139,7 @@ function onPointerCancel(event: PointerEvent) {
             <div class="grid lg:grid-cols-2">
               <div class="border-b border-hairline py-xl pr-xl md:py-2xl md:pr-2xl lg:border-b-0">
                 <h3 class="text-h2 text-navy">{{ slide.title }}</h3>
-                <p class="mt-lg text-h4 font-medium leading-[1.55] text-slate">{{ slide.copy }}</p>
+                <p class="mt-lg text-h4 font-medium leading-[1.55] text-steel">{{ slide.copy }}</p>
                 <p class="mt-8 inline-flex items-center gap-sm rounded-lg bg-surface px-md py-sm text-h5 font-semibold text-primary">
                   <Icon name="lucide:trending-up" class="h-5 w-5" />
                   {{ slide.cta }}
@@ -199,7 +199,7 @@ function onPointerCancel(event: PointerEvent) {
           v-for="(_, index) in cases"
           :key="index"
           type="button"
-          :class="['h-3 rounded-full transition-all', active === index ? 'w-16 bg-primary' : 'w-3 bg-hairline-strong hover:bg-stone']"
+          :class="['h-3 rounded-full transition-all', active === index ? 'w-16 bg-primary' : 'w-3 bg-hairline-strong hover:bg-hairline-strong']"
           :aria-label="`Показать кейс ${index + 1}`"
           @click="moveTo(index + 1)"
         />

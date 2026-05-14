@@ -1,5 +1,5 @@
 <template>
-  <section class="border-y border-hairline bg-surface-soft">
+  <section class="border-y border-hairline bg-surface">
     <div class="container-page py-section text-center">
       <LandingSectionHeading
         centered

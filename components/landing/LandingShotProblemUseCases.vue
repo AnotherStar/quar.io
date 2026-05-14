@@ -20,7 +20,7 @@ const cards = [
 </script>
 
 <template>
-  <section data-section="shot-problem-use-cases" class="border-b border-hairline bg-surface-soft">
+  <section data-section="shot-problem-use-cases" class="border-b border-hairline bg-surface">
     <div class="container-page grid gap-md py-section-lg md:grid-cols-2">
       <article
         v-for="card in cards"
@@ -31,7 +31,7 @@ const cards = [
           <Icon :name="card.icon" class="h-8 w-8" />
         </div>
         <h2 class="mt-10 text-h3 text-navy">{{ card.title }}</h2>
-        <p class="mt-lg max-w-[680px] text-h4 font-medium leading-[1.45] text-slate">
+        <p class="mt-lg max-w-[680px] text-h4 font-medium leading-[1.45] text-steel">
           {{ card.copy }}
         </p>
         <p class="mt-8 max-w-[690px] border-l-4 border-primary pl-lg text-h4 font-semibold leading-[1.45] text-ink">

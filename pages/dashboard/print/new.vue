@@ -101,7 +101,7 @@ async function submit() {
           >
             <div class="flex h-32 items-center justify-center rounded-md bg-surface">
               <img v-if="t.previewUrl" :src="t.previewUrl" :alt="t.name" class="max-h-28 max-w-full object-contain">
-              <Icon v-else name="lucide:image" class="h-10 w-10 text-stone" />
+              <Icon v-else name="lucide:image" class="h-10 w-10 text-hairline-strong" />
             </div>
             <div class="mt-md space-y-1">
               <div class="flex items-center justify-between gap-2">

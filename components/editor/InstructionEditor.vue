@@ -140,19 +140,19 @@ defineExpose({
 /* Empty paragraphs anywhere in the doc — slim hint via attr(data-placeholder). */
 .tiptap p.is-empty::before {
   content: attr(data-placeholder);
-  color: var(--color-stone);
+  color: var(--color-hairline-strong);
   opacity: 0.25;
   float: left;
   height: 0;
   pointer-events: none;
 }
-/* First-line hint — full opacity stone, читается даже когда редактор расфокусирован.
+/* First-line hint — full opacity hairline-strong, читается даже когда редактор расфокусирован.
  * TipTap кладёт класс is-editor-empty на корневой .tiptap div (а не на <p>),
  * поэтому селектор должен быть `.tiptap.is-editor-empty p:first-child::before`. */
 .tiptap.is-editor-empty p:first-child::before,
 .tiptap p.is-empty:first-child::before {
   opacity: 1;
-  color: var(--color-stone);
+  color: var(--color-hairline-strong);
 }
 
 /* ProseMirror gap-cursor: shown between atom blocks (image, sectionRef,
@@ -204,7 +204,7 @@ defineExpose({
   width: 18px;
   height: 22px;
   border-radius: 3px;
-  color: var(--color-stone);
+  color: var(--color-hairline-strong);
   background: transparent;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;

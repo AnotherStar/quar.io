@@ -111,12 +111,12 @@ watch(
       :aria-selected="t.value === modelValue"
       :class="[
         'relative z-10 inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-md text-body-sm-md transition-colors',
-        t.value === modelValue ? 'text-ink' : 'text-stone hover:text-ink'
+        t.value === modelValue ? 'text-ink' : 'text-hairline-strong hover:text-ink'
       ]"
       @click="emit('update:modelValue', t.value)"
     >
       <span>{{ t.label }}</span>
-      <span v-if="t.count !== undefined" class="font-bold text-stone">·&nbsp;{{ t.count }}</span>
+      <span v-if="t.count !== undefined" class="font-bold text-hairline-strong">·&nbsp;{{ t.count }}</span>
     </button>
   </div>
 </template>

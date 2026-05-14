@@ -21,8 +21,8 @@ const definition: ModuleDefinition = {
       }
     },
     configFields: [
-      { key: 'botToken', label: 'Telegram bot token', type: 'string', required: true },
-      { key: 'botUsername', label: 'Bot username', type: 'string', required: true },
+      { key: 'botToken', label: 'Токен Telegram-бота', type: 'string', required: true },
+      { key: 'botUsername', label: 'Имя бота в Telegram', type: 'string', required: true },
       { key: 'supportChatId', label: 'ID группы поддержки', type: 'string', required: true },
       { key: 'workingHours', label: 'Часы работы', type: 'string', default: 'Пн–Пт 10:00–19:00' },
       { key: 'buttonLabel', label: 'Текст кнопки', type: 'string', default: 'Задать вопрос в Telegram' },

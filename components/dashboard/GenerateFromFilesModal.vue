@@ -204,10 +204,10 @@ function submit() {
         <li
           v-for="(f, idx) in files"
           :key="`${f.name}-${f.size}-${idx}`"
-          class="flex items-center gap-3 rounded-lg border border-hairline-soft bg-surface px-3 py-2"
+          class="flex items-center gap-3 rounded-lg border border-hairline bg-surface px-3 py-2"
         >
           <div
-            class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md border border-hairline-soft bg-canvas"
+            class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md border border-hairline bg-canvas"
           >
             <img
               v-if="previewFor(f)"
@@ -224,7 +224,7 @@ function submit() {
           </div>
           <button
             type="button"
-            class="grid h-7 w-7 shrink-0 place-items-center rounded-md text-steel transition-colors hover:bg-hairline-soft hover:text-ink"
+            class="grid h-7 w-7 shrink-0 place-items-center rounded-md text-steel transition-colors hover:bg-hairline hover:text-ink"
             aria-label="Удалить файл"
             :disabled="busy"
             @click="removeFile(idx)"
@@ -243,7 +243,7 @@ function submit() {
           v-model="prompt"
           rows="4"
           placeholder="Например: ориентируйся на пункт «Гарантия», добавь раздел «Уход за изделием», пиши на «вы»."
-          class="w-full resize-y rounded-lg border border-hairline bg-canvas px-3 py-2 text-body-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+          class="w-full resize-y rounded-lg border border-hairline bg-canvas px-3 py-2 text-body-sm text-ink placeholder:text-hairline-strong focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           :disabled="busy"
         />
       </div>

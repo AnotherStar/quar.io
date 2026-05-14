@@ -9,7 +9,7 @@ withDefaults(
 
 <template>
   <div class="overflow-hidden rounded-lg border border-hairline bg-canvas shadow-card">
-    <div class="flex items-center gap-2 border-b border-hairline-soft px-md py-sm">
+    <div class="flex items-center gap-2 border-b border-hairline px-md py-sm">
       <span class="h-3 w-3 rounded-full bg-[#ff5f57]" />
       <span class="h-3 w-3 rounded-full bg-[#febc2e]" />
       <span class="h-3 w-3 rounded-full bg-[#28c840]" />

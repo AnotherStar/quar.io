@@ -131,17 +131,17 @@ const roadmap = [
               <div class="rounded-lg bg-tint-sky p-lg">
                 <div class="flex items-center justify-between">
                   <p class="text-caption-bold text-charcoal">Mobile instruction</p>
-                  <span class="rounded-sm bg-white px-sm py-xxs text-micro text-slate">QR live</span>
+                  <span class="rounded-sm bg-white px-sm py-xxs text-micro text-steel">QR live</span>
                 </div>
                 <div class="mt-lg rounded-lg bg-white p-md shadow-subtle">
                   <p class="text-h5">Шаг 4. Зафиксируйте направляющую</p>
-                  <p class="mt-2 text-body-sm text-slate">
+                  <p class="mt-2 text-body-sm text-steel">
                     Совместите отверстия до щелчка. Если деталь идет туго, не применяйте силу.
                   </p>
                   <div class="mt-md h-32 rounded-md bg-tint-peach p-sm">
                     <div class="h-full rounded-sm border border-dashed border-[#dd5b00]/35 bg-white/60" />
                   </div>
-                  <div class="mt-md grid grid-cols-3 gap-xs text-center text-micro text-slate">
+                  <div class="mt-md grid grid-cols-3 gap-xs text-center text-micro text-steel">
                     <span class="rounded-sm bg-tint-mint px-xs py-xxs">полезно</span>
                     <span class="rounded-sm bg-tint-yellow px-xs py-xxs">непонятно</span>
                     <span class="rounded-sm bg-tint-rose px-xs py-xxs">ошибка</span>
@@ -153,7 +153,7 @@ const roadmap = [
                 <div class="rounded-lg border border-hairline bg-canvas p-lg">
                   <div class="flex items-start justify-between gap-md">
                     <div>
-                      <p class="text-caption-bold uppercase tracking-[1px] text-stone">Risk report</p>
+                      <p class="text-caption-bold uppercase tracking-[1px] text-hairline-strong">Risk report</p>
                       <h2 class="mt-2 text-h3">3 шага угрожают отзывам</h2>
                     </div>
                     <div class="grid h-20 w-20 shrink-0 place-items-center rounded-md bg-ink text-[10px] leading-tight text-white">
@@ -185,15 +185,15 @@ const roadmap = [
                 <div class="grid grid-cols-3 gap-sm">
                   <div class="rounded-lg bg-tint-lavender p-md">
                     <p class="text-h4">48ч</p>
-                    <p class="mt-1 text-caption text-slate">до QR-ready версии</p>
+                    <p class="mt-1 text-caption text-steel">до QR-ready версии</p>
                   </div>
                   <div class="rounded-lg bg-tint-peach p-md">
                     <p class="text-h4">5-10</p>
-                    <p class="mt-1 text-caption text-slate">инструкций в пилоте</p>
+                    <p class="mt-1 text-caption text-steel">инструкций в пилоте</p>
                   </div>
                   <div class="rounded-lg bg-tint-mint p-md">
                     <p class="text-h4">1 SKU</p>
-                    <p class="mt-1 text-caption text-slate">первый proof point</p>
+                    <p class="mt-1 text-caption text-steel">первый proof point</p>
                   </div>
                 </div>
               </div>
@@ -222,7 +222,7 @@ const roadmap = [
     <section id="deck" class="container-page py-section-lg">
       <div class="grid gap-lg lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <p class="text-micro uppercase tracking-[1px] text-stone">Problem</p>
+          <p class="text-micro uppercase tracking-[1px] text-hairline-strong">Problem</p>
           <h2 class="mt-3 text-[48px] font-semibold leading-[1.15]">Селлер защищает рейтинг всем, кроме нормальной инструкции.</h2>
         </div>
         <div class="grid gap-md md:grid-cols-2">
@@ -257,7 +257,7 @@ const roadmap = [
     <section class="bg-surface">
       <div class="container-page py-section-lg">
         <div class="mx-auto max-w-3xl text-center">
-          <p class="text-micro uppercase tracking-[1px] text-stone">Solution</p>
+          <p class="text-micro uppercase tracking-[1px] text-hairline-strong">Solution</p>
           <h2 class="mt-3 text-[48px] font-semibold leading-[1.15]">quar.io превращает инструкцию в управляемый post-purchase канал.</h2>
         </div>
 
@@ -269,7 +269,7 @@ const roadmap = [
           >
             <p class="text-h3 text-primary">{{ item.step }}</p>
             <h3 class="mt-lg text-h4">{{ item.title }}</h3>
-            <p class="mt-3 text-body-sm text-slate">{{ item.copy }}</p>
+            <p class="mt-3 text-body-sm text-steel">{{ item.copy }}</p>
           </div>
         </div>
       </div>
@@ -318,33 +318,33 @@ const roadmap = [
         </div>
 
         <div class="rounded-xl border border-hairline bg-canvas p-2xl shadow-card">
-          <p class="text-micro uppercase tracking-[1px] text-stone">Business model</p>
+          <p class="text-micro uppercase tracking-[1px] text-hairline-strong">Business model</p>
           <h2 class="mt-3 text-[36px] font-semibold leading-[1.2]">Пилот сначала, SaaS после доказанного спроса.</h2>
           <div class="mt-xl space-y-md">
-            <div class="rounded-lg bg-tint-cream p-lg">
+            <div class="rounded-lg bg-surface p-lg">
               <p class="text-h5">Pilot</p>
-              <p class="mt-2 text-body-sm text-slate">Фиксированная цена за перенос 5-10 инструкций, QR-ссылки, разбор отзывов и отчет.</p>
+              <p class="mt-2 text-body-sm text-steel">Фиксированная цена за перенос 5-10 инструкций, QR-ссылки, разбор отзывов и отчет.</p>
             </div>
             <div class="rounded-lg bg-tint-sky p-lg">
               <p class="text-h5">Catalog</p>
-              <p class="mt-2 text-body-sm text-slate">Подписка для 50-200 SKU: массовый импорт, единый стиль, быстрые ответы и отчеты.</p>
+              <p class="mt-2 text-body-sm text-steel">Подписка для 50-200 SKU: массовый импорт, единый стиль, быстрые ответы и отчеты.</p>
             </div>
             <div class="rounded-lg bg-tint-lavender p-lg">
               <p class="text-h5">Brand / Enterprise</p>
-              <p class="mt-2 text-body-sm text-slate">Брендирование, переводы, роли, интеграции и compliance только после реальных pull requests от клиентов.</p>
+              <p class="mt-2 text-body-sm text-steel">Брендирование, переводы, роли, интеграции и compliance только после реальных pull requests от клиентов.</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="bg-surface-soft">
+    <section class="bg-surface">
       <div class="container-page py-section-lg">
         <div class="grid gap-lg lg:grid-cols-[0.85fr_1.15fr]">
           <div>
-            <p class="text-micro uppercase tracking-[1px] text-stone">Differentiation</p>
+            <p class="text-micro uppercase tracking-[1px] text-hairline-strong">Differentiation</p>
             <h2 class="mt-3 text-[48px] font-semibold leading-[1.15]">Конкурируем не количеством фич, а моментом боли.</h2>
-            <p class="mt-4 text-subtitle text-slate">
+            <p class="mt-4 text-subtitle text-steel">
               QR-хостинг PDF, редакторы инструкций и AI-manual tools уже существуют.
               quar.io должен выигрывать конкретным входом: плохие отзывы в карточке товара.
             </p>
@@ -356,7 +356,7 @@ const roadmap = [
               class="rounded-lg border border-hairline bg-canvas p-xl"
             >
               <h3 class="text-h4">{{ item.title }}</h3>
-              <p class="mt-2 text-body-sm text-slate">{{ item.copy }}</p>
+              <p class="mt-2 text-body-sm text-steel">{{ item.copy }}</p>
             </div>
           </div>
         </div>
@@ -366,7 +366,7 @@ const roadmap = [
     <section class="container-page py-section-lg">
       <div class="grid gap-lg lg:grid-cols-[1.05fr_0.95fr]">
         <div class="rounded-xl border border-hairline bg-canvas p-2xl shadow-card">
-          <p class="text-micro uppercase tracking-[1px] text-stone">Roadmap</p>
+          <p class="text-micro uppercase tracking-[1px] text-hairline-strong">Roadmap</p>
           <h2 class="mt-3 text-[36px] font-semibold leading-[1.2]">Следующие 90 дней</h2>
           <div class="mt-xl space-y-md">
             <div
@@ -396,19 +396,19 @@ const roadmap = [
           <div class="mt-lg grid grid-cols-2 gap-sm">
             <div class="rounded-lg bg-white p-md text-ink">
               <p class="text-h4">3</p>
-              <p class="mt-1 text-caption text-slate">пилотных клиента</p>
+              <p class="mt-1 text-caption text-steel">пилотных клиента</p>
             </div>
             <div class="rounded-lg bg-white p-md text-ink">
               <p class="text-h4">30</p>
-              <p class="mt-1 text-caption text-slate">опубликованных инструкций</p>
+              <p class="mt-1 text-caption text-steel">опубликованных инструкций</p>
             </div>
             <div class="rounded-lg bg-white p-md text-ink">
               <p class="text-h4">100+</p>
-              <p class="mt-1 text-caption text-slate">реальных просмотров</p>
+              <p class="mt-1 text-caption text-steel">реальных просмотров</p>
             </div>
             <div class="rounded-lg bg-white p-md text-ink">
               <p class="text-h4">1+</p>
-              <p class="mt-1 text-caption text-slate">платный переход</p>
+              <p class="mt-1 text-caption text-steel">платный переход</p>
             </div>
           </div>
         </div>

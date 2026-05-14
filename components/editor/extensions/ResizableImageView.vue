@@ -218,11 +218,11 @@ if (import.meta.client) {
 }
 
 // Стили кнопок тулбара картинки — единые с EditorToolbar:
-// active = белая плашка + subtle shadow, idle = charcoal + hairline-soft hover.
+// active = белая плашка + subtle shadow, idle = charcoal + hairline hover.
 function btnClass(active: boolean) {
   return [
     'inline-flex h-8 min-w-[32px] items-center justify-center gap-1 rounded-md px-1.5 text-body-sm-md transition-colors',
-    active ? 'bg-canvas text-ink shadow-subtle' : 'text-charcoal hover:bg-hairline-soft'
+    active ? 'bg-canvas text-ink shadow-subtle' : 'text-charcoal hover:bg-hairline'
   ]
 }
 </script>
@@ -334,7 +334,7 @@ function btnClass(active: boolean) {
           ? 'absolute inset-0'
           : 'flex h-[180px] w-[260px] max-w-full'"
       >
-        <div class="absolute inset-0 animate-pulse bg-gradient-to-br from-hairline-soft via-surface to-hairline-soft" />
+        <div class="absolute inset-0 animate-pulse bg-gradient-to-br from-hairline via-surface to-hairline" />
         <div class="relative flex flex-col items-center gap-1.5 text-steel">
           <Icon name="lucide:image" class="h-5 w-5" />
           <span class="text-caption">Загружаю изображение…</span>

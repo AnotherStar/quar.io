@@ -30,13 +30,13 @@ const badgeToneClass = {
 </script>
 
 <template>
-  <section data-section="shot-analytics" class="bg-surface-soft">
+  <section data-section="shot-analytics" class="bg-surface">
     <div class="container-page py-section-lg">
       <LandingShotKicker label="Статистика" />
       <h2 class="mt-8 max-w-[900px] text-[44px] font-semibold leading-[1.16] text-navy md:text-[56px]">
         Видите каждый шаг, где покупатель потерялся.
       </h2>
-      <p class="mt-6 max-w-[960px] text-h4 font-medium leading-[1.55] text-slate">
+      <p class="mt-6 max-w-[960px] text-h4 font-medium leading-[1.55] text-steel">
         Не просто просмотры. Где застряли, что спросили, кто открыл чат с вами —
         и сколько дошли до повторного заказа.
       </p>
@@ -44,38 +44,38 @@ const badgeToneClass = {
       <div class="mt-12 overflow-hidden rounded-2xl border border-hairline bg-canvas shadow-subtle">
         <div class="flex flex-col gap-md border-b border-hairline p-xl md:flex-row md:items-center md:justify-between">
           <h3 class="text-h4 text-charcoal">Герметик силиконовый универсальный 250мл</h3>
-          <span class="self-start rounded-md bg-surface px-md py-xs text-h5 font-semibold text-stone md:self-auto">SKU: CLR-SEAL-250</span>
+          <span class="self-start rounded-md bg-surface px-md py-xs text-h5 font-semibold text-hairline-strong md:self-auto">SKU: CLR-SEAL-250</span>
         </div>
 
         <div class="grid border-b border-hairline md:grid-cols-4">
           <div class="border-b border-hairline p-xl text-center md:border-b-0 md:border-r">
             <p class="text-[40px] font-semibold leading-none text-primary">847</p>
-            <p class="mt-sm text-h5 font-semibold leading-tight text-stone">сканирований<br>за месяц</p>
+            <p class="mt-sm text-h5 font-semibold leading-tight text-hairline-strong">сканирований<br>за месяц</p>
           </div>
           <div class="border-b border-hairline p-xl text-center md:border-b-0 md:border-r">
             <p class="text-[40px] font-semibold leading-none text-error">38%</p>
-            <p class="mt-sm text-h5 font-semibold leading-tight text-stone">бросили на<br>шаге 4</p>
+            <p class="mt-sm text-h5 font-semibold leading-tight text-hairline-strong">бросили на<br>шаге 4</p>
           </div>
           <div class="border-b border-hairline p-xl text-center md:border-b-0 md:border-r">
             <p class="text-[40px] font-semibold leading-none text-ink">64</p>
-            <p class="mt-sm text-h5 font-semibold leading-tight text-stone">открыли чат<br>с продавцом</p>
+            <p class="mt-sm text-h5 font-semibold leading-tight text-hairline-strong">открыли чат<br>с продавцом</p>
           </div>
           <div class="p-xl text-center">
             <p class="text-[40px] font-semibold leading-none text-success">12%</p>
-            <p class="mt-sm text-h5 font-semibold leading-tight text-stone">перешли к<br>повторному заказу</p>
+            <p class="mt-sm text-h5 font-semibold leading-tight text-hairline-strong">перешли к<br>повторному заказу</p>
           </div>
         </div>
 
         <div class="grid md:grid-cols-[1fr_1fr]">
           <div class="border-b border-hairline md:border-b-0 md:border-r">
-            <p class="border-b border-hairline p-md text-h5 uppercase text-stone">Дочитывание по шагам</p>
-            <div class="divide-y divide-hairline-soft">
+            <p class="border-b border-hairline p-md text-h5 uppercase text-hairline-strong">Дочитывание по шагам</p>
+            <div class="divide-y divide-hairline">
               <div
                 v-for="step in steps"
                 :key="step.label"
                 class="grid grid-cols-[86px_1fr_64px_68px] items-center gap-md px-md py-sm text-h5"
               >
-                <span class="font-semibold text-slate">{{ step.label }}</span>
+                <span class="font-semibold text-steel">{{ step.label }}</span>
                 <span class="h-sm overflow-hidden rounded-full bg-surface">
                   <span
                     class="block h-full rounded-full"
@@ -92,8 +92,8 @@ const badgeToneClass = {
           </div>
 
           <div>
-            <p class="border-b border-hairline p-md text-h5 uppercase text-stone">Частые вопросы покупателей</p>
-            <div class="divide-y divide-hairline-soft">
+            <p class="border-b border-hairline p-md text-h5 uppercase text-hairline-strong">Частые вопросы покупателей</p>
+            <div class="divide-y divide-hairline">
               <div v-for="item in questions" :key="item.question" class="grid grid-cols-[1fr_auto] gap-md p-md">
                 <div>
                   <p class="text-h4 text-charcoal">{{ item.question }}</p>
@@ -110,15 +110,15 @@ const badgeToneClass = {
         <div class="grid divide-y divide-hairline border-t border-hairline md:grid-cols-3 md:divide-x md:divide-y-0">
           <div class="flex gap-md p-xl">
             <Icon name="lucide:message-circle" class="mt-1 h-6 w-6 text-primary" />
-            <p class="text-h5 text-ink">64 чата с продавцом<br><span class="text-slate">38 закрыты без отзыва — вопрос решён внутри</span></p>
+            <p class="text-h5 text-ink">64 чата с продавцом<br><span class="text-steel">38 закрыты без отзыва — вопрос решён внутри</span></p>
           </div>
           <div class="flex gap-md p-xl">
             <Icon name="lucide:triangle-alert" class="mt-1 h-6 w-6 text-warning" />
-            <p class="text-h5 text-ink">Шаг 4 отмечен "непонятно"<br><span class="text-slate">Нажали кнопку 91 раз — переписать формулировку</span></p>
+            <p class="text-h5 text-ink">Шаг 4 отмечен "непонятно"<br><span class="text-steel">Нажали кнопку 91 раз — переписать формулировку</span></p>
           </div>
           <div class="flex gap-md p-xl">
             <Icon name="lucide:repeat-2" class="mt-1 h-6 w-6 text-success" />
-            <p class="text-h5 text-ink">102 перехода к офферу<br><span class="text-slate">Конверсия в заказ — 12%, средний чек 430 ₽</span></p>
+            <p class="text-h5 text-ink">102 перехода к офферу<br><span class="text-steel">Конверсия в заказ — 12%, средний чек 430 ₽</span></p>
           </div>
         </div>
       </div>

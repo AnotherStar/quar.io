@@ -30,7 +30,7 @@ const plans: Plan[] = [
     price: '4 500 ₽',
     priceNote: 'в месяц',
     copy: 'Перенести регулярную работу с инструкциями, секциями и QR-кодами в один кабинет.',
-    features: ['До 100 инструкций', 'Reusable sections', 'Команда и роли', 'Модули feedback и warranty'],
+    features: ['До 100 инструкций', 'Переиспользуемые секции', 'Команда и роли', 'Модули обратной связи и гарантии'],
     variant: 'highlight',
     badge: 'Популярный',
     cta: 'Попробовать бесплатно'
@@ -42,7 +42,7 @@ const plans: Plan[] = [
     copy: 'Брендирование, расширенные сценарии допродаж, переводы и интеграции под каталог.',
     features: ['Уникальные QR по партиям', 'Расширенная аналитика', 'AI-ассистент по инструкции', 'Приоритетная поддержка'],
     variant: 'premium',
-    badge: 'Enterprise',
+    badge: 'Для бизнеса',
     cta: 'Связаться с нами',
     to: '/pricing'
   }
@@ -50,12 +50,12 @@ const plans: Plan[] = [
 </script>
 
 <template>
-  <section id="pricing" class="bg-surface-soft shadow-[inset_0_16px_32px_-16px_rgba(15,15,15,0.15)]">
+  <section id="pricing" class="bg-surface shadow-[inset_0_16px_32px_-16px_rgba(15,15,15,0.15)]">
     <div class="container-page py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-caption-bold uppercase tracking-[0.18em] text-primary">Тарифы</p>
         <h2 class="mt-md text-h2 text-navy">Платите за результат, а не за лицензии</h2>
-        <p class="mt-md text-body text-slate">
+        <p class="mt-md text-body text-steel">
           Начните с пилота на 5–10 товаров, масштабируйте до полного каталога и подключайте брендовые сценарии — когда нужно.
         </p>
       </div>
@@ -113,7 +113,7 @@ const plans: Plan[] = [
           <p
             :class="[
               'mt-md text-body-sm leading-relaxed',
-              plan.variant === 'premium' ? 'text-white/72' : 'text-slate'
+              plan.variant === 'premium' ? 'text-white/72' : 'text-steel'
             ]"
           >
             {{ plan.copy }}

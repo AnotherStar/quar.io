@@ -31,7 +31,7 @@ defineProps<{
             </div>
             <p class="text-body-sm-md text-primary">{{ pack.price }}</p>
           </div>
-          <p class="mt-3 text-body-sm text-slate">{{ pack.copy }}</p>
+          <p class="mt-3 text-body-sm text-steel">{{ pack.copy }}</p>
         </div>
       </div>
     </div>

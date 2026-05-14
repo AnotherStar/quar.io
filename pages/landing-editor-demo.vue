@@ -143,7 +143,7 @@ function isActive(name: string, attrs?: Record<string, unknown>) {
 function btnClass(active: boolean) {
   return [
     'inline-flex h-8 min-w-[32px] items-center justify-center gap-1 rounded-md px-1.5 text-body-sm transition-colors',
-    active ? 'bg-canvas text-ink shadow-subtle' : 'text-charcoal hover:bg-hairline-soft'
+    active ? 'bg-canvas text-ink shadow-subtle' : 'text-charcoal hover:bg-hairline'
   ]
 }
 
@@ -317,7 +317,7 @@ body {
   content: attr(data-placeholder);
   height: 0;
   float: left;
-  color: var(--color-stone);
+  color: var(--color-hairline-strong);
   opacity: 0.25;
   pointer-events: none;
 }

@@ -25,7 +25,7 @@ defineProps<{
             <p class="text-caption-bold uppercase text-steel">{{ slide.eyebrow }}</p>
           </div>
           <h3 class="mt-3 text-h3 text-navy">{{ slide.title }}</h3>
-          <p class="mt-3 text-body text-slate">{{ slide.copy }}</p>
+          <p class="mt-3 text-body text-steel">{{ slide.copy }}</p>
           <LandingCheckList :items="slide.points" class="mt-lg" />
         </div>
 

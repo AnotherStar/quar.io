@@ -719,7 +719,7 @@ function isGenerationAbortError(error: any) {
               </UiButton>
             </div>
 
-            <hr class="my-md border-hairline-soft">
+            <hr class="my-md border-hairline">
 
             <!-- URL editor -->
             <UiInput
@@ -733,7 +733,7 @@ function isGenerationAbortError(error: any) {
             <!-- Public link: copy + QR download. Self-contained, see UiCopyableUrl. -->
             <UiCopyableUrl class="mt-sm" :url="fullPublicUrl" :qr-filename="`${currentTenant?.slug}-${slug}`" />
 
-            <hr class="my-md border-hairline-soft">
+            <hr class="my-md border-hairline">
 
             <!-- Штрих-код товара — нужен для авто-привязки свободного QR. -->
             <UiInput
@@ -743,7 +743,7 @@ function isGenerationAbortError(error: any) {
               hint="По этому коду свободный QR привяжется к инструкции"
             />
 
-            <hr class="my-md border-hairline-soft">
+            <hr class="my-md border-hairline">
 
             <!-- Publish action -->
             <UiButton

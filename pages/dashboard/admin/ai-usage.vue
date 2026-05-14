@@ -255,7 +255,7 @@ const featureLabel = (feature: string) => {
       </div>
 
       <!-- All-time -->
-      <div class="rounded-lg border border-hairline-soft p-md">
+      <div class="rounded-lg border border-hairline p-md">
         <p class="text-caption-bold uppercase tracking-wide text-steel">За всё время</p>
         <p class="mt-1 text-body-sm text-ink">
           {{ formatNumber(data.totals.allTime.calls) }} вызовов ·

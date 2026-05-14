@@ -98,7 +98,7 @@
     @apply pb-sm px-xs font-normal;
   }
   .ui-table tbody tr {
-    @apply border-b border-hairline-soft;
+    @apply border-b border-hairline;
   }
   .ui-table tbody td {
     @apply py-sm px-xs;
@@ -228,8 +228,7 @@
  * regardless of editable mode.
  *
  * Geometry follows the Notion design system:
- *   – outer border 1px hairline, rounded 8px (rounded.md)
- *   – inner cell separators 1px hairline-soft (lighter)
+ *   – outer border + inner separators 1px hairline, rounded 8px (rounded.md)
  *   – cell padding 12px 16px (spacing.sm spacing.md)
  *   – header row in canvas-surface tint, 500 weight
  *
@@ -264,8 +263,8 @@
   vertical-align: top;
   position: relative;
   min-width: 80px;
-  border-right: 1px solid var(--color-hairline-soft);
-  border-bottom: 1px solid var(--color-hairline-soft);
+  border-right: 1px solid var(--color-hairline);
+  border-bottom: 1px solid var(--color-hairline);
   word-break: break-word;
   color: var(--color-charcoal);
 }
@@ -360,9 +359,9 @@ ul[data-type='taskList'] input[type='checkbox']:checked::before {
   clip-path: polygon(14% 44%, 0 60%, 38% 100%, 100% 22%, 86% 6%, 38% 70%);
 }
 ul[data-type='taskList'] li[data-checked='true'] > div {
-  color: var(--color-stone);
+  color: var(--color-hairline-strong);
   text-decoration: line-through;
-  text-decoration-color: var(--color-muted);
+  text-decoration-color: var(--color-hairline-strong);
 }
 
 /* Editor-only affordances: selected-cell highlight + drag-to-resize handle.

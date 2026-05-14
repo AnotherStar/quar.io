@@ -55,9 +55,9 @@ const tiers = [
 <template>
   <div class="container-page py-section-lg">
     <div class="mx-auto max-w-3xl text-center">
-      <p class="text-caption-bold uppercase text-stone">Пакеты запуска</p>
+      <p class="text-caption-bold uppercase text-hairline-strong">Пакеты запуска</p>
       <h1 class="mt-3 text-h1 text-ink">Начните с пилота на товарах, где инструкция уже влияет на отзывы.</h1>
-      <p class="mt-4 text-subtitle text-slate">
+      <p class="mt-4 text-subtitle text-steel">
         1 месяц триала входит в запуск: перенесите первые инструкции, поставьте QR-ссылки
         в реальные каналы и посмотрите, какие шаги мешают покупателям.
       </p>

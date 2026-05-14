@@ -20,33 +20,21 @@ export default <Config>{
       colors: {
         primary: {
           DEFAULT: 'var(--color-primary)',
-          pressed: 'var(--color-primary-pressed)',
-          deep: 'var(--color-primary-deep)'
+          pressed: 'var(--color-primary-pressed)'
         },
         'on-primary': 'var(--color-on-primary)',
-        ink: {
-          deep: 'var(--color-ink-deep)',
-          DEFAULT: 'var(--color-ink)'
-        },
+        ink: 'var(--color-ink)',
         charcoal: 'var(--color-charcoal)',
-        slate: 'var(--color-slate)',
         steel: 'var(--color-steel)',
-        stone: 'var(--color-stone)',
-        muted: 'var(--color-muted)',
         canvas: 'var(--color-canvas)',
-        surface: {
-          DEFAULT: 'var(--color-surface)',
-          soft: 'var(--color-surface-soft)'
-        },
+        surface: 'var(--color-surface)',
         hairline: {
           DEFAULT: 'var(--color-hairline)',
-          soft: 'var(--color-hairline-soft)',
           strong: 'var(--color-hairline-strong)'
         },
         navy: {
           DEFAULT: 'var(--color-brand-navy)',
-          deep: 'var(--color-brand-navy-deep)',
-          mid: 'var(--color-brand-navy-mid)'
+          deep: 'var(--color-brand-navy-deep)'
         },
         link: 'var(--color-link-blue)',
         brand: {
@@ -65,7 +53,6 @@ export default <Config>{
           sky: 'var(--color-tint-sky)',
           yellow: 'var(--color-tint-yellow)',
           'yellow-bold': 'var(--color-tint-yellow-bold)',
-          cream: 'var(--color-tint-cream)',
           gray: 'var(--color-tint-gray)'
         },
         success: 'var(--color-success)',

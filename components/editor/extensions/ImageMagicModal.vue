@@ -145,7 +145,7 @@ function onPromptKey(e: KeyboardEvent) {
         <textarea
           v-model="prompt"
           rows="2"
-          class="w-full resize-none rounded-lg border border-hairline bg-canvas px-md py-sm text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+          class="w-full resize-none rounded-lg border border-hairline bg-canvas px-md py-sm text-body-sm-md placeholder:text-hairline-strong outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
           placeholder="Например: «удали фон», «добавь мягкий градиент», «сделай чёрно-белым»…"
           :disabled="isSubmitting"
           @keydown="onPromptKey"

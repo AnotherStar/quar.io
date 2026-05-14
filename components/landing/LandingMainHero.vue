@@ -9,7 +9,7 @@ const { startTrial, loading } = useStartTrial()
         quar.io превращает инструкцию в канал для
         <span class="text-primary">обратной связи и дополнительных продаж</span>
       </h1>
-      <p class="mx-auto mt-lg max-w-3xl text-h4 font-medium leading-[1.55] text-slate">
+      <p class="mx-auto mt-lg max-w-3xl text-h4 font-medium leading-[1.55] text-steel">
         Покупатель сканирует QR после покупки и получает онлайн-инструкцию и возможность напрямую связаться с вами.
       </p>
     </div>

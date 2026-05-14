@@ -67,7 +67,10 @@ const moduleNavItems = computed(() => {
 // рендерим через v-if, а не просто disable.
 const adminNavItems = computed(() =>
   user.value?.isAdmin
-    ? [{ to: '/dashboard/admin', label: 'Админ', icon: 'lucide:shield-check' }]
+    ? [
+        { to: '/dashboard/admin', label: 'Админ', icon: 'lucide:shield-check', exact: true },
+        { to: '/dashboard/admin/ui', label: 'Интерфейс', icon: 'lucide:palette' }
+      ]
     : []
 )
 
@@ -151,7 +154,7 @@ watch(() => route.fullPath, () => {
                  fade-out'ится при сворачивании через .dashboard-fade-label. -->
             <button
               type="button"
-              class="mb-xs flex h-8 w-full items-center gap-3 rounded-md px-sm text-body-sm-md text-steel transition-colors duration-200 ease-out hover:bg-hairline-soft hover:text-ink"
+              class="mb-xs flex h-8 w-full items-center gap-3 rounded-md px-sm text-body-sm-md text-steel transition-colors duration-200 ease-out hover:bg-hairline hover:text-ink"
               :aria-label="sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'"
               :aria-expanded="!sidebarCollapsed"
               @click="sidebarCollapsed = !sidebarCollapsed"
@@ -166,7 +169,7 @@ watch(() => route.fullPath, () => {
               >Свернуть</span>
             </button>
 
-            <hr class="border-hairline-soft" />
+            <hr class="border-hairline" />
 
             <!-- Меню. flex-1 толкает user-зону к низу. Padding/gap pill'ов
                  фиксированы — при сворачивании иконка остаётся на той же
@@ -179,7 +182,7 @@ watch(() => route.fullPath, () => {
                 :title="sidebarCollapsed ? i.label : undefined"
                 :class="[
                   'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
-                  isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                  isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                 ]"
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -200,7 +203,7 @@ watch(() => route.fullPath, () => {
               </NuxtLink>
 
               <template v-if="moduleNavItems.length">
-                <hr class="my-sm border-hairline-soft" />
+                <hr class="my-sm border-hairline" />
                 <NuxtLink
                   v-for="i in moduleNavItems"
                   :key="i.to"
@@ -208,7 +211,7 @@ watch(() => route.fullPath, () => {
                   :title="sidebarCollapsed ? i.label : undefined"
                   :class="[
                     'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
-                    isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                    isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                   ]"
                 >
                   <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -230,7 +233,7 @@ watch(() => route.fullPath, () => {
               </template>
 
               <template v-if="adminNavItems.length">
-                <hr class="my-sm border-hairline-soft" />
+                <hr class="my-sm border-hairline" />
                 <NuxtLink
                   v-for="i in adminNavItems"
                   :key="i.to"
@@ -238,7 +241,7 @@ watch(() => route.fullPath, () => {
                   :title="sidebarCollapsed ? i.label : undefined"
                   :class="[
                     'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
-                    isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                    isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                   ]"
                 >
                   <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -270,7 +273,7 @@ watch(() => route.fullPath, () => {
                 class="dashboard-sidebar-footer-row relative rounded-md transition-colors duration-200 ease-out"
                 :class="isActive('/dashboard/settings')
                   ? 'bg-primary text-on-primary'
-                  : 'text-charcoal hover:bg-hairline-soft hover:text-ink'"
+                  : 'text-charcoal hover:bg-hairline hover:text-ink'"
                 :title="sidebarCollapsed ? (settingsBadge?.title ?? 'Настройки') : undefined"
               >
                 <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
@@ -298,7 +301,7 @@ watch(() => route.fullPath, () => {
                 href="https://t.me/quar_io_chat"
                 target="_blank"
                 rel="noopener"
-                class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors duration-200 ease-out hover:bg-hairline-soft hover:text-ink"
+                class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors duration-200 ease-out hover:bg-hairline hover:text-ink"
                 :title="sidebarCollapsed ? 'Поддержка' : undefined"
               >
                 <Icon name="lucide:life-buoy" class="h-4 w-4 shrink-0 text-steel" />
@@ -348,7 +351,7 @@ watch(() => route.fullPath, () => {
               :to="i.to"
               :class="[
                 'flex h-10 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
-                isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
               ]"
             >
               <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -356,14 +359,14 @@ watch(() => route.fullPath, () => {
               <SidebarBadge v-if="badgeFor(i.to)" v-bind="badgeFor(i.to)!" class="ml-auto" />
             </NuxtLink>
             <template v-if="moduleNavItems.length">
-              <hr class="my-sm border-hairline-soft" />
+              <hr class="my-sm border-hairline" />
               <NuxtLink
                 v-for="i in moduleNavItems"
                 :key="i.to"
                 :to="i.to"
                 :class="[
                   'flex h-10 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
-                  isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                  isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                 ]"
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -372,14 +375,14 @@ watch(() => route.fullPath, () => {
               </NuxtLink>
             </template>
             <template v-if="adminNavItems.length">
-              <hr class="my-sm border-hairline-soft" />
+              <hr class="my-sm border-hairline" />
               <NuxtLink
                 v-for="i in adminNavItems"
                 :key="i.to"
                 :to="i.to"
                 :class="[
                   'flex h-10 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors',
-                  isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline-soft hover:text-ink'
+                  isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                 ]"
               >
                 <Icon :name="i.icon" class="h-4 w-4 shrink-0" />
@@ -394,7 +397,7 @@ watch(() => route.fullPath, () => {
               class="dashboard-sidebar-footer-row rounded-md transition-colors"
               :class="isActive('/dashboard/settings')
                 ? 'bg-primary text-on-primary'
-                : 'text-charcoal hover:bg-hairline-soft hover:text-ink'"
+                : 'text-charcoal hover:bg-hairline hover:text-ink'"
             >
               <Icon name="lucide:settings" class="h-4 w-4 shrink-0" />
               <span class="truncate text-body-sm">Настройки</span>
@@ -407,7 +410,7 @@ watch(() => route.fullPath, () => {
               href="https://t.me/quar_io_chat"
               target="_blank"
               rel="noopener"
-              class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors hover:bg-hairline-soft hover:text-ink"
+              class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors hover:bg-hairline hover:text-ink"
             >
               <Icon name="lucide:life-buoy" class="h-4 w-4 shrink-0 text-steel" />
               <span class="truncate text-body-sm">Поддержка</span>

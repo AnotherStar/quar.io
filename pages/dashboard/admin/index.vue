@@ -69,7 +69,7 @@ const planBadgeVariant = (code: string) => {
           <Icon name="lucide:credit-card" class="h-5 w-5 text-navy opacity-50" />
           <h2 class="text-h4 text-navy">Тарифы компаний</h2>
         </div>
-        <ul v-if="data?.tenants.byPlan.length" class="mt-md divide-y divide-hairline-soft">
+        <ul v-if="data?.tenants.byPlan.length" class="mt-md divide-y divide-hairline">
           <li
             v-for="p in data.tenants.byPlan"
             :key="p.code"

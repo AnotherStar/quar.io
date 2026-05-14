@@ -332,14 +332,14 @@ const toneClass: Record<StorySlide['tone'], string> = {
 
 <template>
   <div class="bg-canvas text-ink">
-    <section class="relative overflow-hidden border-b border-hairline bg-surface-soft">
+    <section class="relative overflow-hidden border-b border-hairline bg-surface">
       <div class="container-page relative py-md">
         <nav class="flex items-center justify-between gap-md rounded-md border border-hairline bg-white/80 px-md py-sm shadow-subtle backdrop-blur">
           <NuxtLink to="/" class="flex min-w-0 items-center gap-sm text-body-sm-md text-ink">
             <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-ink text-caption-bold text-white">q</span>
             <span class="truncate">quar.io</span>
           </NuxtLink>
-          <div class="hidden items-center gap-lg text-body-sm-md text-slate md:flex">
+          <div class="hidden items-center gap-lg text-body-sm-md text-steel md:flex">
             <a href="#how" class="transition-colors hover:text-ink">Как работает</a>
             <a href="#effects" class="transition-colors hover:text-ink">Эффект</a>
             <a href="#pricing" class="transition-colors hover:text-ink">Тарифы</a>
@@ -361,7 +361,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
           <h1 class="mt-5 max-w-4xl text-[42px] font-semibold leading-[1.04] text-ink md:text-[58px] lg:text-[68px]">
             Покупатель отсканировал QR — и не пошёл писать злой отзыв.
           </h1>
-          <p class="mt-6 max-w-2xl text-subtitle text-slate">
+          <p class="mt-6 max-w-2xl text-subtitle text-steel">
             quar.io открывает по QR на товаре мобильную инструкцию, AI-ассистента, кнопку обратной связи прямо вам и блок повторной покупки.
             PDF никто не скачивает. Тираж инструкций перепечатывать не нужно.
           </p>
@@ -376,7 +376,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
             </UiButton>
           </div>
 
-          <div class="mt-6 flex flex-wrap gap-2 text-caption text-slate">
+          <div class="mt-6 flex flex-wrap gap-2 text-caption text-steel">
             <span class="rounded-sm border border-hairline bg-canvas px-sm py-xs">Пилот — 500 ₽</span>
             <span class="rounded-sm border border-hairline bg-canvas px-sm py-xs">Без приложения у покупателя</span>
             <span class="rounded-sm border border-hairline bg-canvas px-sm py-xs">QR не меняется после правок</span>
@@ -402,11 +402,11 @@ const toneClass: Record<StorySlide['tone'], string> = {
                 <div class="mx-auto max-w-[300px] rounded-[28px] border-[10px] border-ink bg-white shadow-card">
                   <div class="flex items-center justify-between border-b border-hairline px-md py-sm">
                     <span class="text-micro text-steel">09:41</span>
-                    <Icon name="lucide:wifi" class="h-4 w-4 text-slate" />
+                    <Icon name="lucide:wifi" class="h-4 w-4 text-steel" />
                   </div>
                   <div class="space-y-md p-md">
                     <div>
-                      <p class="text-caption-bold uppercase text-stone">Робот-пылесос X2</p>
+                      <p class="text-caption-bold uppercase text-hairline-strong">Робот-пылесос X2</p>
                       <h2 class="mt-1 text-h4">Шаг 4. Подключение к Wi‑Fi</h2>
                     </div>
                     <div class="h-28 rounded-md bg-surface">
@@ -414,14 +414,14 @@ const toneClass: Record<StorySlide['tone'], string> = {
                         <Icon name="lucide:router" class="h-10 w-10 text-primary" />
                       </div>
                     </div>
-                    <p class="text-body-sm text-slate">
+                    <p class="text-body-sm text-steel">
                       Если индикатор мигает синим — нажмите кнопку питания на 3 секунды.
                     </p>
                     <div class="rounded-md bg-tint-peach p-sm">
                       <p class="text-caption-bold text-charcoal">Если не получается</p>
-                      <p class="mt-1 text-caption text-slate">Проверьте, что телефон подключён к сети 2,4 ГГц.</p>
+                      <p class="mt-1 text-caption text-steel">Проверьте, что телефон подключён к сети 2,4 ГГц.</p>
                     </div>
-                    <div class="grid grid-cols-3 gap-xs text-center text-micro text-slate">
+                    <div class="grid grid-cols-3 gap-xs text-center text-micro text-steel">
                       <span class="rounded-sm bg-tint-mint px-xs py-xxs">полезно</span>
                       <span class="rounded-sm bg-tint-yellow px-xs py-xxs">непонятно</span>
                       <span class="rounded-sm bg-tint-rose px-xs py-xxs">не работает</span>
@@ -433,7 +433,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
               <div class="p-lg md:p-2xl">
                 <div class="flex items-start justify-between gap-md">
                   <div>
-                    <p class="text-caption-bold uppercase text-stone">В кабинете продавца</p>
+                    <p class="text-caption-bold uppercase text-hairline-strong">В кабинете продавца</p>
                     <h2 class="mt-2 text-h3">Сегодня по этой инструкции</h2>
                   </div>
                   <div class="grid h-20 w-20 shrink-0 grid-cols-3 gap-1 rounded-md bg-ink p-2">
@@ -462,18 +462,18 @@ const toneClass: Record<StorySlide['tone'], string> = {
                   </div>
                 </div>
 
-                <div class="mt-lg grid gap-sm rounded-md border border-hairline bg-surface-soft p-md sm:grid-cols-3">
+                <div class="mt-lg grid gap-sm rounded-md border border-hairline bg-surface p-md sm:grid-cols-3">
                   <div>
                     <p class="text-h4">3 мин</p>
-                    <p class="text-caption text-slate">до ответа AI</p>
+                    <p class="text-caption text-steel">до ответа AI</p>
                   </div>
                   <div>
                     <p class="text-h4">10 мин</p>
-                    <p class="text-caption text-slate">на правку шага</p>
+                    <p class="text-caption text-steel">на правку шага</p>
                   </div>
                   <div>
                     <p class="text-h4">0 ₽</p>
-                    <p class="text-caption text-slate">на перепечатку</p>
+                    <p class="text-caption text-steel">на перепечатку</p>
                   </div>
                 </div>
               </div>
@@ -487,7 +487,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
       <div class="container-page py-section-sm">
         <div class="grid gap-8 lg:grid-cols-[0.74fr_1.26fr] lg:items-start">
           <div>
-            <p class="text-caption-bold uppercase text-stone">Что забирает у вас деньги после покупки</p>
+            <p class="text-caption-bold uppercase text-hairline-strong">Что забирает у вас деньги после покупки</p>
             <h2 class="mt-3 text-h2 text-ink">
               Главные потери продавца происходят не до заказа, а после получения товара.
             </h2>
@@ -496,10 +496,10 @@ const toneClass: Record<StorySlide['tone'], string> = {
             <div
               v-for="item in painItems"
               :key="item.label"
-              class="group rounded-md border border-hairline bg-surface-soft p-md transition-colors hover:bg-canvas"
+              class="group rounded-md border border-hairline bg-surface p-md transition-colors hover:bg-canvas"
             >
               <p class="text-body-sm-md text-charcoal">{{ item.label }}</p>
-              <p class="mt-2 text-caption text-slate">{{ item.cost }}</p>
+              <p class="mt-2 text-caption text-steel">{{ item.cost }}</p>
             </div>
           </div>
         </div>
@@ -519,7 +519,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
 
     <section id="how" class="container-page py-section-lg">
       <div class="mx-auto max-w-3xl text-center">
-        <p class="text-caption-bold uppercase text-stone">Как покупатель проходит путь от QR на коробке до новой покупки</p>
+        <p class="text-caption-bold uppercase text-hairline-strong">Как покупатель проходит путь от QR на коробке до новой покупки</p>
         <h2 class="mt-3 text-h2 text-ink">Семь моментов, ради которых quar.io вообще нужен.</h2>
       </div>
 
@@ -527,12 +527,12 @@ const toneClass: Record<StorySlide['tone'], string> = {
         <article
           v-for="(slide, index) in storySlides"
           :key="slide.title"
-          class="grid gap-lg rounded-lg border border-hairline bg-surface-soft p-lg md:grid-cols-[0.9fr_1.1fr] md:p-2xl"
+          class="grid gap-lg rounded-lg border border-hairline bg-surface p-lg md:grid-cols-[0.9fr_1.1fr] md:p-2xl"
         >
           <div :class="index % 2 === 1 && 'md:order-2'">
-            <p class="text-caption-bold uppercase text-stone">{{ slide.eyebrow }}</p>
+            <p class="text-caption-bold uppercase text-hairline-strong">{{ slide.eyebrow }}</p>
             <h3 class="mt-3 text-h3 text-ink">{{ slide.title }}</h3>
-            <p class="mt-3 text-body text-slate">{{ slide.copy }}</p>
+            <p class="mt-3 text-body text-steel">{{ slide.copy }}</p>
             <ul class="mt-lg grid gap-sm">
               <li
                 v-for="point in slide.points"
@@ -552,7 +552,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
                 <span class="h-3 w-3 rounded-full bg-[#febc2e]" />
                 <span class="h-3 w-3 rounded-full bg-[#28c840]" />
               </div>
-              <span class="text-caption text-slate">продуктовый экран</span>
+              <span class="text-caption text-steel">продуктовый экран</span>
             </div>
             <div class="grid min-h-[220px] place-items-center px-md text-center">
               <p class="max-w-md text-body-sm-md text-charcoal">{{ slide.screen }}</p>
@@ -562,15 +562,15 @@ const toneClass: Record<StorySlide['tone'], string> = {
       </div>
     </section>
 
-    <section id="effects" class="border-y border-hairline bg-surface-soft">
+    <section id="effects" class="border-y border-hairline bg-surface">
       <div class="container-page py-section-lg">
         <div class="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
           <div>
-            <p class="text-caption-bold uppercase text-stone">Не функции, а бизнес-эффект</p>
+            <p class="text-caption-bold uppercase text-hairline-strong">Не функции, а бизнес-эффект</p>
             <h2 class="mt-3 text-h2 text-ink">
               Что меняется в кабинете продавца через 4 недели после запуска.
             </h2>
-            <p class="mt-4 text-body text-slate">
+            <p class="mt-4 text-body text-steel">
               Это не «возможности платформы». Это то, ради чего продавцы маркетплейсов и private-label бренды приходят и остаются в quar.io.
             </p>
           </div>
@@ -583,7 +583,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
             >
               <Icon :name="value.icon" class="h-6 w-6 text-primary" />
               <h3 class="mt-4 text-h4">{{ value.title }}</h3>
-              <p class="mt-2 text-body-sm text-slate">{{ value.copy }}</p>
+              <p class="mt-2 text-body-sm text-steel">{{ value.copy }}</p>
             </div>
           </div>
         </div>
@@ -592,7 +592,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
 
     <section class="container-page py-section-lg">
       <div class="max-w-3xl">
-        <p class="text-caption-bold uppercase text-stone">Как это выглядит в реальных нишах</p>
+        <p class="text-caption-bold uppercase text-hairline-strong">Как это выглядит в реальных нишах</p>
         <h2 class="mt-3 text-h2 text-ink">Три коротких сценария — техника, мебель и косметика.</h2>
       </div>
       <div class="mt-section grid gap-md md:grid-cols-3">
@@ -601,9 +601,9 @@ const toneClass: Record<StorySlide['tone'], string> = {
           :key="item.title"
           class="rounded-md border border-hairline bg-canvas p-lg shadow-subtle"
         >
-          <UiBadge variant="tag-purple">{{ item.niche }}</UiBadge>
+          <UiBadge variant="tag-blue">{{ item.niche }}</UiBadge>
           <h3 class="mt-4 text-h4 text-ink">{{ item.title }}</h3>
-          <p class="mt-3 text-body-sm text-slate">{{ item.body }}</p>
+          <p class="mt-3 text-body-sm text-steel">{{ item.body }}</p>
           <div class="mt-md rounded-md bg-tint-mint p-md">
             <p class="text-caption-bold text-charcoal">Результат</p>
             <p class="mt-1 text-body-sm text-charcoal">{{ item.result }}</p>
@@ -616,11 +616,11 @@ const toneClass: Record<StorySlide['tone'], string> = {
       <div class="container-page py-section-lg">
         <div class="grid gap-10 lg:grid-cols-[0.76fr_1.24fr]">
           <div>
-            <p class="text-caption-bold uppercase text-stone">Что вы видите в кабинете</p>
+            <p class="text-caption-bold uppercase text-hairline-strong">Что вы видите в кабинете</p>
             <h2 class="mt-3 text-h2 text-ink">
               Видно, на каком шаге покупатель злится — и можно починить это за 10 минут.
             </h2>
-            <p class="mt-3 text-body text-slate">
+            <p class="mt-3 text-body text-steel">
               quar.io показывает не просто «просмотры». Видно конкретные шаги с риском отзыва, повторяющиеся вопросы и инструкции, где QR-канал нужно улучшить первым.
             </p>
           </div>
@@ -676,9 +676,9 @@ const toneClass: Record<StorySlide['tone'], string> = {
     <section id="pricing" class="container-page py-section-lg">
       <div class="grid gap-10 lg:grid-cols-[0.76fr_1.24fr] lg:items-start">
         <div>
-          <p class="text-caption-bold uppercase text-stone">Тарифы</p>
+          <p class="text-caption-bold uppercase text-hairline-strong">Тарифы</p>
           <h2 class="mt-3 text-h2 text-ink">Начните с пилота на товарах, где инструкция уже влияет на отзывы.</h2>
-          <p class="mt-4 text-body text-slate">
+          <p class="mt-4 text-body text-steel">
             Бесплатного тарифа нет. Месяц триала кабинета входит в пакет «Пилот»: за это время вы переносите первые инструкции, привязываете QR на реальные SKU и получаете отчёт по проблемным шагам.
           </p>
           <ul class="mt-lg grid gap-sm">
@@ -703,7 +703,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
             :key="tier.code"
             :class="[
               'flex flex-col rounded-md p-lg',
-              tier.featured ? 'border-2 border-primary bg-surface-soft shadow-card' : 'border border-hairline bg-canvas'
+              tier.featured ? 'border-2 border-primary bg-surface shadow-card' : 'border border-hairline bg-canvas'
             ]"
           >
             <div class="flex items-start justify-between gap-sm">
@@ -731,11 +731,11 @@ const toneClass: Record<StorySlide['tone'], string> = {
       </div>
     </section>
 
-    <section class="border-t border-hairline bg-surface-soft">
+    <section class="border-t border-hairline bg-surface">
       <div class="container-page py-section-lg">
         <div class="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
           <div>
-            <p class="text-caption-bold uppercase text-stone">Частые вопросы</p>
+            <p class="text-caption-bold uppercase text-hairline-strong">Частые вопросы</p>
             <h2 class="mt-3 text-h2 text-ink">Что обычно спрашивают перед запуском пилота.</h2>
           </div>
           <div class="grid gap-sm">
@@ -748,7 +748,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
                 <span>{{ item.q }}</span>
                 <Icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-steel transition-transform group-open:rotate-180" />
               </summary>
-              <p class="mt-3 text-body text-slate">{{ item.a }}</p>
+              <p class="mt-3 text-body text-steel">{{ item.a }}</p>
             </details>
           </div>
         </div>

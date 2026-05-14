@@ -27,7 +27,7 @@ const iconTone = {
 </script>
 
 <template>
-  <section class="bg-[linear-gradient(180deg,var(--color-surface-soft)_0%,var(--color-canvas)_100%)]">
+  <section class="bg-[linear-gradient(180deg,var(--color-surface)_0%,var(--color-canvas)_100%)]">
     <div class="container-page pb-hero pt-section md:pt-section-lg">
       <div class="mx-auto max-w-3xl text-center">
         <h2 class="mt-3 text-h2 text-navy">Два сценария — одно решение</h2>
@@ -46,7 +46,7 @@ const iconTone = {
             </div>
             <h3 class="text-h4 text-navy">{{ scenario.title }}</h3>
           </div>
-          <p class="mt-md max-w-[560px] text-body leading-relaxed text-slate">{{ scenario.body }}</p>
+          <p class="mt-md max-w-[560px] text-body leading-relaxed text-steel">{{ scenario.body }}</p>
           <p class="mt-lg max-w-[560px] border-l-2 border-primary pl-md text-body font-medium leading-relaxed text-ink">
             {{ scenario.solution }}
           </p>

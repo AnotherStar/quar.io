@@ -255,7 +255,7 @@ function btnClass(active: boolean) {
   return [
     'inline-flex h-8 min-w-[32px] items-center justify-center gap-1 rounded-md px-1.5 text-body-sm transition-colors',
     'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
-    active ? 'bg-canvas text-ink shadow-subtle' : 'text-charcoal hover:bg-hairline-soft'
+    active ? 'bg-canvas text-ink shadow-subtle' : 'text-charcoal hover:bg-hairline'
   ]
 }
 
@@ -353,7 +353,7 @@ function canInsertTable() {
             <span class="h-4 w-4 shrink-0 rounded-sm border border-hairline" :style="{ backgroundColor: c.color }" />
             <span class="truncate">{{ c.label }}</span>
           </button>
-          <div class="my-1 h-px bg-hairline-soft" />
+          <div class="my-1 h-px bg-hairline" />
           <button
             type="button"
             class="popover-item"
@@ -426,7 +426,7 @@ function canInsertTable() {
               :class="['h-[18px] w-[18px] rounded-[3px] border transition-colors',
                 isCellHighlighted(cell.row, cell.col)
                   ? 'border-primary bg-primary/25'
-                  : 'border-hairline bg-canvas hover:border-stone']"
+                  : 'border-hairline bg-canvas hover:border-hairline-strong']"
               @mouseenter="setTableHover(cell.row, cell.col)"
               @click="insertTableSized(cell.row + 1, cell.col + 1)"
             />
@@ -442,7 +442,7 @@ function canInsertTable() {
           <button type="button" class="popover-item" @click="editor.chain().focus().deleteRow().run(); closeMenus()">
             <Icon name="lucide:trash-2" class="h-4 w-4 text-error" /> Удалить строку
           </button>
-          <div class="my-1 h-px bg-hairline-soft" />
+          <div class="my-1 h-px bg-hairline" />
           <button type="button" class="popover-item" @click="editor.chain().focus().addColumnBefore().run(); closeMenus()">
             <Icon name="lucide:arrow-left" class="h-4 w-4 text-steel" /> Столбец слева
           </button>
@@ -452,7 +452,7 @@ function canInsertTable() {
           <button type="button" class="popover-item" @click="editor.chain().focus().deleteColumn().run(); closeMenus()">
             <Icon name="lucide:trash-2" class="h-4 w-4 text-error" /> Удалить столбец
           </button>
-          <div class="my-1 h-px bg-hairline-soft" />
+          <div class="my-1 h-px bg-hairline" />
           <button type="button" class="popover-item" @click="editor.chain().focus().toggleHeaderRow().run(); closeMenus()">
             <Icon name="lucide:heading" class="h-4 w-4 text-steel" /> Шапка строки
           </button>

@@ -58,7 +58,7 @@ function isEmpty(content: any): boolean {
           <p v-if="s.description" class="mt-0.5 text-body-sm text-steel">{{ s.description }}</p>
         </div>
         <div class="relative max-h-[260px] overflow-hidden rounded-md bg-canvas px-xl py-md">
-          <div v-if="isEmpty(s.content)" class="py-md text-body-sm text-stone">
+          <div v-if="isEmpty(s.content)" class="py-md text-body-sm text-hairline-strong">
             Пусто — нажмите чтобы наполнить
           </div>
           <div v-else class="pointer-events-none">
@@ -86,7 +86,7 @@ function isEmpty(content: any): boolean {
           </p>
         </div>
         <div class="relative flex h-[160px] items-center justify-center rounded-md bg-canvas">
-          <div class="flex flex-col items-center gap-2 text-stone">
+          <div class="flex flex-col items-center gap-2 text-hairline-strong">
             <Icon name="lucide:plus" class="h-8 w-8" />
             <span class="text-body-sm-md">Добавить новую секцию</span>
           </div>

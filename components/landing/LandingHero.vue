@@ -6,7 +6,7 @@
         <h1 class="mt-5 max-w-3xl text-[40px] font-semibold leading-[1.08] text-navy md:text-[52px]">
           quar.io превращает вопросы покупателей в продажи.
         </h1>
-        <p class="mt-6 max-w-2xl text-subtitle text-slate">
+        <p class="mt-6 max-w-2xl text-subtitle text-steel">
           Когда покупатель сканирует QR на товаре, quar.io открывает не статичный PDF, а живой канал:
           инструкцию, AI-помощника, обратную связь, прямые допродажи и аналитику того, что понятно, а что нет.
         </p>
@@ -15,23 +15,23 @@
       </div>
 
       <LandingMockupFrame>
-        <div class="grid gap-lg bg-surface-soft p-lg md:grid-cols-[0.95fr_1.05fr] md:p-2xl">
+        <div class="grid gap-lg bg-surface p-lg md:grid-cols-[0.95fr_1.05fr] md:p-2xl">
           <div class="rounded-lg bg-canvas p-md shadow-subtle">
             <div class="flex items-center justify-between gap-md">
               <p class="text-caption-bold text-charcoal">Мобильная инструкция</p>
-              <span class="rounded-sm bg-surface px-sm py-xxs text-micro text-slate">QR активен</span>
+              <span class="rounded-sm bg-surface px-sm py-xxs text-micro text-steel">QR активен</span>
             </div>
 
             <div class="mt-md rounded-md border border-hairline bg-canvas p-md">
               <p class="text-h5 text-navy">Шаг 4. Зафиксируйте направляющую</p>
-              <p class="mt-2 text-body-sm text-slate">
+              <p class="mt-2 text-body-sm text-steel">
                 Совместите отверстия до щелчка. Если деталь идет туго, проверьте сторону крепления.
               </p>
               <div class="mt-md rounded-md bg-surface p-sm">
                 <p class="text-caption-bold text-charcoal">Важно</p>
-                <p class="mt-1 text-caption text-slate">Не затягивайте винт до установки второй направляющей.</p>
+                <p class="mt-1 text-caption text-steel">Не затягивайте винт до установки второй направляющей.</p>
               </div>
-              <div class="mt-md grid grid-cols-3 gap-xs text-center text-micro text-slate">
+              <div class="mt-md grid grid-cols-3 gap-xs text-center text-micro text-steel">
                 <span class="rounded-sm bg-surface px-xs py-xxs">полезно</span>
                 <span class="rounded-sm bg-surface px-xs py-xxs">непонятно</span>
                 <span class="rounded-sm bg-surface px-xs py-xxs">ошибка</span>

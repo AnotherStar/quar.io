@@ -6,11 +6,9 @@
    * primary CTA и иконка приложения сводятся в одну тональность. */
   --color-primary: #0c3fe9;
   --color-primary-pressed: #0a36c7;
-  --color-primary-deep: #082db0;
   --color-on-primary: #ffffff;
   --color-brand-navy: #0a1530;
   --color-brand-navy-deep: #070f24;
-  --color-brand-navy-mid: #1a2a52;
   --color-link-blue: #0075de;
   --color-link-blue-pressed: #005bab;
 
@@ -18,14 +16,10 @@
   --color-brand-orange: #dd5b00;
   --color-brand-orange-deep: #793400;
   --color-brand-pink: #ff64c8;
-  --color-brand-pink-deep: #a02e6d;
   --color-brand-purple: #7b3ff2;
-  --color-brand-purple-300: #d6b6f6;
-  --color-brand-purple-800: #391c57;
   --color-brand-teal: #2a9d99;
   --color-brand-green: #1aae39;
   --color-brand-yellow: #f5d75e;
-  --color-brand-brown: #523410;
 
   /* Tints */
   --color-tint-peach: #ffe8d4;
@@ -35,30 +29,28 @@
   --color-tint-sky: #dcecfa;
   --color-tint-yellow: #fef7d6;
   --color-tint-yellow-bold: #f9e79f;
-  --color-tint-cream: #f8f5e8;
   --color-tint-gray: #f0eeec;
 
   /* Surface */
   --color-canvas: #ffffff;
   --color-surface: #f6f5f4;
-  --color-surface-soft: #fafaf9;
   --color-hairline: #e5e3df;
-  --color-hairline-soft: #ede9e4;
   --color-hairline-strong: #c8c4be;
 
-  /* Text */
-  --color-ink-deep: #000000;
+  /* Text — 3 уровня: ink (заголовки/dark CTA) → charcoal (body) →
+   * steel (вторичный). Плейсхолдеры/disabled берут hairline-strong из
+   * surface-семейства, отдельный «stone» не нужен. */
   --color-ink: #1a1a1a;
   --color-charcoal: #37352f;
-  --color-slate: #5d5b54;
   --color-steel: #787671;
-  --color-stone: #a4a097;
-  --color-muted: #bbb8b1;
   --color-on-dark: #ffffff;
-  --color-on-dark-muted: #a4a097;
 
-  /* Semantic */
+  /* Semantic.
+   *  - warning = brand-orange: «осторожно», сохраняет фирменный тон.
+   *  - error   = rose-red: специально сдвинут в розово-красную сторону, чтобы
+   *    на одинаковых по размеру свотчах не путался с warning (раньше оба
+   *    оранжево-красные, ~25° по тону — глаз склеивал). */
   --color-success: #1aae39;
   --color-warning: #dd5b00;
-  --color-error: #e03131;
+  --color-error: #e11d48;
 }

@@ -123,7 +123,7 @@ onMounted(ensureLoaded)
     </div>
 
     <div contenteditable="false">
-      <div v-if="!configId" class="flex items-center gap-2 py-md text-body-sm text-stone">
+      <div v-if="!configId" class="flex items-center gap-2 py-md text-body-sm text-hairline-strong">
         <Icon name="lucide:puzzle" class="h-4 w-4" />
         Модуль не выбран
       </div>

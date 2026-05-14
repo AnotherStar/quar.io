@@ -35,7 +35,7 @@ async function toggle(code: string, enabled: boolean, config: object) {
         <div class="flex items-start justify-between gap-md">
           <div class="min-w-0">
             <h3 class="text-h4 text-ink">{{ m.name }}</h3>
-            <p class="mt-1 text-body-sm text-slate">{{ m.description }}</p>
+            <p class="mt-1 text-body-sm text-steel">{{ m.description }}</p>
             <div class="mt-2 flex items-center gap-2">
               <UiBadge variant="tag-gray">v{{ m.version }}</UiBadge>
               <UiBadge v-if="m.requiresPlan" variant="tag-orange">от {{ m.requiresPlan }}</UiBadge>

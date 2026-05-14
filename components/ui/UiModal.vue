@@ -90,7 +90,7 @@ onBeforeUnmount(() => {
             </slot>
             <button
               type="button"
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-md text-steel transition-colors hover:bg-hairline-soft hover:text-ink"
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-md text-steel transition-colors hover:bg-hairline hover:text-ink"
               aria-label="Закрыть"
               @click="close"
             >
@@ -102,7 +102,7 @@ onBeforeUnmount(() => {
             <slot />
           </div>
 
-          <footer v-if="$slots.footer" class="border-t border-hairline-soft px-lg py-md">
+          <footer v-if="$slots.footer" class="border-t border-hairline px-lg py-md">
             <slot name="footer" />
           </footer>
         </section>

@@ -20,6 +20,29 @@ const [{ data: stats }, { data: feedback }] = await Promise.all([
     { watch: [() => currentTenant.value?.id] }
   )
 ])
+
+const feedbackKindLabels: Record<string, string> = {
+  HELPFUL: 'Помогло',
+  INCORRECT: 'Ошибка в инструкции',
+  CONFUSING: 'Непонятно'
+}
+
+const feedbackKindVariants: Record<string, 'tag-green' | 'tag-orange' | 'tag-blue'> = {
+  HELPFUL: 'tag-green',
+  INCORRECT: 'tag-orange',
+  CONFUSING: 'tag-blue'
+}
+
+const deviceLabels: Record<string, string> = {
+  desktop: 'Компьютер',
+  mobile: 'Смартфон',
+  tablet: 'Планшет'
+}
+
+function deviceLabel(value: string | null | undefined) {
+  if (!value) return 'Не определено'
+  return deviceLabels[value] ?? value
+}
 </script>
 
 <template>
@@ -33,14 +56,14 @@ const [{ data: stats }, { data: feedback }] = await Promise.all([
       <UiCard><p class="text-caption text-steel uppercase">Средний скролл</p><p class="mt-1 text-h2">{{ Math.round(stats?.totals.avgScrollDepth ?? 0) }}%</p></UiCard>
       <UiCard>
         <p class="text-caption text-steel uppercase">Среднее время</p>
-        <p class="mt-1 text-h2">{{ Math.round((stats?.totals.avgDurationMs ?? 0) / 1000) }}s</p>
+        <p class="mt-1 text-h2">{{ Math.round((stats?.totals.avgDurationMs ?? 0) / 1000) }} с</p>
       </UiCard>
     </div>
 
     <div class="grid grid-cols-1 gap-md md:grid-cols-2">
       <UiCard>
         <h3 class="text-h5 mb-2">По странам</h3>
-        <ul class="divide-y divide-hairline-soft">
+        <ul class="divide-y divide-hairline">
           <li v-for="r in stats?.byCountry" :key="r.country" class="flex justify-between py-1 text-body-sm">
             <span>{{ r.country }}</span><span class="text-steel">{{ r.count }}</span>
           </li>
@@ -48,9 +71,9 @@ const [{ data: stats }, { data: feedback }] = await Promise.all([
       </UiCard>
       <UiCard>
         <h3 class="text-h5 mb-2">По устройствам</h3>
-        <ul class="divide-y divide-hairline-soft">
+        <ul class="divide-y divide-hairline">
           <li v-for="r in stats?.byDevice" :key="r.deviceType" class="flex justify-between py-1 text-body-sm">
-            <span>{{ r.deviceType }}</span><span class="text-steel">{{ r.count }}</span>
+            <span>{{ deviceLabel(r.deviceType) }}</span><span class="text-steel">{{ r.count }}</span>
           </li>
         </ul>
       </UiCard>
@@ -60,15 +83,15 @@ const [{ data: stats }, { data: feedback }] = await Promise.all([
       <h3 class="text-h5 mb-2">Отзывы по блокам</h3>
       <div class="grid grid-cols-2 gap-md md:grid-cols-4">
         <div v-for="r in stats?.feedbackByKind" :key="r.kind">
-          <p class="text-caption text-steel uppercase">{{ r.kind }}</p>
+          <p class="text-caption text-steel uppercase">{{ feedbackKindLabels[r.kind] ?? r.kind }}</p>
           <p class="text-h3">{{ r.count }}</p>
         </div>
       </div>
       <hr class="my-md border-hairline">
-      <ul class="divide-y divide-hairline-soft max-h-[400px] overflow-y-auto">
+      <ul class="divide-y divide-hairline max-h-[400px] overflow-y-auto">
         <li v-for="f in feedback?.items" :key="f.id" class="py-sm text-body-sm">
           <span class="font-mono text-caption text-steel">{{ f.blockId }}</span>
-          <UiBadge class="ml-2" :variant="f.kind === 'HELPFUL' ? 'tag-green' : f.kind === 'INCORRECT' ? 'tag-orange' : 'tag-purple'">{{ f.kind }}</UiBadge>
+          <UiBadge class="ml-2" :variant="feedbackKindVariants[f.kind] ?? 'tag-gray'">{{ feedbackKindLabels[f.kind] ?? f.kind }}</UiBadge>
           <p v-if="f.comment" class="mt-1 text-charcoal">{{ f.comment }}</p>
         </li>
       </ul>

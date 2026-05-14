@@ -288,6 +288,20 @@ const paymentStatusLabels: Record<string, { label: string; variant: 'tag-green' 
   failed: { label: 'Ошибка', variant: 'tag-gray' }
 }
 
+const subscriptionStatusLabels: Record<string, string> = {
+  active: 'Активна',
+  trialing: 'Пробный период',
+  past_due: 'Ожидает оплаты',
+  canceled: 'Отменена',
+  inactive: 'Не активна'
+}
+
+const subscriptionStatusLabel = computed(() => {
+  const status = billingData.value?.status
+  if (!status) return 'Не активна'
+  return subscriptionStatusLabels[status] ?? 'Не активна'
+})
+
 function formatPaymentAmount(p: PaymentRow) {
   const sign = p.kind === 'refund' ? '−' : '+'
   return `${sign}${p.amount.toLocaleString('ru-RU')} ₽`
@@ -459,9 +473,9 @@ function formatPaymentDate(value: string) {
                 <p class="text-caption-bold text-steel uppercase tracking-wide">Текущий тариф</p>
                 <p class="mt-2 text-h2 capitalize text-navy">{{ billingData?.plan }}</p>
                 <div class="mt-2 flex items-center gap-2">
-                  <UiBadge v-if="billingData?.status === 'trialing'" variant="tag-orange">TRIAL</UiBadge>
-                  <UiBadge v-else-if="billingData?.status === 'active' && billingData?.plan !== 'free'" variant="tag-green">ACTIVE</UiBadge>
-                  <UiBadge v-else variant="tag-gray">{{ billingData?.status }}</UiBadge>
+                  <UiBadge v-if="billingData?.status === 'trialing'" variant="tag-orange">Пробный период</UiBadge>
+                  <UiBadge v-else-if="billingData?.status === 'active' && billingData?.plan !== 'free'" variant="tag-green">Активен</UiBadge>
+                  <UiBadge v-else variant="tag-gray">{{ subscriptionStatusLabel }}</UiBadge>
                 </div>
               </div>
               <div v-if="billingData?.trial?.isTrialing" class="text-right">
@@ -479,9 +493,9 @@ function formatPaymentDate(value: string) {
             </div>
             <ul class="mt-md space-y-1 text-body-sm text-charcoal">
               <li>✓ Кастомные секции</li>
-              <li>✓ Модули (warranty-registration, ...)</li>
-              <li>✓ Approval workflow</li>
-              <li>✓ Расширенная аналитика (1 год)</li>
+              <li>✓ Подключаемые модули: гарантия, чат с поддержкой, FAQ, обратная связь</li>
+              <li>✓ Согласование публикаций (черновик → проверка → публикация)</li>
+              <li>✓ Расширенная аналитика за год</li>
               <li class="text-steel">⚠️ Лимит инструкций — 3, чтобы по окончании триала ничего не пропало</li>
             </ul>
             <p class="mt-md text-caption text-steel">
@@ -496,7 +510,7 @@ function formatPaymentDate(value: string) {
               <Icon name="lucide:sparkles" class="h-5 w-5 text-navy opacity-50" />
               <h3 class="text-h4 text-navy">Запустить триал Plus на 30 дней</h3>
             </div>
-            <p class="mt-sm text-body text-slate">
+            <p class="mt-sm text-body text-steel">
               Все функции Plus — кастомные секции, модули, workflow одобрения. Лимит инструкций
               остаётся 3, чтобы по окончании триала ничего не пропало.
             </p>
@@ -509,7 +523,7 @@ function formatPaymentDate(value: string) {
               <Icon name="lucide:check-circle-2" class="h-5 w-5 text-navy opacity-50" />
               <h3 class="text-h4 text-navy">Триал уже использован</h3>
             </div>
-            <p class="mt-sm text-body text-slate">
+            <p class="mt-sm text-body text-steel">
               Триал был активирован {{ new Date(billingData.trial.trialUsedAt).toLocaleDateString() }}.
               Для постоянного доступа к платным функциям подключите оплату.
             </p>
@@ -522,9 +536,9 @@ function formatPaymentDate(value: string) {
                   <Icon name="lucide:wallet" class="h-5 w-5 text-navy opacity-50" />
                   <h3 class="text-h4 text-navy">Бонусный счёт</h3>
                 </div>
-                <p class="mt-sm text-body text-slate">
-                  Пополняйте счёт заранее — при продлении подписки оплата сначала списывается отсюда,
-                  и только если бонусов не хватает, дёргается ваша карта.
+                <p class="mt-sm text-body text-steel">
+                  При продлении подписки сумма сначала списывается с бонусного счёта.
+                  Если средств на нём недостаточно, остаток списывается с привязанной карты.
                 </p>
               </div>
               <div class="text-right">
@@ -591,11 +605,6 @@ function formatPaymentDate(value: string) {
               </UiTable>
             </div>
           </div>
-
-          <UiAlert kind="info" title="Тестовый платёжный шлюз">
-            Сейчас работает имитация оплаты с фиксированной тестовой картой —
-            настоящие списания не происходят. Реальный шлюз (ЮKassa / Stripe) подключим следующим шагом.
-          </UiAlert>
 
           <PaymentModal
             v-model:open="paymentModalOpen"

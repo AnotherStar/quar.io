@@ -148,7 +148,7 @@ function lastDesign(code: QrCodeRow) {
           v-model="search"
           type="text"
           placeholder="Поиск по shortId, названию, ШК…"
-          class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-stone outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+          class="h-10 w-full rounded-lg border border-transparent bg-surface px-md pl-9 text-body-sm-md placeholder:text-hairline-strong outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
         >
       </div>
     </div>

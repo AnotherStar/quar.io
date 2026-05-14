@@ -90,7 +90,7 @@ function startResize(handleIdx: number, e: PointerEvent) {
 
 const tbBtn = 'inline-flex h-6 w-6 items-center justify-center rounded-sm transition-colors'
 const tbIdle = 'text-charcoal hover:bg-surface'
-const tbActive = 'bg-ink-deep text-white'
+const tbActive = 'bg-ink text-white'
 </script>
 
 <template>

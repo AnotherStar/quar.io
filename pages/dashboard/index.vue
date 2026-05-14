@@ -57,7 +57,7 @@ const stats = computed(() => {
         </div>
         <UiButton to="/dashboard/instructions" variant="secondary" size="sm">Все инструкции</UiButton>
       </div>
-      <ul v-if="data?.instructions.length" class="mt-md divide-y divide-hairline-soft">
+      <ul v-if="data?.instructions.length" class="mt-md divide-y divide-hairline">
         <li v-for="i in data.instructions.slice(0, 5)" :key="i.id" class="flex items-center justify-between py-sm">
           <NuxtLink :to="`/dashboard/instructions/${i.id}/edit`" class="text-body-sm-md text-ink hover:text-primary">{{ i.title }}</NuxtLink>
           <UiBadge :variant="i.status === 'PUBLISHED' ? 'tag-green' : i.status === 'IN_REVIEW' ? 'tag-orange' : 'tag-gray'">

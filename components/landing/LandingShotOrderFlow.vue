@@ -40,7 +40,7 @@ const steps = [
       <div class="mx-auto max-w-[900px] text-center">
         <LandingShotKicker label="Как работает" tone="pill" />
         <h2 class="mt-lg text-h2 text-navy">Ваш путь от идеи к продажи</h2>
-        <p class="mx-auto mt-md max-w-[900px] text-h5 font-medium leading-[1.55] text-slate">
+        <p class="mx-auto mt-md max-w-[900px] text-h5 font-medium leading-[1.55] text-steel">
           Не обязательно делать техническую инструкцию. Можно сразу предложить скидку на следующий заказ —
           покупатель сканирует QR и видит ваше предложение.
         </p>
@@ -56,7 +56,7 @@ const steps = [
               <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-body-sm-md text-white lg:hidden">01</span>
               <span>{{ steps[0].title }}</span>
             </h3>
-            <p class="mt-md max-w-[640px] text-body font-medium leading-[1.55] text-slate md:text-h5">{{ steps[0].copy }}</p>
+            <p class="mt-md max-w-[640px] text-body font-medium leading-[1.55] text-steel md:text-h5">{{ steps[0].copy }}</p>
             <ul class="mt-2xl flex flex-col items-start gap-sm">
               <li v-for="bullet in steps[0].bullets" :key="bullet" class="inline-flex items-center rounded-full bg-surface px-md py-xs text-body-sm-md text-charcoal">
                 {{ bullet }}
@@ -94,7 +94,7 @@ const steps = [
               <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-body-sm-md text-white lg:hidden">{{ String(index + 2).padStart(2, '0') }}</span>
               <span>{{ step.title }}</span>
             </h3>
-            <p v-if="step.copy" class="mt-md max-w-[640px] text-body font-medium leading-[1.55] text-slate md:text-h5">{{ step.copy }}</p>
+            <p v-if="step.copy" class="mt-md max-w-[640px] text-body font-medium leading-[1.55] text-steel md:text-h5">{{ step.copy }}</p>
             <ul v-if="step.bullets" class="mt-2xl flex flex-col items-start gap-sm">
               <li v-for="bullet in step.bullets" :key="bullet" class="inline-flex items-center rounded-full bg-surface px-md py-xs text-body-sm-md text-charcoal">
                 {{ bullet }}

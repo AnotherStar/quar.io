@@ -382,19 +382,19 @@ const toneClass: Record<StorySlide['tone'], string> = {
               <div class="rounded-lg bg-tint-sky p-md">
                 <div class="flex items-center justify-between gap-md">
                   <p class="text-caption-bold text-charcoal">Мобильная инструкция</p>
-                  <span class="rounded-sm bg-white px-sm py-xxs text-micro text-slate">QR активен</span>
+                  <span class="rounded-sm bg-white px-sm py-xxs text-micro text-steel">QR активен</span>
                 </div>
 
                 <div class="mt-md rounded-md bg-white p-md shadow-subtle">
                   <p class="text-h5">Шаг 4. Подключение к Wi-Fi</p>
-                  <p class="mt-2 text-body-sm text-slate">
+                  <p class="mt-2 text-body-sm text-steel">
                     Откройте приложение, поднесите телефон ближе к роботу. Если индикатор мигает синим — нажмите кнопку питания на 3 секунды.
                   </p>
                   <div class="mt-md rounded-md bg-tint-peach p-sm">
                     <p class="text-caption-bold text-charcoal">Если не получается</p>
-                    <p class="mt-1 text-caption text-slate">Проверьте, что телефон подключён к сети 2,4 ГГц. Сеть 5 ГГц робот не поддерживает.</p>
+                    <p class="mt-1 text-caption text-steel">Проверьте, что телефон подключён к сети 2,4 ГГц. Сеть 5 ГГц робот не поддерживает.</p>
                   </div>
-                  <div class="mt-md grid grid-cols-3 gap-xs text-center text-micro text-slate">
+                  <div class="mt-md grid grid-cols-3 gap-xs text-center text-micro text-steel">
                     <span class="rounded-sm bg-tint-mint px-xs py-xxs">полезно</span>
                     <span class="rounded-sm bg-tint-yellow px-xs py-xxs">непонятно</span>
                     <span class="rounded-sm bg-tint-rose px-xs py-xxs">не работает</span>
@@ -406,7 +406,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
                 <div class="rounded-lg border border-hairline bg-canvas p-lg">
                   <div class="flex items-start justify-between gap-md">
                     <div>
-                      <p class="text-caption-bold uppercase text-stone">В кабинете продавца</p>
+                      <p class="text-caption-bold uppercase text-hairline-strong">В кабинете продавца</p>
                       <h2 class="mt-2 text-h3">Сегодня по этой инструкции</h2>
                     </div>
                     <div class="grid h-20 w-20 shrink-0 place-items-center rounded-md bg-ink text-micro text-white">
@@ -445,7 +445,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
     <section class="border-b border-hairline bg-canvas">
       <div class="container-page py-section-sm">
         <div class="max-w-3xl">
-          <p class="text-caption-bold uppercase text-stone">Что забирает у вас деньги после покупки</p>
+          <p class="text-caption-bold uppercase text-hairline-strong">Что забирает у вас деньги после покупки</p>
           <h2 class="mt-3 text-h2 text-ink">
             Главные потери продавца происходят не до заказа, а после получения товара.
           </h2>
@@ -454,10 +454,10 @@ const toneClass: Record<StorySlide['tone'], string> = {
           <div
             v-for="item in painItems"
             :key="item.label"
-            class="rounded-lg border border-hairline bg-surface-soft p-lg"
+            class="rounded-lg border border-hairline bg-surface p-lg"
           >
             <p class="text-body-sm-md text-charcoal">{{ item.label }}</p>
-            <p class="mt-3 text-caption text-slate">{{ item.cost }}</p>
+            <p class="mt-3 text-caption text-steel">{{ item.cost }}</p>
           </div>
         </div>
       </div>
@@ -476,7 +476,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
 
     <section id="how" class="container-page py-section-lg">
       <div class="max-w-3xl">
-        <p class="text-caption-bold uppercase text-stone">Как покупатель проходит путь от QR на коробке до новой покупки</p>
+        <p class="text-caption-bold uppercase text-hairline-strong">Как покупатель проходит путь от QR на коробке до новой покупки</p>
         <h2 class="mt-3 text-h2 text-ink">Семь моментов, ради которых quar.io вообще нужен.</h2>
       </div>
 
@@ -484,12 +484,12 @@ const toneClass: Record<StorySlide['tone'], string> = {
         <article
           v-for="slide in storySlides"
           :key="slide.title"
-          class="grid gap-lg rounded-lg border border-hairline bg-surface-soft p-lg md:grid-cols-[0.95fr_1.05fr] md:p-2xl"
+          class="grid gap-lg rounded-lg border border-hairline bg-surface p-lg md:grid-cols-[0.95fr_1.05fr] md:p-2xl"
         >
           <div>
-            <p class="text-caption-bold uppercase text-stone">{{ slide.eyebrow }}</p>
+            <p class="text-caption-bold uppercase text-hairline-strong">{{ slide.eyebrow }}</p>
             <h3 class="mt-3 text-h3 text-ink">{{ slide.title }}</h3>
-            <p class="mt-3 text-body text-slate">{{ slide.copy }}</p>
+            <p class="mt-3 text-body text-steel">{{ slide.copy }}</p>
             <ul class="mt-lg grid gap-sm">
               <li
                 v-for="point in slide.points"
@@ -507,7 +507,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
               <span class="h-3 w-3 rounded-full bg-[#ff5f57]" />
               <span class="h-3 w-3 rounded-full bg-[#febc2e]" />
               <span class="h-3 w-3 rounded-full bg-[#28c840]" />
-              <span class="ml-sm text-caption text-slate">плейсхолдер скриншота</span>
+              <span class="ml-sm text-caption text-steel">плейсхолдер скриншота</span>
             </div>
             <div class="grid h-[210px] place-items-center text-center">
               <p class="max-w-md text-body-sm-md text-charcoal">{{ slide.screen }}</p>
@@ -547,7 +547,7 @@ const toneClass: Record<StorySlide['tone'], string> = {
 
     <section class="container-page py-section-lg">
       <div class="max-w-3xl">
-        <p class="text-caption-bold uppercase text-stone">Как это выглядит в реальных нишах</p>
+        <p class="text-caption-bold uppercase text-hairline-strong">Как это выглядит в реальных нишах</p>
         <h2 class="mt-3 text-h2 text-ink">Три коротких сценария — техника, мебель и косметика.</h2>
       </div>
       <div class="mt-section grid gap-md md:grid-cols-3">
@@ -556,9 +556,9 @@ const toneClass: Record<StorySlide['tone'], string> = {
           :key="item.title"
           class="rounded-lg border border-hairline bg-canvas p-lg"
         >
-          <UiBadge variant="tag-purple">{{ item.niche }}</UiBadge>
+          <UiBadge variant="tag-blue">{{ item.niche }}</UiBadge>
           <h3 class="mt-4 text-h4 text-ink">{{ item.title }}</h3>
-          <p class="mt-3 text-body-sm text-slate">{{ item.body }}</p>
+          <p class="mt-3 text-body-sm text-steel">{{ item.body }}</p>
           <div class="mt-md rounded-md bg-tint-mint p-md">
             <p class="text-caption-bold text-charcoal">Результат</p>
             <p class="mt-1 text-body-sm text-charcoal">{{ item.result }}</p>
@@ -567,14 +567,14 @@ const toneClass: Record<StorySlide['tone'], string> = {
       </div>
     </section>
 
-    <section class="border-y border-hairline bg-surface-soft">
+    <section class="border-y border-hairline bg-surface">
       <div class="container-page py-section-lg">
         <div class="max-w-3xl">
-          <p class="text-caption-bold uppercase text-stone">Что вы видите в кабинете</p>
+          <p class="text-caption-bold uppercase text-hairline-strong">Что вы видите в кабинете</p>
           <h2 class="mt-3 text-h2 text-ink">
             Видно, на каком шаге покупатель злится — и можно починить это за 10 минут.
           </h2>
-          <p class="mt-3 text-body text-slate">
+          <p class="mt-3 text-body text-steel">
             quar.io показывает не просто «просмотры». Видно конкретные шаги с риском отзыва, повторяющиеся вопросы и инструкции, где QR-канал нужно улучшить первым.
           </p>
         </div>
@@ -627,9 +627,9 @@ const toneClass: Record<StorySlide['tone'], string> = {
     <section class="container-page py-section-lg">
       <div class="grid gap-10 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
         <div>
-          <p class="text-caption-bold uppercase text-stone">Тарифы</p>
+          <p class="text-caption-bold uppercase text-hairline-strong">Тарифы</p>
           <h2 class="mt-3 text-h2 text-ink">Начните с пилота на товарах, где инструкция уже влияет на отзывы.</h2>
-          <p class="mt-4 text-body text-slate">
+          <p class="mt-4 text-body text-steel">
             Бесплатного тарифа нет. Месяц триала кабинета входит в пакет «Пилот»: за это время вы переносите первые инструкции, привязываете QR на реальные SKU и получаете отчёт по проблемным шагам.
           </p>
           <ul class="mt-lg grid gap-sm">
@@ -686,20 +686,20 @@ const toneClass: Record<StorySlide['tone'], string> = {
       <div class="container-page py-section-lg">
         <div class="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
-            <p class="text-caption-bold uppercase text-stone">Частые вопросы</p>
+            <p class="text-caption-bold uppercase text-hairline-strong">Частые вопросы</p>
             <h2 class="mt-3 text-h2 text-ink">Что обычно спрашивают перед запуском пилота.</h2>
           </div>
           <div class="grid gap-md">
             <details
               v-for="item in faqItems"
               :key="item.q"
-              class="group rounded-md border-b border-hairline bg-canvas p-lg open:bg-surface-soft"
+              class="group rounded-md border-b border-hairline bg-canvas p-lg open:bg-surface"
             >
               <summary class="flex cursor-pointer list-none items-center justify-between gap-md text-h5 text-ink">
                 <span>{{ item.q }}</span>
                 <Icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-steel transition-transform group-open:rotate-180" />
               </summary>
-              <p class="mt-3 text-body text-slate">{{ item.a }}</p>
+              <p class="mt-3 text-body text-steel">{{ item.a }}</p>
             </details>
           </div>
         </div>

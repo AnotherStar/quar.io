@@ -65,7 +65,7 @@ function openModal(event: MouseEvent, target: 'pd' | 'marketing') {
 
     <UiModal v-model:open="pdModalOpen" title="Согласие на обработку персональных данных" size="lg">
       <div class="space-y-md text-body-sm text-charcoal">
-        <div class="rounded-md bg-surface-soft p-md text-caption">
+        <div class="rounded-md bg-surface p-md text-caption">
           <p>Оператор: {{ operator?.operatorName ?? 'не указан' }}</p>
           <p>Техническая платформа: {{ operator?.platformName ?? 'quar.io' }}</p>
           <p v-if="operator?.pdEmail">Email для обращений по персональным данным: {{ operator.pdEmail }}</p>
@@ -76,12 +76,12 @@ function openModal(event: MouseEvent, target: 'pd' | 'marketing') {
           </p>
         </div>
         <p class="text-caption text-steel">Цель обработки: {{ purpose }}.</p>
-        <pre class="max-h-[55vh] overflow-auto whitespace-pre-wrap rounded-md bg-surface-soft p-md font-sans text-caption text-charcoal">{{ pdDoc?.content ?? 'Текст согласия пока не опубликован.' }}</pre>
+        <pre class="max-h-[55vh] overflow-auto whitespace-pre-wrap rounded-md bg-surface p-md font-sans text-caption text-charcoal">{{ pdDoc?.content ?? 'Текст согласия пока не опубликован.' }}</pre>
       </div>
     </UiModal>
 
     <UiModal v-model:open="marketingModalOpen" title="Согласие на рекламные сообщения" size="lg">
-      <pre class="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-md bg-surface-soft p-md font-sans text-caption text-charcoal">{{ marketingDoc?.content ?? 'Текст согласия пока не опубликован.' }}</pre>
+      <pre class="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-md bg-surface p-md font-sans text-caption text-charcoal">{{ marketingDoc?.content ?? 'Текст согласия пока не опубликован.' }}</pre>
     </UiModal>
   </div>
 </template>

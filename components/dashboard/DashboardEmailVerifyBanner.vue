@@ -52,7 +52,7 @@ onMounted(() => {
           class="mt-0.5 h-5 w-5 shrink-0 text-warning"
         />
         <p v-if="needsSignup" class="text-body-sm leading-snug">
-          Вы в режиме <span class="font-medium">тестового аккаунта</span>. Завершите регистрацию чтобы ваши данные сохранились. Инструкции без подтвержденного email автоматически удаляются через 24 часа.
+          Вы работаете в <span class="font-medium">пробном аккаунте</span>. Завершите регистрацию, чтобы сохранить данные — инструкции без подтверждённого email удаляются через 24 часа.
         </p>
         <p v-else class="text-body-sm leading-snug">
           Подтвердите email <span class="font-medium">{{ user!.email }}</span> — пока он не подтверждён, на ваших 
@@ -78,7 +78,7 @@ onMounted(() => {
        (dashboard → blank) с двойным transition давал «белый экран». -->
   <UiModal v-model:open="completeModalOpen" title="Завершите регистрацию" size="sm">
     <p class="mb-md text-body-sm text-charcoal">
-      Задайте email и пароль — без них вы не сможете войти в trial-аккаунт повторно.
+      Укажите email и пароль — без них вы не сможете снова войти в пробный аккаунт.
     </p>
     <AuthCompleteSignupForm @success="onSignupSuccess" />
   </UiModal>

@@ -37,7 +37,7 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
         :required="required"
         :autocomplete="autocomplete"
         :disabled="disabled"
-        class="w-full bg-transparent px-md text-body-sm-md placeholder:text-stone outline-none disabled:cursor-not-allowed disabled:text-muted"
+        class="w-full bg-transparent px-md text-body-sm-md placeholder:text-hairline-strong outline-none disabled:cursor-not-allowed disabled:text-hairline-strong"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       >
     </div>

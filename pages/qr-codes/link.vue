@@ -771,7 +771,7 @@ const hint = computed(() => {
       </template>
 
       <div class="space-y-md">
-        <p class="text-body text-slate">
+        <p class="text-body text-steel">
           В кадре оказался другой QR-код. Заменить текущий выбор?
         </p>
         <div class="grid grid-cols-2 gap-sm">
@@ -809,7 +809,7 @@ const hint = computed(() => {
       </template>
 
       <div class="space-y-md">
-        <p class="text-body text-slate">
+        <p class="text-body text-steel">
           Этот QR-код ведёт на инструкцию:
         </p>
         <div class="rounded-md border border-hairline bg-surface px-md py-sm">
@@ -853,7 +853,7 @@ const hint = computed(() => {
           <button
             v-for="instr in pickerResults"
             :key="instr.id"
-            class="flex w-full flex-col items-start gap-1 border-b border-hairline-soft px-md py-sm text-left hover:bg-surface"
+            class="flex w-full flex-col items-start gap-1 border-b border-hairline px-md py-sm text-left hover:bg-surface"
             @click="pickInstruction(instr)"
           >
             <span class="text-body-md text-ink">{{ instr.title }}</span>
@@ -867,7 +867,7 @@ const hint = computed(() => {
 
       <div v-else class="space-y-md">
         <h3 class="text-h5 text-ink">{{ previewInstruction.title }}</h3>
-        <p v-if="previewInstruction.description" class="text-body text-slate">{{ previewInstruction.description }}</p>
+        <p v-if="previewInstruction.description" class="text-body text-steel">{{ previewInstruction.description }}</p>
         <UiAlert v-if="previewInstruction.status !== 'PUBLISHED'" kind="warning">
           Эта инструкция ещё не опубликована — сначала опубликуйте её, тогда QR можно будет связать.
         </UiAlert>

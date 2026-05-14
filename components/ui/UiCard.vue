@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type Tint = 'canvas' | 'peach' | 'rose' | 'mint' | 'lavender' | 'sky' | 'yellow' | 'yellow-bold' | 'cream' | 'gray'
+type Tint = 'canvas' | 'peach' | 'rose' | 'mint' | 'lavender' | 'sky' | 'yellow' | 'yellow-bold' | 'gray'
 
 withDefaults(
   defineProps<{
@@ -19,7 +19,6 @@ const tintClass: Record<Tint, string> = {
   sky: 'bg-tint-sky',
   yellow: 'bg-tint-yellow',
   'yellow-bold': 'bg-tint-yellow-bold',
-  cream: 'bg-tint-cream',
   gray: 'bg-tint-gray'
 }
 

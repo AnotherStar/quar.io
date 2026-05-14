@@ -124,7 +124,7 @@ function statusLabel(status: string) {
 
 function statusVariant(status: string) {
   if (status === 'open') return 'tag-orange'
-  if (status === 'pending') return 'tag-purple'
+  if (status === 'pending') return 'tag-blue'
   return 'tag-gray'
 }
 
@@ -283,7 +283,7 @@ onBeforeUnmount(() => {
             <p class="mt-1 truncate text-body-sm text-steel">
               {{ ticket.lastMessage?.text || (ticket.lastMessage?.mediaKind === 'photo' ? 'Фото' : ticket.lastMessage ? 'Файл' : 'Нет сообщений') }}
             </p>
-            <p class="mt-1 truncate text-caption text-stone">{{ ticket.instruction?.title || 'Инструкция не определена' }}</p>
+            <p class="mt-1 truncate text-caption text-hairline-strong">{{ ticket.instruction?.title || 'Инструкция не определена' }}</p>
           </button>
           <p v-if="!ticketsData.items.length" class="p-md text-body-sm text-steel">
             Обращений пока нет. Они появятся после первого сообщения покупателя в Telegram-бот.
@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
         <div class="min-h-[520px] rounded-lg bg-surface p-md">
           <div v-if="loadingTicket" class="p-md text-body-sm text-steel">Загружаем обращение…</div>
           <template v-else-if="selected">
-            <div class="flex flex-wrap items-start justify-between gap-md border-b border-hairline-soft pb-md">
+            <div class="flex flex-wrap items-start justify-between gap-md border-b border-hairline pb-md">
               <div>
                 <h2 class="text-h4 text-ink">{{ customerName(selected) }}</h2>
                 <p class="mt-1 text-body-sm text-steel">
@@ -335,8 +335,8 @@ onBeforeUnmount(() => {
           </label>
 
           <div class="grid gap-md md:grid-cols-2">
-            <UiInput v-model="form.botToken" label="Telegram bot token" placeholder="123456:ABC..." />
-            <UiInput v-model="form.botUsername" label="Bot username" placeholder="my_company_support_bot" prefix="@" />
+            <UiInput v-model="form.botToken" label="Токен Telegram-бота" placeholder="123456:ABC..." />
+            <UiInput v-model="form.botUsername" label="Имя бота в Telegram" placeholder="my_company_support_bot" prefix="@" />
             <UiInput v-model="form.supportChatId" label="ID группы поддержки" placeholder="-1001234567890" />
             <UiInput v-model="form.workingHours" label="Часы работы" />
           </div>
@@ -362,14 +362,14 @@ onBeforeUnmount(() => {
           <UiButton type="submit" :loading="saving">Сохранить</UiButton>
         </form>
 
-        <div class="mt-xl border-t border-hairline-soft pt-md">
+        <div class="mt-xl border-t border-hairline pt-md">
           <h3 class="text-h5 text-ink">Как подключить Telegram</h3>
           <ol class="mt-sm list-decimal space-y-2 pl-5 text-body-sm text-charcoal">
-            <li>Создайте бота в <span class="text-ink">@BotFather</span>, получите token и username.</li>
-            <li>Создайте закрытую группу поддержки, добавьте туда бота и выдайте ему право читать сообщения.</li>
-            <li>Получите chat id группы, например временно отправив сообщение в группу и проверив updates Bot API.</li>
-            <li>Сохраните настройки здесь, затем установите webhook на показанный URL.</li>
-            <li>Операторы отвечают в группе только через Reply на сообщение обращения.</li>
+            <li>Создайте бота в <span class="text-ink">@BotFather</span> и сохраните выданный токен и имя бота.</li>
+            <li>Создайте закрытую группу поддержки, добавьте в неё бота и разрешите ему читать сообщения.</li>
+            <li>Узнайте идентификатор группы — например, через сервис <span class="text-ink">@getidsbot</span> или другую утилиту для получения chat id.</li>
+            <li>Сохраните настройки на этой странице и нажмите «Установить webhook».</li>
+            <li>Оператор отвечает покупателю, нажимая «Ответить» на нужное сообщение в группе.</li>
           </ol>
         </div>
       </div>

@@ -7,7 +7,7 @@ defineProps<{
 </script>
 
 <template>
-  <section class="border-y border-hairline bg-surface-soft">
+  <section class="border-y border-hairline bg-surface">
     <div class="container-page py-section-lg">
       <div class="grid gap-10 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
         <LandingSectionHeading
@@ -26,7 +26,7 @@ defineProps<{
               <Icon :name="feature.icon" class="mt-1 h-5 w-5 shrink-0 text-navy opacity-50" />
               <div>
                 <h3 class="text-h4 text-navy">{{ feature.title }}</h3>
-                <p class="mt-2 text-body-sm text-slate">{{ feature.copy }}</p>
+                <p class="mt-2 text-body-sm text-steel">{{ feature.copy }}</p>
               </div>
             </div>
           </div>

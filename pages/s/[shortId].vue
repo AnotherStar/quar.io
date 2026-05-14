@@ -33,7 +33,7 @@ const isAuthenticated = computed(() => !!activation.value?.viewerAuthenticated)
 </script>
 
 <template>
-  <main class="min-h-screen bg-surface-soft">
+  <main class="min-h-screen bg-surface">
     <div class="container-page flex min-h-screen items-center justify-center py-section">
       <UiCard class="w-full max-w-[560px]">
         <div v-if="activation" class="space-y-lg">
@@ -44,7 +44,7 @@ const isAuthenticated = computed(() => !!activation.value?.viewerAuthenticated)
                 <Icon name="lucide:shield-x" class="h-5 w-5" />
               </div>
               <h1 class="text-h3 text-ink">Это не ваш ШК</h1>
-              <p class="mt-2 text-body text-slate">
+              <p class="mt-2 text-body text-steel">
                 Этот QR-код принадлежит другой компании. Активировать его может только владелец аккаунта «{{ activation.tenant.name }}».
               </p>
             </div>
@@ -61,7 +61,7 @@ const isAuthenticated = computed(() => !!activation.value?.viewerAuthenticated)
                 <Icon name="lucide:link-2-off" class="h-5 w-5" />
               </div>
               <h1 class="text-h3 text-ink">ШК не привязан к инструкции</h1>
-              <p class="mt-2 text-body text-slate">
+              <p class="mt-2 text-body text-steel">
                 Этот QR-код напечатан заранее, но владелец ещё не связал его с инструкцией к товару.
               </p>
             </div>
