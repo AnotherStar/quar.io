@@ -1,29 +1,26 @@
 ---
 version: alpha
 name: quar.io
-description: quar.io combines two distinct visual modes — a Notion-flavoured marketing surface (illustration-rich, pastel feature cards, navy hero band) and a calm, macOS-Settings-inspired dashboard (inset rounded sidebar on a white canvas, no top header, brand-row and content header-row aligned). Primary CTA is the brand blue {colors.primary} (sourced from the quar.io logo so logotype and primary action share the same hue). Typography is Inter-based across all surfaces. Dashboard pages share a single `PageHeader` component (icon + h3 title in navy with 50% opacity icon), a segmented-tabs / pill-search row, and unwrapped tables — no card borders inside the working canvas.
+description: quar.io combines two distinct visual modes — a Notion-flavoured marketing surface (illustration-rich, pastel feature cards, navy hero band) and a calm, macOS-Settings-inspired dashboard (inset rounded sidebar on a white canvas, no top header, brand-row and content header-row aligned). Primary CTA is the brand blue {colors.primary} (sourced from the quar.io logo so logotype and primary action share the same hue). Typography is Inter-based across all surfaces. Dashboard pages share a single `PageHeader` component (icon + h3 title in navy with 50% opacity icon), a segmented-tabs / pill-search row, and unwrapped tables — no card borders inside the working canvas. Палитра сокращена до рабочего минимума: 4-уровневая warm-neutral шкала (canvas → surface → hairline → hairline-strong), 3 уровня текста (ink → charcoal → steel) и 4 семантических tag-чипа (green / orange / blue / gray). Inputs ходят на rounded-md (8px), кнопки и табы — на rounded-lg (12px).
 
 colors:
+  # Brand & primary — синий quar.io под цвет логотипа
   primary: "#0c3fe9"
   primary-pressed: "#0a36c7"
-  primary-deep: "#082db0"
   on-primary: "#ffffff"
   brand-navy: "#0a1530"
   brand-navy-deep: "#070f24"
-  brand-navy-mid: "#1a2a52"
   link-blue: "#0075de"
   link-blue-pressed: "#005bab"
+  # Brand spectrum (используется на маркетинге и в иконах метрик)
   brand-orange: "#dd5b00"
   brand-orange-deep: "#793400"
   brand-pink: "#ff64c8"
-  brand-pink-deep: "#a02e6d"
   brand-purple: "#7b3ff2"
-  brand-purple-300: "#d6b6f6"
-  brand-purple-800: "#391c57"
   brand-teal: "#2a9d99"
   brand-green: "#1aae39"
   brand-yellow: "#f5d75e"
-  brand-brown: "#523410"
+  # Card tints (пастельные фоны)
   card-tint-peach: "#ffe8d4"
   card-tint-rose: "#fde0ec"
   card-tint-mint: "#d9f3e1"
@@ -31,26 +28,21 @@ colors:
   card-tint-sky: "#dcecfa"
   card-tint-yellow: "#fef7d6"
   card-tint-yellow-bold: "#f9e79f"
-  card-tint-cream: "#f8f5e8"
   card-tint-gray: "#f0eeec"
+  # Surface (warm-neutral шкала, 4 уровня)
   canvas: "#ffffff"
   surface: "#f6f5f4"
-  surface-soft: "#fafaf9"
   hairline: "#e5e3df"
-  hairline-soft: "#ede9e4"
   hairline-strong: "#c8c4be"
-  ink-deep: "#000000"
+  # Text (3 уровня + on-dark)
   ink: "#1a1a1a"
   charcoal: "#37352f"
-  slate: "#5d5b54"
   steel: "#787671"
-  stone: "#a4a097"
-  muted: "#bbb8b1"
   on-dark: "#ffffff"
-  on-dark-muted: "#a4a097"
+  # Semantic
   semantic-success: "#1aae39"
   semantic-warning: "#dd5b00"
-  semantic-error: "#e03131"
+  semantic-error: "#e11d48"
 
 typography:
   hero-display:
@@ -181,22 +173,23 @@ components:
     textColor: "{colors.on-primary}"
   button-primary-disabled:
     backgroundColor: "{colors.hairline}"
-    textColor: "{colors.muted}"
+    textColor: "{colors.hairline-strong}"
   button-dark:
-    backgroundColor: "{colors.ink-deep}"
+    backgroundColor: "{colors.ink}"
     textColor: "{colors.on-dark}"
     typography: "{typography.button-md}"
     rounded: "{rounded.lg}"
     height: 40px
     padding: "0 18px"
+    description: "Чёрный CTA на светлом фоне. Hover опускается до {colors.charcoal} (на шаг светлее ink)."
   button-secondary:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.card-tint-gray}"
     textColor: "{colors.charcoal}"
     typography: "{typography.button-md}"
     rounded: "{rounded.lg}"
     height: 40px
     padding: "0 18px"
-    description: "Soft pill — same geometry as primary, no border. Used on dashboard surfaces next to primary CTAs and as quiet navigation buttons (e.g. 'Все инструкции' on the overview page). Hover deepens to {colors.tint-gray}."
+    description: "Soft pill — same geometry as primary, no border. Фон {colors.card-tint-gray} (на шаг темнее surface) — чтобы кнопка не пропадала на info-card, которая сама surface. Hover опускается на {colors.hairline}. Disabled-text: {colors.hairline-strong}."
   button-on-dark:
     backgroundColor: "{colors.on-dark}"
     textColor: "{colors.ink}"
@@ -211,7 +204,7 @@ components:
     rounded: "{rounded.lg}"
     height: 40px
     padding: "0 18px"
-    border: "1px solid {colors.on-dark-muted}"
+    border: "1px solid {colors.hairline-strong}"
   button-ghost:
     backgroundColor: "transparent"
     textColor: "{colors.ink}"
@@ -268,11 +261,6 @@ components:
     textColor: "{colors.charcoal}"
     rounded: "{rounded.lg}"
     padding: "{spacing.xxl}"
-  card-feature-cream:
-    backgroundColor: "{colors.card-tint-cream}"
-    textColor: "{colors.charcoal}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.xxl}"
   card-agent-tile:
     backgroundColor: "{colors.canvas}"
     rounded: "{rounded.lg}"
@@ -301,26 +289,33 @@ components:
   text-input:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
-    placeholderColor: "{colors.stone}"
+    placeholderColor: "{colors.hairline-strong}"
     typography: "{typography.body-sm-medium}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.md}"
     padding: "0 {spacing.md}"
     border: "1px solid {colors.hairline}"
     height: 40px
-    description: "Form input. Quiet hairline border at rest. Focus state keeps the border 1px (no width change → no layout shift) but darkens to primary and adds a 2px primary ring at 15% opacity via box-shadow. Geometry matches search-pill / segmented-tabs / button-primary."
+    description: "Form input. Quiet hairline border at rest. Focus state keeps the border 1px (no width change → no layout shift) but darkens to primary and adds a 2px primary ring at 15% opacity via box-shadow. Геометрия — h-10 / rounded-md (8px) / border 1px hairline. Кнопки и segmented-tabs остаются на rounded-lg (12px), у инпутов углы чуть «уже»."
   text-input-focused:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     border: "1px solid {colors.primary}"
     ring: "0 0 0 2px rgba({colors.primary}, 0.15)"
+  text-input-disabled:
+    backgroundColor: "{colors.card-tint-gray}"
+    textColor: "{colors.hairline-strong}"
+    placeholderColor: "{colors.hairline-strong}"
+    border: "1px solid {colors.hairline}"
+    description: "Disabled-стейт. Фон {colors.card-tint-gray} (на шаг темнее surface) — отличим и на canvas-страницах, и внутри info-card на surface. Cursor: not-allowed."
   search-pill:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.steel}"
-    typography: "{typography.body-md}"
+    typography: "{typography.body-sm-medium}"
     rounded: "{rounded.md}"
-    padding: "{spacing.sm} {spacing.md}"
-    height: 44px
-    border: "1px solid {colors.hairline}"
+    padding: "0 {spacing.md} 0 36px"
+    height: 40px
+    border: "1px solid transparent"
+    description: "Search-pill дашборда. h-10 / rounded-md / bg-surface. На focus — фон сменяется на canvas, бордер становится primary + 2px ring primary/20."
   pill-tab:
     backgroundColor: "transparent"
     textColor: "{colors.steel}"
@@ -329,10 +324,10 @@ components:
     padding: "{spacing.xs} {spacing.md}"
     border: "1px solid {colors.hairline}"
   pill-tab-active:
-    backgroundColor: "{colors.ink-deep}"
+    backgroundColor: "{colors.ink}"
     textColor: "{colors.on-dark}"
     rounded: "{rounded.full}"
-    border: "1px solid {colors.ink-deep}"
+    border: "1px solid {colors.ink}"
   segmented-tab:
     backgroundColor: "transparent"
     textColor: "{colors.steel}"
@@ -362,12 +357,13 @@ components:
     typography: "{typography.caption-bold}"
     rounded: "{rounded.full}"
     padding: "4px 10px"
-  badge-tag-purple:
-    backgroundColor: "{colors.card-tint-lavender}"
-    textColor: "{colors.brand-purple-800}"
+  badge-tag-blue:
+    backgroundColor: "{colors.card-tint-sky}"
+    textColor: "{colors.link-blue-pressed}"
     typography: "{typography.caption-bold}"
     rounded: "{rounded.sm}"
     padding: "2px 8px"
+    description: "Нейтрально-информационный чип. Используем для «Напечатан/Партия» на /dashboard/qr-codes/[id], индикатора возврата ↻ и групп аналитики, niche-тегов на маркетинге."
   badge-tag-orange:
     backgroundColor: "{colors.card-tint-peach}"
     textColor: "{colors.brand-orange-deep}"
@@ -423,7 +419,7 @@ components:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     padding: "{spacing.md} {spacing.lg}"
-    border: "0 0 1px {colors.hairline-soft} solid"
+    border: "0 0 1px {colors.hairline} solid"
   testimonial-card:
     backgroundColor: "{colors.canvas}"
     rounded: "{rounded.lg}"
@@ -522,17 +518,19 @@ components:
   segmented-tab-active:
     textColor: "{colors.ink}"
   segmented-tab-inactive:
-    textColor: "{colors.stone}"
-  search-pill:
+    textColor: "{colors.hairline-strong}"
+  ui-switch:
+    description: "Бинарный on/off toggle, отдельный компонент UiSwitch. Track 40×24, thumb 20×20 (white + shadow-subtle), движется через transform: translateX(16px). On — {colors.primary}, off — {colors.surface} + 1px inset {colors.hairline} (чтобы трек был виден на info-card, которая сама surface), disabled — {colors.hairline} без shadow на thumb."
+  ui-switch-on:
+    backgroundColor: "{colors.primary}"
+    thumb: "{colors.canvas}"
+  ui-switch-off:
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    placeholderColor: "{colors.stone}"
-    typography: "{typography.body-sm-medium}"
-    rounded: "{rounded.lg}"
-    padding: "0 {spacing.md} 0 36px"
-    height: 40px
-    border: "1px solid transparent"
-    description: "Dashboard search input. Same height as segmented-tabs and primary button. On focus, background flips to canvas, border to primary, plus 2px ring at 20% opacity."
+    thumb: "{colors.canvas}"
+    border: "1px inset {colors.hairline}"
+  ui-switch-disabled:
+    backgroundColor: "{colors.hairline}"
+    thumb: "{colors.canvas}"
   info-card:
     backgroundColor: "{colors.surface}"
     rounded: "{rounded.lg}"
@@ -555,7 +553,7 @@ components:
     rounded: "{rounded.lg}"
     padding: "4px"
     height: 40px
-    description: "Альтернатива segmented-tabs для 3+ опций с разной длиной текста (на QR-codes — 5 фильтров). Контейнер тот же серый surface, но без анимированного индикатора-плашки: каждая кнопка сама получает `bg-canvas + shadow-subtle` при активном состоянии. Неактивные — {colors.stone}, hover → {colors.ink}."
+    description: "Альтернатива segmented-tabs для 3+ опций с разной длиной текста (на QR-codes — 5 фильтров). Контейнер тот же серый surface, но без анимированного индикатора-плашки: каждая кнопка сама получает `bg-canvas + shadow-subtle` при активном состоянии. Неактивные — {colors.hairline-strong}, hover → {colors.ink}."
 ---
 
 ## Overview
@@ -582,62 +580,51 @@ The system uses a Notion-Sans typeface (Inter-based) across every UI surface —
 > Source pages: notion.com/ (homepage), /enterprise, /product/ai, /product/agents, /startups, /pricing. Token coverage was identical across all six pages.
 
 ### Brand & Primary
-- **Notion Purple** ({colors.primary}): Signature primary CTA color — the unmistakable "Get Notion free" pill button. Reserved for the dominant CTA only.
-- **Purple Pressed** ({colors.primary-pressed}): Pressed-state variant
-- **Purple Deep** ({colors.primary-deep}): Deeper variant for emphasis
-- **Brand Navy** ({colors.brand-navy}): Hero band background — deep navy
-- **Brand Navy Deep** ({colors.brand-navy-deep}): Deeper navy for promo banner
-- **Brand Navy Mid** ({colors.brand-navy-mid}): Mid-spectrum navy
-- **Link Blue** ({colors.link-blue}): Inline text link blue (NOT primary CTA)
-- **Link Blue Pressed** ({colors.link-blue-pressed}): Pressed-state link blue
+- **Primary** ({colors.primary}): Signature primary CTA — синий quar.io, тот же оттенок, что в логотипе.
+- **Primary Pressed** ({colors.primary-pressed}): hover/pressed-стейт primary.
+- **Brand Navy** ({colors.brand-navy}): PageHeader, заголовки секций, hero-band на маркетинге.
+- **Brand Navy Deep** ({colors.brand-navy-deep}): Глубже navy — promo-banner.
+- **Link Blue** ({colors.link-blue}): Inline-ссылки в тексте (не primary CTA).
+- **Link Blue Pressed** ({colors.link-blue-pressed}): Pressed-state link.
 
-### Brand Color Spectrum (echoes live product database properties)
-- **Brand Pink** ({colors.brand-pink}): Pink accent
-- **Brand Pink Deep** ({colors.brand-pink-deep}): Deeper pink
-- **Brand Orange** ({colors.brand-orange}): Orange accent
-- **Brand Orange Deep** ({colors.brand-orange-deep}): Deeper orange-rust
-- **Brand Purple** ({colors.brand-purple}): Purple accent variant
-- **Brand Purple 300** ({colors.brand-purple-300}): Light purple
-- **Brand Purple 800** ({colors.brand-purple-800}): Deep purple for tag text
-- **Brand Teal** ({colors.brand-teal}): Teal accent
-- **Brand Green** ({colors.brand-green}): Bright green
-- **Brand Yellow** ({colors.brand-yellow}): Soft yellow
-- **Brand Brown** ({colors.brand-brown}): Brand brown for "earthy" tints
+### Brand Color Spectrum
+Используется на маркетинговых поверхностях (landing, investors, alt-*) и точечно для иконок метрик в дашборде. В рабочем UI не появляется.
+- **Brand Orange** ({colors.brand-orange}): Оранжевый акцент. Также — `semantic-warning`.
+- **Brand Orange Deep** ({colors.brand-orange-deep}): Тёмный orange — text для `badge-tag-orange` поверх peach-фона.
+- **Brand Pink** ({colors.brand-pink}): Pink-акцент для маркетинга, badge-pink.
+- **Brand Purple** ({colors.brand-purple}): Purple-акцент.
+- **Brand Teal** ({colors.brand-teal}): Teal-акцент.
+- **Brand Green** ({colors.brand-green}): Зелёный — также `semantic-success` и text в `badge-tag-green`.
+- **Brand Yellow** ({colors.brand-yellow}): Soft yellow для маркетинговых блоков.
 
 ### Card Tints (Pastel Feature Card Backgrounds)
-- **Tint Peach** ({colors.card-tint-peach}): Pale peach
-- **Tint Rose** ({colors.card-tint-rose}): Pale rose-pink
-- **Tint Mint** ({colors.card-tint-mint}): Pale mint-green
-- **Tint Lavender** ({colors.card-tint-lavender}): Pale lavender
-- **Tint Sky** ({colors.card-tint-sky}): Pale sky-blue
-- **Tint Yellow** ({colors.card-tint-yellow}): Pale yellow
-- **Tint Yellow Bold** ({colors.card-tint-yellow-bold}): Bold yellow for high-emphasis feature banners ("Ask your on-demand assistants")
-- **Tint Cream** ({colors.card-tint-cream}): Cream tint
-- **Tint Gray** ({colors.card-tint-gray}): Neutral surface
+- **Tint Peach** ({colors.card-tint-peach}): Pale peach — фон `badge-tag-orange`, card-feature.
+- **Tint Rose** ({colors.card-tint-rose}): Pale rose-pink — card-feature.
+- **Tint Mint** ({colors.card-tint-mint}): Pale mint-green — фон `badge-tag-green`, card-feature.
+- **Tint Lavender** ({colors.card-tint-lavender}): Pale lavender — card-feature.
+- **Tint Sky** ({colors.card-tint-sky}): Pale sky-blue — фон `badge-tag-blue`, card-feature.
+- **Tint Yellow** ({colors.card-tint-yellow}): Pale yellow — card-feature.
+- **Tint Yellow Bold** ({colors.card-tint-yellow-bold}): Bold yellow для высококонтрастных hero-блоков на маркетинге.
+- **Tint Gray** ({colors.card-tint-gray}): На 2.5% темнее surface. `button-secondary` фон, hover-tier между surface и hairline, фон `<code>`/`<pre>`, disabled `text-input`/`select`.
 
 ### Surface
-- **Canvas White** ({colors.canvas}): Page background and primary card surface
-- **Surface** ({colors.surface}): Subtle section backgrounds, search-pill rest, featured pricing tier
-- **Surface Soft** ({colors.surface-soft}): Quieter section divisions
-- **Hairline** ({colors.hairline}): 1px borders and primary dividers
-- **Hairline Soft** ({colors.hairline-soft}): Quieter dividers
-- **Hairline Strong** ({colors.hairline-strong}): Stronger 1px border for inputs
+4-уровневая warm-neutral шкала. Раньше было 6 уровней (с `surface-soft` и `hairline-soft`) — слили вниз/вверх, разница меньше 4% по яркости визуально незаметна.
+- **Canvas** ({colors.canvas}): Основной фон дашборда, бренд-row сайдбара, контент tables.
+- **Surface** ({colors.surface}): `info-card`, `stat-card`, sidebar shell, search-pill rest.
+- **Hairline** ({colors.hairline}): 1px бордеры таблиц, инпутов, разделители row'ов.
+- **Hairline Strong** ({colors.hairline-strong}): Off-трек UiSwitch, плейсхолдеры в инпутах, disabled-text, неактивные пилюли. Самый тёмный warm-neutral в системе.
 
 ### Text
-- **Ink Deep** ({colors.ink-deep}): Pure black for emphasis
-- **Ink** ({colors.ink}): Primary headlines and body text
-- **Charcoal** ({colors.charcoal}): Body emphasis (Notion's signature warm-charcoal)
-- **Slate** ({colors.slate}): Secondary text
-- **Steel** ({colors.steel}): Tertiary, footer links
-- **Stone** ({colors.stone}): Muted labels
-- **Muted** ({colors.muted}): Disabled, placeholders
-- **On Dark** ({colors.on-dark}): White text on dark surfaces
-- **On Dark Muted** ({colors.on-dark-muted}): Reduced-opacity white
+3 уровня + on-dark. Слили `slate` → `steel`, `stone` → `hairline-strong`, `muted` → `hairline-strong`, удалили `ink-deep` (теперь `ink` покрывает и dark CTA).
+- **Ink** ({colors.ink}): Заголовки таблиц, dark CTA кнопки (`button-dark`).
+- **Charcoal** ({colors.charcoal}): Body, текст в пунктах меню, hover для `button-dark`.
+- **Steel** ({colors.steel}): Вторичный/третичный текст, caption-подписи, шапки таблиц.
+- **On Dark** ({colors.on-dark}): Белый текст на тёмных поверхностях (navy hero, primary CTA).
 
 ### Semantic
-- **Success** ({colors.semantic-success}): Confirmation green
-- **Warning** ({colors.semantic-warning}): Mid-priority alerts (orange)
-- **Error** ({colors.semantic-error}): Validation errors (red)
+- **Success** ({colors.semantic-success}): Зелёный — published, успешные действия.
+- **Warning** ({colors.semantic-warning}): Brand-orange — «осторожно», тёплый акцент.
+- **Error** ({colors.semantic-error}): Rose-red. Раньше был `#e03131` — на свотчах его склеивало с warning. Сдвинули в розово-красную сторону для 40° hue-разделения.
 
 ## Typography
 
@@ -705,16 +692,16 @@ Marketing surfaces use generous breathing room between feature card bands. Works
 
 | Token | Value | Use |
 |---|---|---|
-| `{rounded.xs}` | 4px | Tag chips |
-| `{rounded.sm}` | 6px | Type badges |
-| `{rounded.md}` | 8px | Buttons, inputs, search-pill |
-| `{rounded.lg}` | 12px | Cards, pricing tiers, agent tiles, workspace mockup |
-| `{rounded.xl}` | 16px | Larger feature panels |
-| `{rounded.xxl}` | 20px | Featured product showcases |
-| `{rounded.xxxl}` | 24px | Larger feature cards |
-| `{rounded.full}` | 9999px | Status badges, pill tabs (NOT regular buttons) |
+| `{rounded.xs}` | 4px | Микро-чипы |
+| `{rounded.sm}` | 6px | `badge-tag-*`, мелкие ghost-кнопки, sm-buttons |
+| `{rounded.md}` | 8px | **Inputs / textarea / select / search-pill / disabled controls** + nav-items в сайдбаре, code-блоки |
+| `{rounded.lg}` | 12px | **Buttons (md/lg) / segmented-tabs / pill-tabs / info-cards / stat-cards / module tiles / cards общего вида** |
+| `{rounded.xl}` | 16px | Крупные feature-панели на маркетинге |
+| `{rounded.xxl}` | 20px | UiModal внешний контейнер |
+| `{rounded.xxxl}` | 24px | Самые крупные маркетинговые карточки |
+| `{rounded.full}` | 9999px | solid-badges, pill-tabs нав, sidebar attention-dot, UiSwitch |
 
-Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguish it from pill-button-everywhere brands.
+В дашборде ключевой контраст — **rounded-md (8px)** для всего, во что пользователь печатает, и **rounded-lg (12px)** для всего, что он нажимает или внутри чего лежат данные. В working-row под PageHeader это даёт: rounded-lg табы → rounded-md поиск → rounded-lg CTA. Сделано намеренно — у инпутов углы чуть «уже».
 
 ## Components
 
@@ -722,28 +709,30 @@ Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguis
 
 ### Buttons
 
-**`button-primary`** — Signature purple rectangular primary CTA, the dominant action.
-- Background `{colors.primary}`, text `{colors.on-primary}`, typography `{typography.button-md}`, padding `10px 18px`, rounded `{rounded.md}`.
-- Pressed state `button-primary-pressed` deepens to `{colors.primary-pressed}`.
-- Disabled state uses `{colors.hairline}` background.
+Размер `md` — h-10 / rounded-lg (12px). Размер `sm` — h-8 / rounded-md. Размер `lg` — h-12 / rounded-lg.
 
-**`button-dark`** — Black rectangular CTA on light backgrounds.
-- Background `{colors.ink-deep}`, text `{colors.on-dark}`, typography `{typography.button-md}`, padding `10px 18px`, rounded `{rounded.md}`.
+**`button-primary`** — Signature blue CTA, основное действие.
+- Background `{colors.primary}`, text `{colors.on-primary}`, typography `{typography.button-md}`, padding `0 18px`, rounded `{rounded.lg}`.
+- Hover/pressed: `{colors.primary-pressed}`. Disabled: bg `{colors.hairline}`, text `{colors.hairline-strong}`.
 
-**`button-secondary`** — Outlined rectangular for secondary actions ("Request a demo").
-- Background transparent, text `{colors.ink}`, border `1px solid {colors.hairline-strong}`, typography `{typography.button-md}`, padding `10px 18px`, rounded `{rounded.md}`.
+**`button-dark`** — Чёрный CTA на светлом фоне.
+- Background `{colors.ink}`, text `{colors.on-dark}`, rounded `{rounded.lg}`, hover `{colors.charcoal}`.
 
-**`button-on-dark`** — White button on dark hero bands.
-- Background `{colors.on-dark}`, text `{colors.ink}`, typography `{typography.button-md}`, padding `10px 18px`, rounded `{rounded.md}`.
+**`button-secondary`** — Soft pill, без бордера. Сидит рядом с primary CTA или как «тихая навигация».
+- Background `{colors.card-tint-gray}` (на шаг темнее surface — чтобы кнопка не пропадала на info-card), text `{colors.charcoal}`, rounded `{rounded.lg}`, hover `{colors.hairline}`.
+- Disabled-text: `{colors.hairline-strong}`.
 
-**`button-secondary-on-dark`** — Outlined button on dark.
-- Background transparent, text `{colors.on-dark}`, border `1px solid {colors.on-dark-muted}`, typography `{typography.button-md}`, padding `10px 18px`, rounded `{rounded.md}`.
+**`button-on-dark`** — White button на тёмных hero-band'ах.
+- Background `{colors.on-dark}`, text `{colors.ink}`, rounded `{rounded.lg}`.
 
-**`button-ghost`** — Quieter ghost button.
-- Background transparent, text `{colors.ink}`, typography `{typography.button-md}`, padding `8px 12px`, rounded `{rounded.sm}`.
+**`button-secondary-on-dark`** — Outlined на тёмных.
+- Background transparent, text `{colors.on-dark}`, border `1px solid {colors.hairline-strong}`, rounded `{rounded.lg}`.
 
-**`button-link`** — Inline blue text link (NOT primary purple).
-- Background transparent, text `{colors.link-blue}`, typography `{typography.body-sm-medium}`, padding `0`.
+**`button-ghost`** — Тихая ghost-кнопка.
+- Background transparent, text `{colors.ink}`, padding `8px 12px`, rounded `{rounded.sm}`.
+
+**`button-link`** — Inline-ссылка-кнопка (не primary blue).
+- Background transparent, text `{colors.link}`, typography `{typography.body-sm-medium}`, padding `0`.
 
 ### Cards & Containers
 
@@ -756,8 +745,8 @@ Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguis
 **`card-feature-yellow-bold`** — Bold yellow feature banner for high-emphasis content ("Ask your on-demand assistants").
 - Background `{colors.card-tint-yellow-bold}`, text `{colors.charcoal}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`.
 
-**`card-feature-peach`** + **`card-feature-rose`** + **`card-feature-mint`** + **`card-feature-sky`** + **`card-feature-lavender`** + **`card-feature-yellow`** + **`card-feature-cream`** — Pastel-tinted feature cards.
-- Each variant uses its corresponding `card-tint-*` color as background, text `{colors.charcoal}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`.
+**`card-feature-peach`** + **`card-feature-rose`** + **`card-feature-mint`** + **`card-feature-sky`** + **`card-feature-lavender`** + **`card-feature-yellow`** — Pastel-tinted feature cards.
+- Каждый вариант берёт соответствующий `card-tint-*` фон, text `{colors.charcoal}`, rounded `{rounded.lg}`, padding `{spacing.xxl}`. `tint-cream` слили в `surface` — отдельной cream-карточки больше нет.
 
 **`card-agent-tile`** — Agent assistant tile.
 - Background `{colors.canvas}`, rounded `{rounded.lg}`, padding `{spacing.xl}`, border `1px solid {colors.hairline}`.
@@ -776,23 +765,42 @@ Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguis
 
 ### Inputs & Forms
 
-**`text-input`** — Standard text field.
-- Background `{colors.canvas}`, text `{colors.ink}`, border `1px solid {colors.hairline-strong}`, rounded `{rounded.md}`, padding `{spacing.sm} {spacing.md}`, height 44px.
+Все формы дашборда собраны из шести элементов: `UiInput`, `<textarea>`, `<select>`, checkbox, radio, file. Геометрия одинаковая — **h-10 / rounded-md (8px) / border 1px hairline**. Кнопки и segmented-tabs остаются на rounded-lg — у инпутов углы чуть «уже».
+
+**`text-input`** — Standard text field (UiInput wrapper).
+- Background `{colors.canvas}`, text `{colors.ink}`, placeholder `{colors.hairline-strong}`, border `1px solid {colors.hairline}`, rounded `{rounded.md}`, padding `0 {spacing.md}`, height 40px.
 
 **`text-input-focused`** — Activated state.
-- Border switches to `2px solid {colors.primary}` (purple).
+- Border 1px остаётся (no layout shift), цвет переключается на `{colors.primary}`, плюс 2px ring primary/15 через box-shadow.
 
-**`search-pill`** — Search bar.
-- Background `{colors.surface}`, text `{colors.steel}`, typography `{typography.body-md}`, rounded `{rounded.md}`, height 44px, border `1px solid {colors.hairline}`.
+**`text-input-error`** — С ошибкой валидации.
+- Border `{colors.semantic-error}`, ring 2px error/20 на focus, под полем — caption-сообщение в `{colors.semantic-error}`.
+
+**`text-input-disabled`** — Не редактируется.
+- Background `{colors.card-tint-gray}` (на шаг темнее surface — видно и на canvas, и на info-card), text/placeholder `{colors.hairline-strong}`, cursor `not-allowed`.
+
+**`search-pill`** — Поисковая строка дашборда (в working-row под PageHeader).
+- Background `{colors.surface}`, text `{colors.ink}`, placeholder `{colors.hairline-strong}`, rounded `{rounded.md}`, height 40px, border `1px solid transparent`.
+- Focus: фон переключается на `{colors.canvas}`, бордер становится `{colors.primary}`, плюс 2px ring primary/20.
+
+**`ui-switch`** — Бинарный on/off (компонент `UiSwitch.vue`).
+- Track 40×24, thumb 20×20 (canvas + shadow-subtle). Движется через `transform: translateX(16px)` (не `left:*` — нативная button съедала бы padding 1px 6px и thumb выпадал за track).
+- On: bg `{colors.primary}`. Off: bg `{colors.surface}` + 1px inset `{colors.hairline}` (чтобы трек был виден на info-card, который сам surface). Disabled: bg `{colors.hairline}`, thumb без тени.
 
 ### Tabs
 
-**`pill-tab`** + **`pill-tab-active`** — Pill-style tab nav for top-level switching.
-- Inactive: text `{colors.steel}`, border `1px solid {colors.hairline}`, padding `{spacing.xs} {spacing.md}`, rounded `{rounded.full}`.
-- Active: background `{colors.ink-deep}`, text `{colors.on-dark}`.
+**`segmented-tabs`** (UiSegmentedTabs) — Канонические dashboard-табы.
+- Контейнер: bg `{colors.surface}`, rounded `{rounded.lg}`, p-1, h-10.
+- Активная кнопка: плашка bg-canvas + shadow-subtle, плавно (200ms) едет между позициями (offset-based).
+- Active text `{colors.ink}`, inactive `{colors.hairline-strong}`.
 
-**`segmented-tab`** + **`segmented-tab-active`** — Underline-style tab navigation.
-- Inactive: text `{colors.steel}`, no border. Active: text `{colors.ink}`, 2px bottom border in `{colors.ink}`.
+**`pill-tabs`** — Альтернатива для 3+ фильтров разной длины (QR-codes status filter).
+- Тот же контейнер surface/lg/h-10, но без анимированной плашки: каждая кнопка независимо получает bg-canvas + shadow-subtle при активном состоянии.
+- Inactive: `{colors.hairline-strong}`, hover → `{colors.ink}`.
+
+**`pill-tab`** (legacy, маркетинг) — Top-level pill tab.
+- Inactive: text `{colors.steel}`, border 1px hairline, rounded-full.
+- Active: bg `{colors.ink}`, text `{colors.on-dark}`.
 
 ### Badges & Status
 
@@ -805,14 +813,18 @@ Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguis
 **`badge-orange`** — Orange accent badge.
 - Background `{colors.brand-orange}`, text `{colors.on-primary}`, typography `{typography.caption-bold}`, rounded `{rounded.full}`, padding `4px 10px`.
 
-**`badge-tag-purple`** — Soft-purple feature tag chip.
-- Background `{colors.card-tint-lavender}`, text `{colors.brand-purple-800}`, typography `{typography.caption-bold}`, rounded `{rounded.sm}`, padding `2px 8px`.
+**`badge-tag-green`** — Soft-mint feature tag. Status: success / published / включён.
+- Background `{colors.card-tint-mint}`, text `{colors.brand-green}`, typography `{typography.caption-bold}`, rounded `{rounded.sm}`, padding `2px 8px`.
 
-**`badge-tag-orange`** — Soft-orange feature tag.
+**`badge-tag-orange`** — Soft-orange feature tag. Status: warning / in-review / archived / trial / UTM.
 - Background `{colors.card-tint-peach}`, text `{colors.brand-orange-deep}`, typography `{typography.caption-bold}`, rounded `{rounded.sm}`, padding `2px 8px`.
 
-**`badge-tag-green`** — Soft-mint feature tag.
-- Background `{colors.card-tint-mint}`, text `{colors.brand-green}`, typography `{typography.caption-bold}`, rounded `{rounded.sm}`, padding `2px 8px`.
+**`badge-tag-blue`** — Soft-sky feature tag. Info / нейтральный акцент: «Напечатан», «Партия», ↻ returning visitor, geo-группы, niche-теги маркетинга.
+- Background `{colors.card-tint-sky}`, text `{colors.link-blue-pressed}`, typography `{typography.caption-bold}`, rounded `{rounded.sm}`, padding `2px 8px`.
+- Заменил legacy `tag-purple` — он рендерился только в 4 точках с особыми данными и тянул отдельный `brand-purple-800` токен.
+
+**`badge-tag-gray`** — Neutral tag. Status: draft / нейтральная метка по умолчанию.
+- Background `{colors.surface}`, text `{colors.steel}`, typography `{typography.caption-bold}`, rounded `{rounded.sm}`, padding `2px 8px`.
 
 **`badge-popular`** — "Most Popular" tier indicator.
 - Background `{colors.primary}`, text `{colors.on-primary}`, typography `{typography.caption-bold}`, rounded `{rounded.full}`, padding `4px 10px`.
@@ -826,7 +838,7 @@ Notion's geometry is sober-editorial — `{rounded.md}` (8px) buttons distinguis
 - Background `{colors.canvas}`, text `{colors.ink}`, typography `{typography.body-sm}`, rounded `{rounded.md}`, border `1px solid {colors.hairline}`.
 
 **`comparison-row`** — Individual feature row.
-- Background `{colors.canvas}`, text `{colors.ink}`, padding `{spacing.md} {spacing.lg}`, bottom border `1px solid {colors.hairline-soft}`.
+- Background `{colors.canvas}`, text `{colors.ink}`, padding `{spacing.md} {spacing.lg}`, bottom border `1px solid {colors.hairline}`.
 
 ### Documentation Components
 
@@ -1019,21 +1031,24 @@ Below `PageHeader` (with `mt-sm`), pages typically render a single horizontal fl
 
 All three elements share **h-10 (40px)** height and `{rounded.lg}` for visual alignment. This is the canonical working-row of the dashboard.
 
-For filter rows with **3+ options** of uneven label length (e.g. QR-codes status filter: `Все · 10 / Свободные · 4 / Привязанные · 6 / …`), the animated indicator of segmented-tabs gets visually misaligned, so use `pill-tabs` instead: same container, but each button independently flips to `bg-canvas + shadow-subtle` when active. Inactive labels in `{colors.stone}`, hover → `{colors.ink}`.
+For filter rows with **3+ options** of uneven label length (e.g. QR-codes status filter: `Все · 10 / Свободные · 4 / Привязанные · 6 / …`), the animated indicator of segmented-tabs gets visually misaligned, so use `pill-tabs` instead: same container, but each button independently flips to `bg-canvas + shadow-subtle` when active. Inactive labels in `{colors.hairline-strong}`, hover → `{colors.ink}`.
 
 ### Tables
 
 - **No `UiCard` wrapper around tables**, no surrounding border. Tables sit directly on the canvas so the leftmost column heading aligns with the page title and tab pill above.
 - Column headers: `{typography.caption}` uppercase, colour `{colors.steel}`, bottom-border `1px solid {colors.hairline}`.
 - Row title: `{typography.body-sm-medium}` (14px / 500), colour `{colors.ink}`. Secondary line (slug, barcode): `{typography.caption}`, colour `{colors.steel}`.
-- Rows separated by `1px solid {colors.hairline-soft}` (no full grid).
+- Rows separated by `1px solid {colors.hairline}` (no full grid).
 
 ### Status badges in dashboard tables
 
 Use the `tag-*` variants (rounded-sm chips, NOT full pills):
-- `tag-green` for success states (e.g. `PUBLISHED`).
-- `tag-orange` for warning / outdated states (`ARCHIVED`, `IN_REVIEW`).
-- `tag-gray` for neutral states (`DRAFT`). `tag-gray` is a quar.io-specific variant — Notion's original tag-purple was kept for marketing surfaces but felt off-tone for state pills inside the dashboard.
+- `tag-green` — success / published / включён.
+- `tag-orange` — warning / archived / in-review / trial / UTM-источник.
+- `tag-blue` — informational акцент: «Напечатан», «Партия», ↻ returning visitor, geo-группы.
+- `tag-gray` — neutral по умолчанию (DRAFT, count-метки версий, кол-во сессий).
+
+Solid-пилюли (`purple`/`pink`/`orange`/`popular`) — только для маркетинга и hero-блоков. В таблицах дашборда не использовать.
 
 ### Mobile
 
@@ -1044,24 +1059,30 @@ Use the `tag-*` variants (rounded-sm chips, NOT full pills):
 ### Editor (TipTap) inside dashboard
 
 - The editor renders directly inside `dashboard-content` without an outer card. No border, no rounded wrapper — the working area is the canvas itself.
-- **Placeholder on first empty line**: TipTap's placeholder extension puts `is-editor-empty` on the root `.tiptap` div and `is-empty` on every empty node. CSS targets `.tiptap.is-editor-empty p:first-child::before, .tiptap p.is-empty:first-child::before { opacity: 1; color: var(--color-stone) }` — full opacity so the prompt ("Контент секции…", "Начните писать…") stays legible even when unfocused. Other `is-empty` paragraphs render `¶` at 25 % opacity.
+- **Placeholder on first empty line**: TipTap's placeholder extension puts `is-editor-empty` on the root `.tiptap` div and `is-empty` on every empty node. CSS targets `.tiptap.is-editor-empty p:first-child::before, .tiptap p.is-empty:first-child::before { opacity: 1; color: var(--color-hairline-strong) }` — full opacity so the prompt ("Контент секции…", "Начните писать…") stays legible even when unfocused. Other `is-empty` paragraphs render `¶` at 25 % opacity.
 - **Block drag-handle** (`+` + grip): floats 44 px to the left of the block. Closer than 40 px overlaps text; further than ~48 px feels detached.
 - **Optimistic image upload**: when a user picks a file in the toolbar, a `blob:` URL is inserted immediately as the image src so the layout snaps into place. The real upload runs in the background; on success the src is swapped via `setNodeMarkup`; on failure the placeholder node is deleted. Either way `URL.revokeObjectURL` is called in `finally`.
 
 ## Iteration Guide
 
-1. Focus on ONE component at a time
-2. Reference component names and tokens directly
-3. Run `npx @google/design.md lint DESIGN.md` after edits
-4. Add new variants as separate `components:` entries
-5. Default to `{typography.body-md}` for body
-6. Keep `{colors.primary}` (blue, sourced from the quar.io logo) as the primary CTA — distinct from `{colors.link-blue}` for inline links
-7. Use `{rounded.lg}` (12px) for buttons, inputs, segmented-tabs, and cards in the dashboard. `{rounded.md}` (8px) is reserved for small/compact controls (small buttons, nav-items inside the sidebar). `{rounded.full}` for status pills and circular badges only.
-8. Inside the dashboard, NEVER add a top header bar. The brand row lives in the sidebar; each page brings its own `PageHeader`.
-9. Inside the dashboard, NEVER wrap content blocks in `<UiCard>` (white + border). Use the `info-card` / `stat-card` pattern: `<div class="rounded-lg bg-surface p-xl">`. Tables sit directly on the canvas with no wrapper, so their leftmost column heading aligns with the page title.
-10. Section-level headings inside a page (above lists, inside cards) use the **section mini-header**: 20 px navy/50%-opacity icon + `text-h4 text-navy`. Same icon vocabulary as the sidebar / PageHeader.
-11. `text-input` and `search-pill` keep a constant 1 px border at all states. Focus is visualised via a 2 px primary ring at 15 % opacity (box-shadow, not border-width change) — switching border-width on focus shifts layout by 1 px and is forbidden.
-12. Status badges in tables: `tag-green` (success/published), `tag-orange` (warning/archived/in-review), `tag-gray` (neutral/draft). Avoid solid `purple/pink/orange` badges in the dashboard — they belong to marketing surfaces.
+1. Focus on ONE component at a time.
+2. Reference component names and tokens directly — `{colors.surface}`, `{rounded.md}`, и т.д.
+3. Add new variants as separate `components:` entries.
+4. Default to `{typography.body-md}` for body.
+5. **Primary CTA — `{colors.primary}` (синий quar.io)**, тот же hue, что в логотипе. Не путать с `{colors.link}` для inline-ссылок.
+6. **Радиусы дашборда:**
+   - `rounded-lg` (12px): buttons (md/lg), segmented-tabs, pill-tabs, info-cards, stat-cards, module-tiles.
+   - `rounded-md` (8px): UiInput, textarea, native `<select>`, search-pill, disabled controls, sidebar nav-items, code-блоки.
+   - `rounded-sm` (6px): `badge-tag-*`, sm-buttons, ghost-кнопки toolbar редактора.
+   - `rounded-full`: solid status-badges, UiSwitch track, sidebar attention-dot.
+7. **Inside the dashboard, NEVER add a top header bar.** Brand-row живёт в сайдбаре; каждая страница приносит свой `PageHeader`.
+8. **Inside the dashboard, NEVER wrap content blocks in `<UiCard>` (white + border)** — этот стиль зарезервирован для маркетинга. Используй info-card паттерн: `<div class="rounded-lg bg-surface p-xl">`. Tables сидят прямо на canvas без обёртки.
+9. **Section mini-header** внутри страницы: 20px navy/50%-opacity иконка + `text-h4 text-navy`. Тот же словарь иконок, что в сайдбаре/PageHeader.
+10. **Input focus — через ring, не через border-width.** `text-input` и `search-pill` держат 1px бордер всегда; focus визуализируется box-shadow ring 2px primary/15. Менять ширину бордера на focus — запрещено (layout shift 1px).
+11. **Disabled-инпуты — bg `card-tint-gray`** (на шаг темнее surface). На белом canvas и на surface info-card отличается одинаково хорошо.
+12. **Button-secondary — bg `card-tint-gray`**, не surface. Иначе кнопка сливается с info-card. Hover опускается ещё на шаг до `hairline`.
+13. **Status badges в таблицах** — только tag-варианты: `tag-green` (success), `tag-orange` (warning), `tag-blue` (info-акцент), `tag-gray` (neutral). Solid-пилюли — только маркетинг.
+14. **UiSwitch off-стейт** — `surface` + 1px inset `hairline` border. Без бордера трек растворится на info-card (которая тоже surface).
 
 ## Known Gaps
 

@@ -21,7 +21,10 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
     </span>
     <div
       :class="[
-        'flex h-10 items-stretch overflow-hidden rounded-lg border bg-canvas transition-shadow',
+        'flex h-10 items-stretch overflow-hidden rounded-md border transition-shadow',
+        // bg-tint-gray на disabled (а не bg-surface) — даёт видимое
+        // отличие и на canvas-страницах, и внутри info-card на surface.
+        disabled ? 'bg-tint-gray' : 'bg-canvas',
         error
           ? 'border-error focus-within:ring-2 focus-within:ring-error/20'
           : 'border-hairline focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15'

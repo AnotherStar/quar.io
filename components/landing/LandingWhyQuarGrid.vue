@@ -1,11 +1,11 @@
 <script setup lang="ts">
 const benefits = [
   { icon: 'lucide:qr-code', iconTone: 'bg-tint-sky text-primary group-hover:bg-primary group-hover:text-surface', title: 'Инструкция меняется, QR остаётся', copy: 'Инструкцию можно обновлять после печати коробок: QR ведёт всегда на актуальную версию.' },
-  { icon: 'lucide:message-circle', iconTone: 'bg-tint-peach text-brand-orange group-hover:bg-brand-orange group-hover:text-surface', title: 'Негатив не уходят в плохие отзывы', copy: 'Покупатель пишет продавцу прямо из нужного шага, пока проблема ещё решаема.' },
+  { icon: 'lucide:message-circle', iconTone: 'bg-tint-peach text-brand-orange group-hover:bg-brand-orange group-hover:text-surface', title: 'Негатив не уходят в плохие отзывы', copy: 'Покупатель пишет в поддержку прямо из нужного шага, пока проблема ещё решаема.' },
   { icon: 'lucide:shopping-bag', iconTone: 'bg-tint-mint text-success group-hover:bg-success group-hover:text-surface', title: 'Допродажи после покупки', copy: 'Расходники, аксессуары и повторный заказ появляются в момент использования товара.' },
   { icon: 'lucide:sparkles', iconTone: 'bg-tint-lavender text-brand-purple group-hover:bg-brand-purple group-hover:text-surface', title: 'Такую инструкцию хочется прочитать', copy: 'ИИ анализирует контент и делает инструкцию структурированной и понятной.' },
   { icon: 'lucide:bar-chart-3', iconTone: 'bg-tint-mint text-brand-teal group-hover:bg-brand-teal group-hover:text-surface', title: 'Улучшайте пользовательский опыт', copy: 'Аналитика по дочитыванию, вопросам и отметкам “непонятно” помогут сделать материал точнее.' },
-  { icon: 'lucide:user-plus', iconTone: 'bg-tint-rose text-brand-pink group-hover:bg-brand-pink group-hover:text-surface', title: 'Покупатель становится вашим', copy: 'Контакт с покупателем происходит вне карточки маркетплейса и не теряется после продажи.' },
+  { icon: 'lucide:user-plus', iconTone: 'bg-tint-rose text-brand-pink group-hover:bg-brand-pink group-hover:text-surface', title: 'Покупатель становится лояльным', copy: 'Понятная инструкция и своевременная поддержка помогут сделать покупателя лояльным.' },
   { icon: 'lucide:layers-3', iconTone: 'bg-tint-sky text-link group-hover:bg-link group-hover:text-surface', title: 'Подходит для больших каталогов', copy: 'Переиспользуемые секции, версионирование помогают масштабировать инструкции на десятки и тысячи SKU.' },
   { icon: 'lucide:bot', iconTone: 'bg-tint-yellow-bold text-warning group-hover:bg-warning group-hover:text-surface', title: 'Персональный ИИ ассистент ', copy: 'Ответит на вопросы покупателя и предложит дополнительные товары или скидки, даже ночью.' }
 ]

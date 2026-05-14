@@ -306,14 +306,14 @@ function closeVisit() {
       <div class="mt-md flex flex-wrap items-center gap-md">
         <select
           v-model="filterInstructionId"
-          class="h-10 rounded-lg border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+          class="h-10 rounded-md border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
         >
           <option value="">Все инструкции</option>
           <option v-for="i in instructionsList" :key="i.id" :value="i.id">{{ i.title }}</option>
         </select>
         <select
           v-model="filterEntrySource"
-          class="h-10 rounded-lg border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+          class="h-10 rounded-md border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
         >
           <option value="">Все источники</option>
           <option value="qr">QR</option>
@@ -324,7 +324,7 @@ function closeVisit() {
         </select>
         <select
           v-model="filterReturning"
-          class="h-10 rounded-lg border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
+          class="h-10 rounded-md border border-transparent bg-surface px-md text-body-sm-md text-ink outline-none focus:border-primary focus:bg-canvas focus:ring-2 focus:ring-primary/20"
         >
           <option value="">Все типы</option>
           <option value="false">Новые</option>

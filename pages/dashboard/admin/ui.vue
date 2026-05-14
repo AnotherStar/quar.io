@@ -579,8 +579,9 @@ const iconLibrary = [
         <p class="mt-1 text-body-sm text-steel">
           Все формы дашборда собраны из шести элементов: <code class="text-caption">UiInput</code>,
           <code class="text-caption">&lt;textarea&gt;</code>, <code class="text-caption">&lt;select&gt;</code>,
-          checkbox, radio и file. Геометрия одинаковая — h-10 / rounded-lg / border 1px hairline,
-          фокус через ring без сдвига разметки.
+          checkbox, radio и file. Геометрия одинаковая — h-10 / rounded-md (8px) / border 1px hairline,
+          фокус через ring без сдвига разметки. Кнопки и segmented-tabs остаются на rounded-lg (12px) — в working-row
+          input визуально чуть «уже» по углам, чем CTA.
         </p>
 
         <!-- 7.1 UiInput · все состояния и типы ------------------------------ -->
@@ -614,9 +615,9 @@ const iconLibrary = [
           <div class="rounded-lg bg-surface p-xl">
             <p class="mb-sm text-caption-bold uppercase tracking-wide text-steel">Search pill</p>
             <p class="mb-md text-caption text-steel">
-              Поисковая строка в рабочей строке дашборда. h-10 / rounded-lg, фон canvas → focus с primary-ring.
+              Поисковая строка в рабочей строке дашборда. h-10 / rounded-md, фон canvas → focus с primary-ring.
             </p>
-            <label class="flex h-10 items-center gap-2 rounded-lg border border-transparent bg-canvas px-md transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <label class="flex h-10 items-center gap-2 rounded-md border border-transparent bg-canvas px-md transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
               <Icon name="lucide:search" class="h-4 w-4 text-steel" />
               <input
                 type="text"
@@ -636,7 +637,7 @@ const iconLibrary = [
               v-model="formDemo.description"
               placeholder="Описание инструкции…"
               rows="4"
-              class="w-full rounded-lg border border-hairline bg-canvas p-md text-body-sm-md placeholder:text-hairline-strong outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15"
+              class="w-full rounded-md border border-hairline bg-canvas p-md text-body-sm-md placeholder:text-hairline-strong outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15"
             />
           </div>
         </div>
@@ -645,7 +646,7 @@ const iconLibrary = [
         <div class="mt-md">
           <p class="mb-sm text-caption-bold uppercase tracking-wide text-steel">Select (native)</p>
           <p class="mb-md text-caption text-steel">
-            Используется на /dashboard/analytics для фильтров. h-10 / rounded-lg / bg-surface (без бордера) — на фокусе фон сменяется на canvas + primary-ring.
+            Используется на /dashboard/analytics для фильтров. h-10 / rounded-md / bg-surface (без бордера) — на фокусе фон сменяется на canvas + primary-ring.
             Нативный <code class="text-caption">&lt;select&gt;</code> сохраняет ОС-овое выпадающее меню и не требует JS.
           </p>
           <div class="rounded-lg bg-surface p-xl">
@@ -654,7 +655,7 @@ const iconLibrary = [
                 <span class="mb-1 block text-body-sm-md text-charcoal">Видимость</span>
                 <select
                   v-model="formDemo.visibility"
-                  class="h-10 w-full rounded-lg border border-transparent bg-canvas px-md text-body-sm-md text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  class="h-10 w-full rounded-md border border-transparent bg-canvas px-md text-body-sm-md text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="public">Публичная</option>
                   <option value="unlisted">По прямой ссылке</option>
@@ -665,7 +666,7 @@ const iconLibrary = [
               <label class="block">
                 <span class="mb-1 block text-body-sm-md text-charcoal">Источник трафика</span>
                 <select
-                  class="h-10 w-full rounded-lg border border-transparent bg-canvas px-md text-body-sm-md text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  class="h-10 w-full rounded-md border border-transparent bg-canvas px-md text-body-sm-md text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Все источники</option>
                   <option value="qr">QR</option>
@@ -677,7 +678,7 @@ const iconLibrary = [
 
               <label class="block">
                 <span class="mb-1 block text-body-sm-md text-charcoal">Disabled</span>
-                <select disabled class="h-10 w-full rounded-lg border border-hairline bg-canvas px-md text-body-sm text-hairline-strong outline-none">
+                <select disabled class="h-10 w-full rounded-md border border-hairline bg-tint-gray px-md text-body-sm text-hairline-strong outline-none">
                   <option>Недоступно</option>
                 </select>
               </label>
@@ -918,12 +919,13 @@ const iconLibrary = [
         </div>
         <p class="mt-1 text-body-sm text-steel">
           Канонический ряд под PageHeader: табы слева, поиск посередине, primary-CTA справа.
-          Все три блока — высоты 40px и радиуса 12px.
+          Все три блока — высоты 40px. Кнопки и табы — rounded-lg (12px), поиск — rounded-md (8px):
+          у инпутов углы чуть «уже».
         </p>
 
         <div class="mt-md flex flex-wrap items-center gap-md">
           <UiSegmentedTabs v-model="segmentedValue" :tabs="segmentedTabs" />
-          <label class="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-lg border border-transparent bg-surface px-md transition-all focus-within:border-primary focus-within:bg-canvas focus-within:ring-2 focus-within:ring-primary/20">
+          <label class="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-md border border-transparent bg-surface px-md transition-all focus-within:border-primary focus-within:bg-canvas focus-within:ring-2 focus-within:ring-primary/20">
             <Icon name="lucide:search" class="h-4 w-4 text-steel" />
             <input
               type="text"

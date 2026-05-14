@@ -19,10 +19,11 @@ const props = withDefaults(
 const variantClass: Record<Variant, string> = {
   primary: 'bg-primary text-white hover:bg-primary-pressed disabled:bg-hairline disabled:text-hairline-strong',
   dark: 'bg-ink text-white hover:bg-charcoal',
-  // Secondary — soft pill, no border. Same rounded/height as primary so the
-  // two stack visually in the same row. Background is the dashboard surface
-  // grey, text is charcoal. Hover deepens to tint-gray.
-  secondary: 'bg-surface text-charcoal hover:bg-tint-gray disabled:text-hairline-strong',
+  // Secondary — soft pill, no border. Same rounded/height as primary. Фон
+  // bg-tint-gray (на шаг темнее surface) — чтобы кнопка не пропадала, когда
+  // сидит на info-card (которая тоже surface). Hover опускается ещё на шаг
+  // до hairline.
+  secondary: 'bg-tint-gray text-charcoal hover:bg-hairline disabled:text-hairline-strong',
   'on-dark': 'bg-white text-ink hover:bg-surface',
   'secondary-on-dark': 'bg-transparent text-white border border-hairline-strong hover:bg-white/10',
   ghost: 'bg-transparent text-ink hover:bg-surface',
