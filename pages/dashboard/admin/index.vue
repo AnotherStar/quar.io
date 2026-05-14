@@ -27,9 +27,17 @@ const planBadgeVariant = (code: string) => {
   <div>
     <PageHeader icon="lucide:shield-check" title="Админ-панель">
       <template #actions>
+        <UiButton to="/dashboard/admin/features" variant="secondary" size="sm">
+          <Icon name="lucide:layers" class="h-4 w-4" />
+          Фичи и тарифы
+        </UiButton>
         <UiButton to="/dashboard/admin/ai-usage" variant="secondary" size="sm">
           <Icon name="lucide:sparkles" class="h-4 w-4" />
           AI-расходы
+        </UiButton>
+        <UiButton to="/dashboard/admin/ui" variant="secondary" size="sm">
+          <Icon name="lucide:palette" class="h-4 w-4" />
+          Интерфейс
         </UiButton>
         <UiButton to="/dashboard/admin/users" variant="secondary" size="sm">
           <Icon name="lucide:users" class="h-4 w-4" />
