@@ -637,9 +637,9 @@ function isGenerationAbortError(error: any) {
 
 <template>
   <div>
-    <UiCard v-if="(pending || !currentTenant) && !instr">
-      <p class="py-md text-body text-steel">Загружаю инструкцию…</p>
-    </UiCard>
+    <div v-if="(pending || !currentTenant) && !instr" class="rounded-lg bg-surface p-xl">
+      <p class="text-body-sm text-steel">Загружаю инструкцию…</p>
+    </div>
     <UiAlert v-else-if="error && !instr" kind="error" title="Не удалось загрузить инструкцию">
       Проверьте подключение и обновите страницу.
     </UiAlert>

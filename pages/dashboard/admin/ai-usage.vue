@@ -101,27 +101,15 @@ const featureLabel = (feature: string) => {
       <div>
         <p class="mb-md text-caption-bold uppercase tracking-wide text-steel">За последние 30 дней</p>
         <div class="grid grid-cols-2 gap-md md:grid-cols-4">
-          <div class="rounded-lg bg-surface p-xl">
-            <p class="text-caption-bold text-steel uppercase tracking-wide">Вызовов</p>
-            <p class="mt-2 text-h2 text-navy">{{ formatNumber(data.totals.last30d.calls) }}</p>
-            <p class="mt-1 text-caption text-steel">
-              за 7 дней: {{ formatNumber(data.totals.last7d.calls) }}
-            </p>
-          </div>
-          <div class="rounded-lg bg-surface p-xl">
-            <p class="text-caption-bold text-steel uppercase tracking-wide">Токенов</p>
-            <p class="mt-2 text-h2 text-navy">{{ formatNumber(data.totals.last30d.tokens) }}</p>
-            <p class="mt-1 text-caption text-steel">
-              за 7 дней: {{ formatNumber(data.totals.last7d.tokens) }}
-            </p>
-          </div>
-          <div class="rounded-lg bg-surface p-xl">
-            <p class="text-caption-bold text-steel uppercase tracking-wide">Расходы · USD</p>
-            <p class="mt-2 text-h2 text-navy">{{ formatUsd(data.totals.last30d.costUsd) }}</p>
-            <p class="mt-1 text-caption text-steel">
-              за 7 дней: {{ formatUsd(data.totals.last7d.costUsd) }}
-            </p>
-          </div>
+          <UiStatCard label="Вызовов" :hint="`за 7 дней: ${formatNumber(data.totals.last7d.calls)}`">
+            {{ formatNumber(data.totals.last30d.calls) }}
+          </UiStatCard>
+          <UiStatCard label="Токенов" :hint="`за 7 дней: ${formatNumber(data.totals.last7d.tokens)}`">
+            {{ formatNumber(data.totals.last30d.tokens) }}
+          </UiStatCard>
+          <UiStatCard label="Расходы · USD" :hint="`за 7 дней: ${formatUsd(data.totals.last7d.costUsd)}`">
+            {{ formatUsd(data.totals.last30d.costUsd) }}
+          </UiStatCard>
           <div class="rounded-lg bg-surface p-xl">
             <p class="text-caption-bold text-steel uppercase tracking-wide">Статус · 30 дн</p>
             <p class="mt-2 text-body-sm-md text-navy">
@@ -137,10 +125,7 @@ const featureLabel = (feature: string) => {
 
       <!-- Breakdown by feature -->
       <div>
-        <div class="flex items-center gap-3">
-          <Icon name="lucide:layers" class="h-5 w-5 text-navy opacity-50" />
-          <h2 class="text-h4 text-navy">По типу запроса · 30 дней</h2>
-        </div>
+        <SectionHeader icon="lucide:layers" title="По типу запроса · 30 дней" />
         <UiTable v-if="data.byFeature30d.length" min-width="560px" class="mt-md">
           <thead>
             <tr>
@@ -166,10 +151,7 @@ const featureLabel = (feature: string) => {
 
       <!-- Top tenants -->
       <div>
-        <div class="flex items-center gap-3">
-          <Icon name="lucide:building-2" class="h-5 w-5 text-navy opacity-50" />
-          <h2 class="text-h4 text-navy">Топ компаний · 30 дней</h2>
-        </div>
+        <SectionHeader icon="lucide:building-2" title="Топ компаний · 30 дней" />
         <UiTable v-if="data.topTenants30d.length" min-width="640px" class="mt-md">
           <thead>
             <tr>
@@ -198,10 +180,7 @@ const featureLabel = (feature: string) => {
 
       <!-- Recent events -->
       <div>
-        <div class="flex items-center gap-3">
-          <Icon name="lucide:list" class="h-5 w-5 text-navy opacity-50" />
-          <h2 class="text-h4 text-navy">Последние события</h2>
-        </div>
+        <SectionHeader icon="lucide:list" title="Последние события" />
         <UiTable v-if="data.recent.length" min-width="900px" class="mt-md">
           <thead>
             <tr>

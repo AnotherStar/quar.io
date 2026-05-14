@@ -42,9 +42,9 @@ function isEmpty(content: any): boolean {
       <NuxtLink to="/dashboard/billing" class="underline">Сменить тариф</NuxtLink>
     </UiAlert>
 
-    <UiCard v-if="pending && !data?.sections.length">
-      <p class="py-md text-body text-steel">Загружаю секции…</p>
-    </UiCard>
+    <div v-if="pending && !data?.sections.length" class="rounded-lg bg-surface p-xl">
+      <p class="text-body-sm text-steel">Загружаю секции…</p>
+    </div>
 
     <div v-else class="space-y-md">
       <NuxtLink

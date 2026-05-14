@@ -160,13 +160,11 @@ function closeVisit() {
 
         <!-- Динамика по дням -->
         <div class="rounded-lg bg-surface p-xl">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:trending-up" class="h-5 w-5 text-navy opacity-50" />
-              <h2 class="text-h4 text-navy">Визиты по дням</h2>
-            </div>
-            <span class="text-caption text-steel">Последние {{ days }} дн.</span>
-          </div>
+          <SectionHeader icon="lucide:trending-up" title="Визиты по дням">
+            <template #actions>
+              <span class="text-caption text-steel">Последние {{ days }} дн.</span>
+            </template>
+          </SectionHeader>
           <div v-if="!overview?.byDay?.length" class="mt-md py-lg text-center text-body text-steel">
             Данных пока нет.
           </div>
@@ -187,13 +185,11 @@ function closeVisit() {
 
         <!-- Топ инструкций -->
         <div class="rounded-lg bg-surface p-xl">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:list-ordered" class="h-5 w-5 text-navy opacity-50" />
-              <h2 class="text-h4 text-navy">Топ инструкций</h2>
-            </div>
-            <UiButton to="/dashboard/instructions" variant="secondary" size="sm">Все инструкции</UiButton>
-          </div>
+          <SectionHeader icon="lucide:list-ordered" title="Топ инструкций">
+            <template #actions>
+              <UiButton to="/dashboard/instructions" variant="secondary" size="sm">Все инструкции</UiButton>
+            </template>
+          </SectionHeader>
           <p v-if="!overview?.topInstructions?.length" class="mt-md py-lg text-center text-body text-steel">
             Пока нет визитов.
           </p>
@@ -224,10 +220,7 @@ function closeVisit() {
         <!-- Источники и устройства -->
         <div class="grid grid-cols-1 gap-md md:grid-cols-2">
           <div class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:scan-line" class="h-5 w-5 text-navy opacity-50" />
-              <h2 class="text-h4 text-navy">Источник захода</h2>
-            </div>
+            <SectionHeader icon="lucide:scan-line" title="Источник захода" />
             <ul class="mt-md divide-y divide-hairline">
               <li v-for="r in overview?.byEntrySource" :key="r.source" class="flex items-center justify-between py-sm text-body-sm">
                 <UiBadge :variant="r.source === 'qr' ? 'tag-green' : r.source === 'utm' ? 'tag-orange' : 'tag-gray'">
@@ -240,10 +233,7 @@ function closeVisit() {
           </div>
 
           <div class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:tag" class="h-5 w-5 text-navy opacity-50" />
-              <h2 class="text-h4 text-navy">UTM-источники</h2>
-            </div>
+            <SectionHeader icon="lucide:tag" title="UTM-источники" />
             <ul class="mt-md divide-y divide-hairline">
               <li v-for="r in overview?.byUtmSource" :key="r.utmSource" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="text-charcoal">{{ r.utmSource }}</span>
@@ -254,10 +244,7 @@ function closeVisit() {
           </div>
 
           <div class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:globe" class="h-5 w-5 text-navy opacity-50" />
-              <h2 class="text-h4 text-navy">По странам</h2>
-            </div>
+            <SectionHeader icon="lucide:globe" title="По странам" />
             <ul class="mt-md max-h-[280px] divide-y divide-hairline overflow-y-auto">
               <li v-for="r in overview?.byCountry" :key="r.country" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="text-charcoal">{{ r.country }}</span>
@@ -268,10 +255,7 @@ function closeVisit() {
           </div>
 
           <div class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:monitor-smartphone" class="h-5 w-5 text-navy opacity-50" />
-              <h2 class="text-h4 text-navy">По устройствам</h2>
-            </div>
+            <SectionHeader icon="lucide:monitor-smartphone" title="По устройствам" />
             <ul class="mt-md divide-y divide-hairline">
               <li v-for="r in overview?.byDevice" :key="r.deviceType" class="flex items-center justify-between py-sm text-body-sm">
                 <span class="capitalize text-charcoal">{{ r.deviceType }}</span>
@@ -284,10 +268,7 @@ function closeVisit() {
 
         <!-- Цели -->
         <div class="rounded-lg bg-surface p-xl">
-          <div class="flex items-center gap-3">
-            <Icon name="lucide:target" class="h-5 w-5 text-navy opacity-50" />
-            <h2 class="text-h4 text-navy">Цели</h2>
-          </div>
+          <SectionHeader icon="lucide:target" title="Цели" />
           <p v-if="!overview?.goalsByCode?.length" class="mt-md py-md text-center text-body text-steel">
             Пока не зафиксировано ни одной цели.
           </p>

@@ -344,7 +344,7 @@ onBeforeUnmount(() => {
           <UiInput v-model="form.welcomeMessage" label="Приветствие в боте" />
           <UiInput v-model="form.closedMessage" label="Сообщение после закрытия тикета" />
 
-          <div v-if="webhookUrl" class="rounded-md border border-hairline bg-canvas p-md">
+          <div v-if="webhookUrl" class="rounded-md bg-canvas p-md">
             <p class="text-body-sm-md text-ink">Webhook URL</p>
             <p class="mt-1 break-all text-body-sm text-steel">{{ webhookUrl }}</p>
             <div class="mt-sm flex flex-wrap items-center gap-2">

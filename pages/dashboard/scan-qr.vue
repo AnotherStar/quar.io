@@ -1,10 +1,12 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
+type QrStatus = 'all' | 'unbound' | 'bound'
+
 const api = useApi()
 const { currentTenant } = useAuthState()
 
-const status = ref<'all' | 'unbound' | 'bound'>('unbound')
+const status = ref<QrStatus>('unbound')
 const countToCreate = ref(100)
 const sizeMm = ref(40)
 const creating = ref(false)
@@ -50,90 +52,66 @@ function shortUrl(code: any) {
 function openPdf() {
   if (import.meta.client) window.location.href = exportUrl.value
 }
+
+const statusTabs = computed(() => [
+  { value: 'unbound' as QrStatus, label: 'Свободные', count: stats.value.unbound },
+  { value: 'bound' as QrStatus, label: 'Привязанные', count: stats.value.bound },
+  { value: 'all' as QrStatus, label: 'Все', count: stats.value.total }
+])
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <div class="flex flex-col justify-between gap-md md:flex-row md:items-end">
-      <div>
-        <h1 class="text-h2 text-ink">Пикнуть QR</h1>
-        <p class="mt-1 max-w-2xl text-body text-steel">
-          Печатайте свободные QR заранее, а при сборке заказа привязывайте первый попавшийся QR к инструкции по ШК товара.
-        </p>
-      </div>
-      <UiButton variant="secondary" :disabled="!stats.unbound" @click="openPdf">
-        <Icon name="lucide:file-down" class="h-4 w-4" />
-        Скачать PDF
-      </UiButton>
-    </div>
-
-    <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
-
-    <div class="grid gap-md md:grid-cols-3">
-      <UiCard>
-        <p class="text-caption text-steel uppercase">Всего</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.total }}</p>
-      </UiCard>
-      <UiCard tint="mint" :bordered="false">
-        <p class="text-caption text-steel uppercase">Свободные</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.unbound }}</p>
-      </UiCard>
-      <UiCard tint="gray" :bordered="false">
-        <p class="text-caption text-steel uppercase">Привязанные</p>
-        <p class="mt-1 text-h3 text-ink">{{ stats.bound }}</p>
-      </UiCard>
-    </div>
-
-    <UiCard>
-      <form class="grid gap-md md:grid-cols-[1fr_1fr_auto]" @submit.prevent="createBatch">
-        <UiInput
-          v-model="countToCreate"
-          label="Сколько QR создать"
-          type="number"
-          hint="От 1 до 5000 за раз"
-        />
-        <UiInput
-          v-model="sizeMm"
-          label="Размер QR в PDF, мм"
-          type="number"
-          hint="Шаблоны дизайна добавим отдельно"
-        />
-        <UiButton class="self-end" :loading="creating">
-          <Icon name="lucide:plus" class="h-4 w-4" />
-          Сгенерировать
+  <div>
+    <PageHeader icon="lucide:qr-code" title="Пикнуть QR">
+      <template #actions>
+        <UiButton variant="secondary" size="sm" :disabled="!stats.unbound" @click="openPdf">
+          <Icon name="lucide:file-down" class="h-4 w-4" />
+          Скачать PDF
         </UiButton>
-      </form>
-    </UiCard>
+      </template>
+    </PageHeader>
 
-    <div class="flex flex-wrap items-center justify-between gap-md">
-      <div class="flex items-center gap-1 border-b border-hairline">
-        <button
-          :class="['px-md py-sm text-body-sm-md transition-colors',
-            status === 'unbound' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
-          @click="status = 'unbound'"
-        >
-          Свободные · {{ stats.unbound }}
-        </button>
-        <button
-          :class="['px-md py-sm text-body-sm-md transition-colors',
-            status === 'bound' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
-          @click="status = 'bound'"
-        >
-          Привязанные · {{ stats.bound }}
-        </button>
-        <button
-          :class="['px-md py-sm text-body-sm-md transition-colors',
-            status === 'all' ? 'border-b-2 border-ink text-ink' : 'border-b-2 border-transparent text-steel hover:text-ink']"
-          @click="status = 'all'"
-        >
-          Все · {{ stats.total }}
-        </button>
+    <p class="mt-1 max-w-2xl text-body-sm text-steel">
+      Печатайте свободные QR заранее, а при сборке заказа привязывайте первый попавшийся QR к инструкции по ШК товара.
+    </p>
+
+    <div class="mt-sm space-y-2xl">
+      <UiAlert v-if="createError" kind="error">{{ createError }}</UiAlert>
+
+      <div class="grid gap-md md:grid-cols-3">
+        <UiStatCard label="Всего" size="h3">{{ stats.total }}</UiStatCard>
+        <UiStatCard label="Свободные" size="h3">{{ stats.unbound }}</UiStatCard>
+        <UiStatCard label="Привязанные" size="h3">{{ stats.bound }}</UiStatCard>
       </div>
-      <p class="text-caption text-steel">Показаны последние {{ codes.length }} QR</p>
-    </div>
 
-    <UiCard>
-      <div v-if="pending" class="py-md text-body text-steel">Загружаю QR-коды…</div>
+      <div class="rounded-lg bg-surface p-xl">
+        <SectionHeader icon="lucide:plus" title="Сгенерировать партию QR" />
+        <form class="mt-md grid gap-md md:grid-cols-[1fr_1fr_auto]" @submit.prevent="createBatch">
+          <UiInput
+            v-model="countToCreate"
+            label="Сколько QR создать"
+            type="number"
+            hint="От 1 до 5000 за раз"
+          />
+          <UiInput
+            v-model="sizeMm"
+            label="Размер QR в PDF, мм"
+            type="number"
+            hint="Шаблоны дизайна добавим отдельно"
+          />
+          <UiButton class="self-end" :loading="creating">
+            <Icon name="lucide:plus" class="h-4 w-4" />
+            Сгенерировать
+          </UiButton>
+        </form>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-md">
+        <UiSegmentedTabs v-model="status" :tabs="statusTabs" />
+        <p class="text-caption text-steel">Показаны последние {{ codes.length }} QR</p>
+      </div>
+
+      <p v-if="pending" class="py-md text-body-sm text-steel">Загружаю QR-коды…</p>
 
       <UiTable v-else-if="codes.length">
         <thead>
@@ -170,9 +148,9 @@ function openPdf() {
         </tbody>
       </UiTable>
 
-      <p v-else class="py-md text-body text-steel">
+      <p v-else class="py-md text-body-sm text-steel">
         Пока нет QR-кодов в выбранном фильтре.
       </p>
-    </UiCard>
+    </div>
   </div>
 </template>

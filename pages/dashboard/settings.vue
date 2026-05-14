@@ -333,10 +333,7 @@ function formatPaymentDate(value: string) {
           <div class="rounded-lg bg-surface p-xl">
             <div class="flex flex-col gap-md md:flex-row md:items-start md:justify-between">
               <div>
-                <div class="flex items-center gap-3">
-                  <Icon name="lucide:user-round" class="h-5 w-5 text-navy opacity-50" />
-                  <h3 class="text-h4 text-navy">Профиль</h3>
-                </div>
+                <SectionHeader icon="lucide:user-round" title="Профиль" />
                 <p class="mt-md text-body text-charcoal">Email: {{ user?.email || '—' }}</p>
                 <p class="text-body text-charcoal">Имя: {{ user?.name ?? '—' }}</p>
               </div>
@@ -351,20 +348,14 @@ function formatPaymentDate(value: string) {
         <!-- ── Tab: Компания ─────────────────────────────────────────── -->
         <div v-else-if="tab === 'company'" key="company" class="space-y-xl">
           <div class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:building-2" class="h-5 w-5 text-navy opacity-50" />
-              <h3 class="text-h4 text-navy">Компания</h3>
-            </div>
+            <SectionHeader icon="lucide:building-2" title="Компания" />
             <p class="mt-md text-body text-charcoal">{{ currentTenant?.name }} · /{{ currentTenant?.slug }}</p>
           </div>
 
           <div class="rounded-lg bg-surface p-xl">
             <div class="flex flex-col gap-lg">
               <div>
-                <div class="flex items-center gap-3">
-                  <Icon name="lucide:shield-check" class="h-5 w-5 text-navy opacity-50" />
-                  <h3 class="text-h4 text-navy">Юридический профиль оператора</h3>
-                </div>
+                <SectionHeader icon="lucide:shield-check" title="Юридический профиль оператора" />
                 <p class="mt-sm text-body-sm text-steel">
                   Эти реквизиты показываются покупателю на публичных QR-формах. quar.io указывается как техническая платформа.
                 </p>
@@ -401,10 +392,7 @@ function formatPaymentDate(value: string) {
           <div class="rounded-lg bg-surface p-xl">
             <div class="flex flex-col gap-lg md:flex-row md:items-start md:justify-between">
               <div>
-                <div class="flex items-center gap-3">
-                  <Icon name="lucide:image" class="h-5 w-5 text-navy opacity-50" />
-                  <h3 class="text-h4 text-navy">Брендинг</h3>
-                </div>
+                <SectionHeader icon="lucide:image" title="Брендинг" />
                 <p class="mt-md text-body text-charcoal">Логотип компании</p>
                 <p class="mt-1 text-caption text-steel">PNG, JPG, WebP или SVG до 5 МБ.</p>
               </div>
@@ -487,10 +475,7 @@ function formatPaymentDate(value: string) {
           </div>
 
           <div v-if="billingData?.trial?.isTrialing" class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:gift" class="h-5 w-5 text-navy opacity-50" />
-              <h3 class="text-h4 text-navy">Что включено в триале</h3>
-            </div>
+            <SectionHeader icon="lucide:gift" title="Что включено в триале" />
             <ul class="mt-md space-y-1 text-body-sm text-charcoal">
               <li>✓ Кастомные секции</li>
               <li>✓ Подключаемые модули: гарантия, чат с поддержкой, FAQ, обратная связь</li>
@@ -506,10 +491,7 @@ function formatPaymentDate(value: string) {
           </div>
 
           <div v-else-if="!trialBlocked" class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:sparkles" class="h-5 w-5 text-navy opacity-50" />
-              <h3 class="text-h4 text-navy">Запустить триал Plus на 30 дней</h3>
-            </div>
+            <SectionHeader icon="lucide:sparkles" title="Запустить триал Plus на 30 дней" />
             <p class="mt-sm text-body text-steel">
               Все функции Plus — кастомные секции, модули, workflow одобрения. Лимит инструкций
               остаётся 3, чтобы по окончании триала ничего не пропало.
@@ -519,10 +501,7 @@ function formatPaymentDate(value: string) {
           </div>
 
           <div v-else-if="billingData?.trial?.trialUsedAt" class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:check-circle-2" class="h-5 w-5 text-navy opacity-50" />
-              <h3 class="text-h4 text-navy">Триал уже использован</h3>
-            </div>
+            <SectionHeader icon="lucide:check-circle-2" title="Триал уже использован" />
             <p class="mt-sm text-body text-steel">
               Триал был активирован {{ new Date(billingData.trial.trialUsedAt).toLocaleDateString() }}.
               Для постоянного доступа к платным функциям подключите оплату.
@@ -532,10 +511,7 @@ function formatPaymentDate(value: string) {
           <div class="rounded-lg bg-surface p-xl">
             <div class="flex flex-wrap items-start justify-between gap-md">
               <div>
-                <div class="flex items-center gap-3">
-                  <Icon name="lucide:wallet" class="h-5 w-5 text-navy opacity-50" />
-                  <h3 class="text-h4 text-navy">Бонусный счёт</h3>
-                </div>
+                <SectionHeader icon="lucide:wallet" title="Бонусный счёт" />
                 <p class="mt-sm text-body text-steel">
                   При продлении подписки сумма сначала списывается с бонусного счёта.
                   Если средств на нём недостаточно, остаток списывается с привязанной карты.
@@ -561,10 +537,7 @@ function formatPaymentDate(value: string) {
           </div>
 
           <div class="rounded-lg bg-surface p-xl">
-            <div class="flex items-center gap-3">
-              <Icon name="lucide:receipt" class="h-5 w-5 text-navy opacity-50" />
-              <h3 class="text-h4 text-navy">История платежей</h3>
-            </div>
+            <SectionHeader icon="lucide:receipt" title="История платежей" />
             <p v-if="!paymentsData?.payments.length" class="mt-md text-body-sm text-steel">
               Платежей пока нет. После первого пополнения здесь появятся транзакции.
             </p>

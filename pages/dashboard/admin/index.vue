@@ -41,34 +41,23 @@ const planBadgeVariant = (code: string) => {
     <div class="mt-sm space-y-2xl">
       <!-- Top-level counters -->
       <div class="grid grid-cols-2 gap-md md:grid-cols-4">
-        <div class="rounded-lg bg-surface p-xl">
-          <p class="text-caption-bold text-steel uppercase tracking-wide">Пользователей</p>
-          <p class="mt-2 text-h2 text-navy">{{ data?.users.total ?? 0 }}</p>
-          <p class="mt-1 text-caption text-steel">+{{ data?.users.new30d ?? 0 }} за 30 дней</p>
-        </div>
-        <div class="rounded-lg bg-surface p-xl">
-          <p class="text-caption-bold text-steel uppercase tracking-wide">Компаний</p>
-          <p class="mt-2 text-h2 text-navy">{{ data?.tenants.total ?? 0 }}</p>
-          <p class="mt-1 text-caption text-steel">админов: {{ data?.users.admins ?? 0 }}</p>
-        </div>
-        <div class="rounded-lg bg-surface p-xl">
-          <p class="text-caption-bold text-steel uppercase tracking-wide">Инструкций</p>
-          <p class="mt-2 text-h2 text-navy">{{ data?.instructions.total ?? 0 }}</p>
-          <p class="mt-1 text-caption text-steel">опубликовано: {{ data?.instructions.published ?? 0 }}</p>
-        </div>
-        <div class="rounded-lg bg-surface p-xl">
-          <p class="text-caption-bold text-steel uppercase tracking-wide">Визиты · 30 дн</p>
-          <p class="mt-2 text-h2 text-navy">{{ data?.visits.last30d ?? 0 }}</p>
-          <p class="mt-1 text-caption text-steel">за 7 дней: {{ data?.visits.last7d ?? 0 }}</p>
-        </div>
+        <UiStatCard label="Пользователей" :hint="`+${data?.users.new30d ?? 0} за 30 дней`">
+          {{ data?.users.total ?? 0 }}
+        </UiStatCard>
+        <UiStatCard label="Компаний" :hint="`админов: ${data?.users.admins ?? 0}`">
+          {{ data?.tenants.total ?? 0 }}
+        </UiStatCard>
+        <UiStatCard label="Инструкций" :hint="`опубликовано: ${data?.instructions.published ?? 0}`">
+          {{ data?.instructions.total ?? 0 }}
+        </UiStatCard>
+        <UiStatCard label="Визиты · 30 дн" :hint="`за 7 дней: ${data?.visits.last7d ?? 0}`">
+          {{ data?.visits.last30d ?? 0 }}
+        </UiStatCard>
       </div>
 
       <!-- Plans breakdown -->
       <div>
-        <div class="flex items-center gap-3">
-          <Icon name="lucide:credit-card" class="h-5 w-5 text-navy opacity-50" />
-          <h2 class="text-h4 text-navy">Тарифы компаний</h2>
-        </div>
+        <SectionHeader icon="lucide:credit-card" title="Тарифы компаний" />
         <ul v-if="data?.tenants.byPlan.length" class="mt-md divide-y divide-hairline">
           <li
             v-for="p in data.tenants.byPlan"
@@ -82,7 +71,7 @@ const planBadgeVariant = (code: string) => {
             <span class="text-body-sm-md text-ink">{{ p.count }}</span>
           </li>
         </ul>
-        <p v-else class="mt-md py-md text-body text-steel">Нет данных.</p>
+        <p v-else class="mt-md py-md text-body-sm text-steel">Нет данных.</p>
       </div>
     </div>
   </div>

@@ -46,55 +46,80 @@ function deviceLabel(value: string | null | undefined) {
 </script>
 
 <template>
-  <div class="space-y-xl">
-    <NuxtLink :to="`/dashboard/instructions/${id}/edit`" class="text-caption text-steel hover:text-ink">← Назад к редактору</NuxtLink>
-    <h1 class="text-h2 text-ink">Аналитика · последние 30 дней</h1>
+  <div>
+    <BackLink :to="`/dashboard/instructions/${id}/edit`" label="Назад к редактору" />
 
-    <div class="grid grid-cols-2 gap-md md:grid-cols-4">
-      <UiCard><p class="text-caption text-steel uppercase">Просмотры</p><p class="mt-1 text-h2">{{ stats?.totals.pageViews ?? 0 }}</p></UiCard>
-      <UiCard><p class="text-caption text-steel uppercase">Уникальные сессии</p><p class="mt-1 text-h2">{{ stats?.totals.uniqueSessions ?? 0 }}</p></UiCard>
-      <UiCard><p class="text-caption text-steel uppercase">Средний скролл</p><p class="mt-1 text-h2">{{ Math.round(stats?.totals.avgScrollDepth ?? 0) }}%</p></UiCard>
-      <UiCard>
-        <p class="text-caption text-steel uppercase">Среднее время</p>
-        <p class="mt-1 text-h2">{{ Math.round((stats?.totals.avgDurationMs ?? 0) / 1000) }} с</p>
-      </UiCard>
-    </div>
+    <PageHeader icon="lucide:bar-chart-3" title="Аналитика инструкции">
+      <template #actions>
+        <span class="text-caption text-steel">за последние 30 дней</span>
+      </template>
+    </PageHeader>
 
-    <div class="grid grid-cols-1 gap-md md:grid-cols-2">
-      <UiCard>
-        <h3 class="text-h5 mb-2">По странам</h3>
-        <ul class="divide-y divide-hairline">
-          <li v-for="r in stats?.byCountry" :key="r.country" class="flex justify-between py-1 text-body-sm">
-            <span>{{ r.country }}</span><span class="text-steel">{{ r.count }}</span>
-          </li>
-        </ul>
-      </UiCard>
-      <UiCard>
-        <h3 class="text-h5 mb-2">По устройствам</h3>
-        <ul class="divide-y divide-hairline">
-          <li v-for="r in stats?.byDevice" :key="r.deviceType" class="flex justify-between py-1 text-body-sm">
-            <span>{{ deviceLabel(r.deviceType) }}</span><span class="text-steel">{{ r.count }}</span>
-          </li>
-        </ul>
-      </UiCard>
-    </div>
-
-    <UiCard>
-      <h3 class="text-h5 mb-2">Отзывы по блокам</h3>
+    <div class="mt-sm space-y-2xl">
+      <!-- Stat-карточки: 4 ключевые метрики -->
       <div class="grid grid-cols-2 gap-md md:grid-cols-4">
-        <div v-for="r in stats?.feedbackByKind" :key="r.kind">
-          <p class="text-caption text-steel uppercase">{{ feedbackKindLabels[r.kind] ?? r.kind }}</p>
-          <p class="text-h3">{{ r.count }}</p>
+        <UiStatCard label="Просмотры">
+          {{ stats?.totals.pageViews ?? 0 }}
+        </UiStatCard>
+        <UiStatCard label="Уникальные сессии">
+          {{ stats?.totals.uniqueSessions ?? 0 }}
+        </UiStatCard>
+        <UiStatCard label="Средний скролл">
+          {{ Math.round(stats?.totals.avgScrollDepth ?? 0) }}%
+        </UiStatCard>
+        <UiStatCard label="Среднее время">
+          {{ Math.round((stats?.totals.avgDurationMs ?? 0) / 1000) }} с
+        </UiStatCard>
+      </div>
+
+      <!-- Гео и устройства: info-card + section-mini-header -->
+      <div class="grid grid-cols-1 gap-md md:grid-cols-2">
+        <div class="rounded-lg bg-surface p-xl">
+          <SectionHeader icon="lucide:globe" title="По странам" />
+          <ul v-if="stats?.byCountry?.length" class="mt-md divide-y divide-hairline">
+            <li v-for="r in stats?.byCountry" :key="r.country" class="flex justify-between py-sm text-body-sm">
+              <span class="text-ink">{{ r.country }}</span>
+              <span class="text-steel">{{ r.count }}</span>
+            </li>
+          </ul>
+          <p v-else class="mt-md text-body-sm text-steel">Нет данных за 30 дней.</p>
+        </div>
+        <div class="rounded-lg bg-surface p-xl">
+          <SectionHeader icon="lucide:smartphone" title="По устройствам" />
+          <ul v-if="stats?.byDevice?.length" class="mt-md divide-y divide-hairline">
+            <li v-for="r in stats?.byDevice" :key="r.deviceType" class="flex justify-between py-sm text-body-sm">
+              <span class="text-ink">{{ deviceLabel(r.deviceType) }}</span>
+              <span class="text-steel">{{ r.count }}</span>
+            </li>
+          </ul>
+          <p v-else class="mt-md text-body-sm text-steel">Нет данных за 30 дней.</p>
         </div>
       </div>
-      <hr class="my-md border-hairline">
-      <ul class="divide-y divide-hairline max-h-[400px] overflow-y-auto">
-        <li v-for="f in feedback?.items" :key="f.id" class="py-sm text-body-sm">
-          <span class="font-mono text-caption text-steel">{{ f.blockId }}</span>
-          <UiBadge class="ml-2" :variant="feedbackKindVariants[f.kind] ?? 'tag-gray'">{{ feedbackKindLabels[f.kind] ?? f.kind }}</UiBadge>
-          <p v-if="f.comment" class="mt-1 text-charcoal">{{ f.comment }}</p>
-        </li>
-      </ul>
-    </UiCard>
+
+      <!-- Отзывы по блокам -->
+      <div class="rounded-lg bg-surface p-xl">
+        <SectionHeader icon="lucide:message-square" title="Отзывы по блокам" />
+
+        <div class="mt-md grid grid-cols-2 gap-md md:grid-cols-4">
+          <div v-for="r in stats?.feedbackByKind" :key="r.kind">
+            <p class="text-caption-bold text-steel uppercase tracking-wide">{{ feedbackKindLabels[r.kind] ?? r.kind }}</p>
+            <p class="mt-1 text-h3 text-navy">{{ r.count }}</p>
+          </div>
+        </div>
+
+        <hr class="my-lg border-hairline">
+
+        <ul v-if="feedback?.items?.length" class="max-h-[400px] divide-y divide-hairline overflow-y-auto">
+          <li v-for="f in feedback.items" :key="f.id" class="py-sm text-body-sm">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-caption text-steel">{{ f.blockId }}</span>
+              <UiBadge :variant="feedbackKindVariants[f.kind] ?? 'tag-gray'">{{ feedbackKindLabels[f.kind] ?? f.kind }}</UiBadge>
+            </div>
+            <p v-if="f.comment" class="mt-1 text-charcoal">{{ f.comment }}</p>
+          </li>
+        </ul>
+        <p v-else class="text-body-sm text-steel">Пока никто не оставил отзыв на блок.</p>
+      </div>
+    </div>
   </div>
 </template>

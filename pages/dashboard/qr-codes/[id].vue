@@ -156,110 +156,108 @@ function copy(text: string) {
 <template>
   <div v-if="pending" class="py-section text-body text-steel">Загружаю QR-код…</div>
 
-  <div v-else-if="code" class="space-y-xl">
-    <div class="flex flex-col gap-sm">
-      <button class="self-start text-body-sm text-link hover:underline" @click="router.back()">
-        ← Назад к списку
-      </button>
-      <div class="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 class="text-h2 text-ink">QR /s/{{ code.shortId }}</h1>
-          <p class="mt-1 text-body text-steel">
-            Создан {{ new Date(code.createdAt).toLocaleDateString() }} · Обновлён {{ new Date(code.updatedAt).toLocaleDateString() }}
-          </p>
+  <div v-else-if="code">
+    <BackLink to="/dashboard/qr-codes" label="Назад к списку" />
+
+    <PageHeader icon="lucide:qr-code" :title="`QR /s/${code.shortId}`">
+      <template #actions>
+        <UiBadge :variant="code.instruction ? 'tag-green' : 'tag-orange'">
+          {{ code.instruction ? 'Привязан' : 'Свободен' }}
+        </UiBadge>
+        <UiBadge v-if="code.firstPrintedAt" variant="tag-blue">Напечатан</UiBadge>
+      </template>
+    </PageHeader>
+
+    <p class="mt-1 text-body-sm text-steel">
+      Создан {{ new Date(code.createdAt).toLocaleDateString() }} · Обновлён {{ new Date(code.updatedAt).toLocaleDateString() }}
+    </p>
+
+    <div class="mt-sm space-y-2xl">
+      <UiAlert v-if="saveError" kind="error">{{ saveError }}</UiAlert>
+
+      <!-- QR-код + ссылка -->
+      <div class="rounded-lg bg-surface p-xl">
+        <SectionHeader icon="lucide:qr-code" title="QR-код" />
+        <p class="mt-1 text-body-sm text-steel">
+          Этот QR ведёт на ссылку ниже. Скачайте SVG для печати — он масштабируется без потери качества.
+        </p>
+        <div class="mt-md grid gap-md md:grid-cols-[200px_1fr] md:items-center">
+          <div class="grid h-[200px] w-[200px] place-items-center rounded-md border border-hairline bg-canvas p-sm">
+            <div v-if="qrSvg" class="qr-svg-host h-full w-full" v-html="qrSvg" />
+            <span v-else class="text-caption text-steel">Генерирую…</span>
+          </div>
+          <div class="space-y-sm">
+            <code class="block break-all rounded-md bg-canvas px-md py-sm text-body-sm">{{ shortUrl }}</code>
+            <div class="flex flex-wrap gap-sm">
+              <UiButton variant="secondary" size="sm" @click="copy(shortUrl)">
+                <Icon name="lucide:copy" class="h-4 w-4" /> Скопировать ссылку
+              </UiButton>
+              <UiButton variant="secondary" size="sm" :disabled="!qrSvg" @click="downloadSvg">
+                <Icon name="lucide:download" class="h-4 w-4" /> Скачать SVG
+              </UiButton>
+            </div>
+          </div>
         </div>
-        <div class="flex items-center gap-sm">
-          <UiBadge :variant="code.instruction ? 'tag-green' : 'tag-orange'">
-            {{ code.instruction ? 'Привязан' : 'Свободен' }}
-          </UiBadge>
-          <UiBadge v-if="code.firstPrintedAt" variant="tag-blue">Напечатан</UiBadge>
+      </div>
+
+      <!-- Привязка -->
+      <div class="rounded-lg bg-surface p-xl">
+        <SectionHeader icon="lucide:link" title="Привязка к инструкции">
+          <template #actions>
+            <UiButton v-if="code.instruction" variant="secondary" size="sm" :loading="saving" @click="unbind">
+              <Icon name="lucide:unlink" class="h-4 w-4" /> Отвязать
+            </UiButton>
+            <UiButton size="sm" @click="showRebind = true">
+              <Icon name="lucide:link" class="h-4 w-4" />
+              {{ code.instruction ? 'Перепривязать' : 'Привязать вручную' }}
+            </UiButton>
+          </template>
+        </SectionHeader>
+        <p v-if="code.instruction" class="mt-md text-body-sm">
+          <NuxtLink :to="`/dashboard/instructions/${code.instruction.id}/edit`" class="text-link hover:underline">
+            {{ code.instruction.title }}
+          </NuxtLink>
+          <span class="block text-caption text-steel">
+            ШК {{ code.instruction.productBarcode || '—' }} · {{ code.instruction.status }}
+          </span>
+        </p>
+        <p v-else class="mt-md text-body-sm text-steel">QR ещё не связан с инструкцией.</p>
+      </div>
+
+      <!-- История печати -->
+      <div class="rounded-lg bg-surface p-xl">
+        <SectionHeader icon="lucide:printer" title="История печати" />
+        <ul v-if="code.printRuns.length" class="mt-md divide-y divide-hairline">
+          <li
+            v-for="run in [...code.printRuns].reverse()"
+            :key="run.batchId + run.printedAt"
+            class="flex items-center justify-between py-sm"
+          >
+            <div>
+              <p class="text-body-sm-md text-ink">{{ run.designLabel }}</p>
+              <p class="text-caption text-steel">{{ new Date(run.printedAt).toLocaleString() }}</p>
+            </div>
+            <UiBadge variant="tag-blue">Партия {{ run.batchId.slice(0, 8) }}</UiBadge>
+          </li>
+        </ul>
+        <p v-else class="mt-md text-body-sm text-steel">QR ещё не печатали.</p>
+      </div>
+
+      <!-- Заметка -->
+      <div class="rounded-lg bg-surface p-xl">
+        <SectionHeader icon="lucide:sticky-note" title="Заметка" />
+        <p class="mt-1 text-body-sm text-steel">Видна только команде. Например, в какой коробке стикер.</p>
+        <textarea
+          v-model="notes"
+          rows="3"
+          class="mt-md w-full rounded-md border border-hairline bg-canvas p-md text-body-sm-md placeholder:text-hairline-strong outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15"
+          placeholder="Свободный текст…"
+        />
+        <div class="mt-sm flex justify-end">
+          <UiButton size="sm" :loading="saving" @click="saveNotes">Сохранить</UiButton>
         </div>
       </div>
     </div>
-
-    <UiAlert v-if="saveError" kind="error">{{ saveError }}</UiAlert>
-
-    <UiCard>
-      <h2 class="text-h4 text-ink">QR-код</h2>
-      <p class="mt-1 text-body-sm text-steel">
-        Этот QR ведёт на ссылку ниже. Скачайте SVG для печати — он масштабируется без потери качества.
-      </p>
-      <div class="mt-md grid gap-md md:grid-cols-[200px_1fr] md:items-center">
-        <div class="grid h-[200px] w-[200px] place-items-center rounded-md border border-hairline bg-canvas p-sm">
-          <div v-if="qrSvg" class="qr-svg-host h-full w-full" v-html="qrSvg" />
-          <span v-else class="text-caption text-steel">Генерирую…</span>
-        </div>
-        <div class="space-y-sm">
-          <code class="block break-all rounded-md bg-surface px-md py-sm text-body-sm">{{ shortUrl }}</code>
-          <div class="flex flex-wrap gap-sm">
-            <UiButton variant="secondary" size="sm" @click="copy(shortUrl)">
-              <Icon name="lucide:copy" class="h-4 w-4" /> Скопировать ссылку
-            </UiButton>
-            <UiButton variant="secondary" size="sm" :disabled="!qrSvg" @click="downloadSvg">
-              <Icon name="lucide:download" class="h-4 w-4" /> Скачать SVG
-            </UiButton>
-          </div>
-        </div>
-      </div>
-    </UiCard>
-
-    <UiCard>
-      <div class="flex items-start justify-between gap-md">
-        <div>
-          <h2 class="text-h4 text-ink">Привязка к инструкции</h2>
-          <p v-if="code.instruction" class="mt-1 text-body text-steel">
-            <NuxtLink :to="`/dashboard/instructions/${code.instruction.id}/edit`" class="text-link hover:underline">
-              {{ code.instruction.title }}
-            </NuxtLink>
-            <span class="block text-caption text-steel">
-              ШК {{ code.instruction.productBarcode || '—' }} · {{ code.instruction.status }}
-            </span>
-          </p>
-          <p v-else class="mt-1 text-body text-steel">QR ещё не связан с инструкцией.</p>
-        </div>
-        <div class="flex flex-col gap-sm">
-          <UiButton v-if="code.instruction" variant="secondary" size="sm" :loading="saving" @click="unbind">
-            <Icon name="lucide:unlink" class="h-4 w-4" /> Отвязать
-          </UiButton>
-          <UiButton size="sm" @click="showRebind = true">
-            <Icon name="lucide:link" class="h-4 w-4" />
-            {{ code.instruction ? 'Перепривязать' : 'Привязать вручную' }}
-          </UiButton>
-        </div>
-      </div>
-    </UiCard>
-
-    <UiCard>
-      <h2 class="text-h4 text-ink">История печати</h2>
-      <div v-if="code.printRuns.length" class="mt-md space-y-sm">
-        <div
-          v-for="run in [...code.printRuns].reverse()"
-          :key="run.batchId + run.printedAt"
-          class="flex items-center justify-between rounded-md border border-hairline px-md py-sm"
-        >
-          <div>
-            <p class="text-body-md text-ink">{{ run.designLabel }}</p>
-            <p class="text-caption text-steel">{{ new Date(run.printedAt).toLocaleString() }}</p>
-          </div>
-          <UiBadge variant="tag-blue">Партия {{ run.batchId.slice(0, 8) }}</UiBadge>
-        </div>
-      </div>
-      <p v-else class="mt-md text-body text-steel">QR ещё не печатали.</p>
-    </UiCard>
-
-    <UiCard>
-      <h2 class="text-h4 text-ink">Заметка</h2>
-      <p class="mt-1 text-body-sm text-steel">Видна только команде. Например, в какой коробке стикер.</p>
-      <textarea
-        v-model="notes"
-        rows="3"
-        class="mt-md w-full rounded-md border border-hairline-strong bg-canvas px-md py-sm text-body outline-none focus:border-primary focus:border-2"
-        placeholder="Свободный текст…"
-      />
-      <div class="mt-sm flex justify-end">
-        <UiButton size="sm" :loading="saving" @click="saveNotes">Сохранить</UiButton>
-      </div>
-    </UiCard>
 
     <UiModal v-model:open="showRebind" title="Выбрать инструкцию" size="lg">
       <div class="space-y-md">
