@@ -1,7 +1,9 @@
 <script setup lang="ts">
 const { startTrial, loading: trialLoading } = useStartTrial()
+const { track } = useTrackGoal()
 
 type Plan = {
+  code: string
   name: string
   price: string
   priceNote?: string
@@ -17,6 +19,7 @@ type Plan = {
 
 const plans: Plan[] = [
   {
+    code: 'pilot',
     name: 'Пилот',
     price: '500 ₽',
     priceNote: 'разово',
@@ -26,6 +29,7 @@ const plans: Plan[] = [
     cta: 'Попробовать бесплатно'
   },
   {
+    code: 'catalog',
     name: 'Каталог',
     price: '4 500 ₽',
     priceNote: 'в месяц',
@@ -36,6 +40,7 @@ const plans: Plan[] = [
     cta: 'Попробовать бесплатно'
   },
   {
+    code: 'brand',
     name: 'Бренд',
     price: 'от 14 500 ₽',
     priceNote: 'индивидуально',
@@ -125,6 +130,7 @@ const plans: Plan[] = [
             :to="plan.to"
             :variant="plan.variant === 'premium' ? 'on-dark' : 'primary'"
             block
+            @click="track('pricing_plan_selected', { code: plan.code })"
           >
             {{ plan.cta }}
           </UiButton>
@@ -134,7 +140,7 @@ const plans: Plan[] = [
             :variant="plan.variant === 'premium' ? 'on-dark' : 'primary'"
             :loading="trialLoading"
             block
-            @click="startTrial"
+            @click="track('pricing_plan_selected', { code: plan.code }); startTrial()"
           >
             {{ plan.cta }}
           </UiButton>
