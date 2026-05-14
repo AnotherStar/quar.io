@@ -5,8 +5,66 @@ import { isBadgeModuleCode } from '~~/shared/constants/moduleBadges'
 const { user, currentTenant } = useAuthState()
 const route = useRoute()
 const api = useApi()
+
+// Состояние «свёрнут/развёрнут» персистится в localStorage. На SSR
+// инициализируемся в false (no flash, корректная гидрация), при монтировании
+// читаем сохранённое значение и применяем. На любое изменение — пишем.
+//
+// `sidebarHydrated` — отдельный флаг: пока он false, transition'ы на ширину
+// сайдбара и fade-out лейблов выключены — иначе при перезагрузке пользователь
+// видит развёрнутый сайдбар + анимацию сворачивания после чтения localStorage.
+const SIDEBAR_COLLAPSED_KEY = 'dashboard:sidebar-collapsed'
 const sidebarCollapsed = ref(false)
+const sidebarHydrated = ref(false)
+onMounted(() => {
+  try {
+    if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1') {
+      sidebarCollapsed.value = true
+    }
+  } catch {
+    // localStorage может быть недоступен (Safari private mode и т.п.) — игнорим.
+  }
+  // Двойной requestAnimationFrame: ждём, пока браузер реально отрисует
+  // хотя бы один кадр со свёрнутым состоянием и `is-hydrating` (transition:
+  // none). После этого включаем анимации обратно — повторного изменения
+  // grid-template-columns при следующем кадре уже нет, и transition не
+  // срабатывает. Чисто nextTick недостаточно — он отрабатывает до paint'а,
+  // и браузер успевает зафиксировать только финальное состояние «288→114
+  // + transition: 0.2s» → запускает анимацию.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      sidebarHydrated.value = true
+    })
+  })
+})
+watch(sidebarCollapsed, (v) => {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, v ? '1' : '0')
+  } catch {
+    // см. выше — молча пропускаем сохранение.
+  }
+})
+
 const mobileMenuOpen = ref(false)
+
+// Tooltip для свёрнутого сайдбара. Один общий div, position: fixed, чтобы
+// не обрезался overflow: hidden у shell/inner. Координаты считаем по rect
+// наведённого NuxtLink — справа от него, по центру по вертикали.
+const sidebarTooltip = ref<{ label: string; top: number; left: number } | null>(null)
+function showSidebarTooltip(e: Event, label: string) {
+  if (!sidebarCollapsed.value) return
+  const el = e.currentTarget as HTMLElement | null
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  sidebarTooltip.value = { label, top: r.top + r.height / 2, left: r.right + 8 }
+}
+function hideSidebarTooltip() {
+  sidebarTooltip.value = null
+}
+// Если пользователь развернул сайдбар при наведённой подсказке — скрываем её,
+// иначе зависший tooltip останется на «свёрнутых» координатах.
+watch(sidebarCollapsed, (v) => { if (!v) sidebarTooltip.value = null })
 
 // Кабинет не должен индексироваться: данные приватные и часто за авторизацией.
 useHead({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
@@ -179,7 +237,7 @@ watch(() => route.fullPath, () => {
 
     <div
       class="dashboard-shell"
-      :class="{ 'is-sidebar-collapsed': sidebarCollapsed }"
+      :class="{ 'is-sidebar-collapsed': sidebarCollapsed, 'is-hydrating': !sidebarHydrated }"
     >
       <!-- Desktop-сайдбар. На мобиле скрыт (там работает overlay). -->
       <aside class="dashboard-sidebar hidden md:block">
@@ -215,6 +273,8 @@ watch(() => route.fullPath, () => {
               :aria-label="sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'"
               :aria-expanded="!sidebarCollapsed"
               @click="sidebarCollapsed = !sidebarCollapsed"
+              @mouseenter="showSidebarTooltip($event, 'Развернуть меню')"
+              @mouseleave="hideSidebarTooltip"
             >
               <span class="grid h-4 w-4 shrink-0 place-items-center">
                 <Icon
@@ -238,11 +298,15 @@ watch(() => route.fullPath, () => {
                 v-for="i in coreItems"
                 :key="i.to"
                 :to="i.to"
-                :title="sidebarCollapsed ? i.label : undefined"
+                :aria-label="sidebarCollapsed ? i.label : undefined"
                 :class="[
                   'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
                   isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                 ]"
+                @mouseenter="showSidebarTooltip($event, i.label)"
+                @mouseleave="hideSidebarTooltip"
+                @focus="showSidebarTooltip($event, i.label)"
+                @blur="hideSidebarTooltip"
               >
                 <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                 <span
@@ -267,11 +331,15 @@ watch(() => route.fullPath, () => {
                   v-for="i in moduleNavItems"
                   :key="i.to"
                   :to="i.to"
-                  :title="sidebarCollapsed ? i.label : undefined"
+                  :aria-label="sidebarCollapsed ? i.label : undefined"
                   :class="[
                     'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
                     isActive(i.to) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                   ]"
+                  @mouseenter="showSidebarTooltip($event, i.label)"
+                  @mouseleave="hideSidebarTooltip"
+                  @focus="showSidebarTooltip($event, i.label)"
+                  @blur="hideSidebarTooltip"
                 >
                   <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                   <span
@@ -297,11 +365,15 @@ watch(() => route.fullPath, () => {
                   v-for="i in adminNavItems"
                   :key="i.to"
                   :to="i.to"
-                  :title="sidebarCollapsed ? i.label : undefined"
+                  :aria-label="sidebarCollapsed ? i.label : undefined"
                   :class="[
                     'relative flex h-9 items-center gap-3 rounded-md px-sm text-body-sm-md transition-colors duration-200 ease-out',
                     isActive(i.to, i.exact) ? 'bg-primary text-on-primary' : 'text-charcoal hover:bg-hairline hover:text-ink'
                   ]"
+                  @mouseenter="showSidebarTooltip($event, i.label)"
+                  @mouseleave="hideSidebarTooltip"
+                  @focus="showSidebarTooltip($event, i.label)"
+                  @blur="hideSidebarTooltip"
                 >
                   <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon :name="i.icon" class="block h-4 w-4" /></span>
                   <span
@@ -333,7 +405,11 @@ watch(() => route.fullPath, () => {
                 :class="isActive('/dashboard/settings')
                   ? 'bg-primary text-on-primary'
                   : 'text-charcoal hover:bg-hairline hover:text-ink'"
-                :title="sidebarCollapsed ? (settingsBadge?.title ?? 'Настройки') : undefined"
+                :aria-label="sidebarCollapsed ? (settingsBadge?.title ?? 'Настройки') : undefined"
+                @mouseenter="showSidebarTooltip($event, settingsBadge?.title ?? 'Настройки')"
+                @mouseleave="hideSidebarTooltip"
+                @focus="showSidebarTooltip($event, settingsBadge?.title ?? 'Настройки')"
+                @blur="hideSidebarTooltip"
               >
                 <span class="grid h-4 w-4 shrink-0 place-items-center"><Icon name="lucide:settings" class="block h-4 w-4" /></span>
                 <span
@@ -361,7 +437,11 @@ watch(() => route.fullPath, () => {
                 target="_blank"
                 rel="noopener"
                 class="dashboard-sidebar-footer-row rounded-md text-charcoal transition-colors duration-200 ease-out hover:bg-hairline hover:text-ink"
-                :title="sidebarCollapsed ? 'Поддержка' : undefined"
+                :aria-label="sidebarCollapsed ? 'Поддержка' : undefined"
+                @mouseenter="showSidebarTooltip($event, 'Поддержка')"
+                @mouseleave="hideSidebarTooltip"
+                @focus="showSidebarTooltip($event, 'Поддержка')"
+                @blur="hideSidebarTooltip"
               >
                 <span class="grid h-4 w-4 shrink-0 place-items-center text-steel"><Icon name="lucide:life-buoy" class="block h-4 w-4" /></span>
                 <span
@@ -482,6 +562,32 @@ watch(() => route.fullPath, () => {
         </div>
       </div>
     </Transition>
+
+    <!-- Свёрнутый сайдбар: tooltip справа от наведённого пункта. Teleport
+         в body, чтобы overflow:hidden на shell/inner не обрезал. mode="out-in"
+         + :key по label заставляют фейд срабатывать и при переходе между
+         пунктами, а не только на первом показе/скрытии. -->
+    <Teleport to="body">
+      <Transition
+        mode="out-in"
+        enter-active-class="transition-opacity duration-150 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-100 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="sidebarTooltip && sidebarCollapsed"
+          :key="sidebarTooltip.label"
+          class="dashboard-sidebar-tooltip"
+          :style="{ top: sidebarTooltip.top + 'px', left: sidebarTooltip.left + 'px' }"
+          role="tooltip"
+        >
+          {{ sidebarTooltip.label }}
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -497,6 +603,16 @@ watch(() => route.fullPath, () => {
   .dashboard-shell {
     grid-template-columns: var(--dashboard-sidebar-width, 288px) minmax(0, 1fr);
     transition: grid-template-columns 0.2s ease;
+  }
+
+  /* На первом тике после mount, пока ещё читаем localStorage — выключаем
+   * все transition'ы сайдбара, чтобы свёрнутое состояние применилось
+   * мгновенно, без анимации сворачивания при перезагрузке. */
+  .dashboard-shell.is-hydrating,
+  .dashboard-shell.is-hydrating *,
+  .dashboard-shell.is-hydrating *::before,
+  .dashboard-shell.is-hydrating *::after {
+    transition: none !important;
   }
 
   .dashboard-shell.is-sidebar-collapsed {
@@ -596,6 +712,38 @@ watch(() => route.fullPath, () => {
   overflow: hidden;
   text-overflow: ellipsis;
   transition: opacity 150ms ease, max-width 200ms ease, margin-left 200ms ease;
+}
+
+/* Tooltip справа от пункта свёрнутого сайдбара. position: fixed, координаты
+ * проставляются inline в JS (см. showSidebarTooltip) — так уходим от
+ * overflow:hidden на shell/inner, который иначе обрезает абсолютный tooltip
+ * на левой стороне экрана. translateY(-50%) центрирует относительно своей
+ * высоты — top передаём как центр анкера. */
+.dashboard-sidebar-tooltip {
+  position: fixed;
+  z-index: 200;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: var(--color-charcoal);
+  color: var(--color-on-dark);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.1px;
+  pointer-events: none;
+  box-shadow: rgba(15, 15, 15, 0.16) 0 6px 18px -4px;
+}
+
+.dashboard-sidebar-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-right-color: var(--color-charcoal);
 }
 
 .dashboard-fade-label.is-hidden {

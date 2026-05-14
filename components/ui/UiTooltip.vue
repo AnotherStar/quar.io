@@ -22,7 +22,9 @@ defineProps<{
 <template>
   <span class="ui-tooltip">
     <slot />
-    <span v-if="text && !disabled" class="ui-tooltip__bubble" role="tooltip">{{ text }}</span>
+    <Transition name="ui-tooltip">
+      <span v-if="text && !disabled" class="ui-tooltip__bubble" role="tooltip">{{ text }}</span>
+    </Transition>
   </span>
 </template>
 
@@ -49,7 +51,7 @@ defineProps<{
   letter-spacing: 0.1px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition: opacity 140ms ease, transform 140ms ease;
   z-index: 100;
 }
 
@@ -69,5 +71,19 @@ defineProps<{
   opacity: 1;
   transform: translateX(-50%) translateY(0);
   transition-delay: 250ms;
+}
+
+/* Vue-Transition: фейд при v-if-смене (text/disabled). Не конфликтует
+ * с :hover-анимацией — отрабатывает только при mount/unmount, например
+ * когда у dropdown-trigger'а закрывается меню и `disabled` снимается. */
+.ui-tooltip-enter-active {
+  transition: opacity 140ms ease;
+}
+.ui-tooltip-leave-active {
+  transition: opacity 100ms ease;
+}
+.ui-tooltip-enter-from,
+.ui-tooltip-leave-to {
+  opacity: 0 !important;
 }
 </style>
