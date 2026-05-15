@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client'
+import { AI_SETTING_KEYS } from '../shared/aiSettings'
+import { AI_SEED_DEFAULTS } from './aiSeedDefaults'
 
 const prisma = new PrismaClient()
 
@@ -158,6 +160,45 @@ async function main() {
 
   console.log('✓ Seeded plans:', plans.map(p => p.code).join(', '))
   console.log('✓ Seeded modules:', modules.map(m => m.code).join(', '))
+
+  // ── AI settings: seed current defaults as version 1 ─────────────────────────
+  // Идемпотентно: для каждого ключа сидим v1 только если у настройки ещё нет
+  // ни одной версии. Если админ уже сохранил свои версии — ничего не трогаем.
+  const seededAiKeys: string[] = []
+  for (const key of AI_SETTING_KEYS) {
+    const defaultValue = AI_SEED_DEFAULTS[key]
+    const existing = await prisma.aiSettingVersion.findFirst({
+      where: { settingKey: key },
+      select: { id: true }
+    })
+    if (existing) continue
+
+    await prisma.$transaction(async (tx) => {
+      await tx.aiSetting.upsert({
+        where: { key },
+        create: { key },
+        update: {}
+      })
+      await tx.aiSettingVersion.create({
+        data: {
+          settingKey: key,
+          version: 1,
+          value: defaultValue as object,
+          note: 'Стартовая версия из кода (seed)'
+        }
+      })
+      await tx.aiSetting.update({
+        where: { key },
+        data: { activeVersion: 1 }
+      })
+    })
+    seededAiKeys.push(key)
+  }
+  if (seededAiKeys.length) {
+    console.log('✓ Seeded AI settings (v1):', seededAiKeys.join(', '))
+  } else {
+    console.log('• AI settings already have versions, skipping')
+  }
 }
 
 main()

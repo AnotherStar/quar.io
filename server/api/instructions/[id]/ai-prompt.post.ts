@@ -16,34 +16,14 @@ import {
   type AiBlock,
   type AiInstruction
 } from '~~/server/utils/aiInstructionGenerator'
-import {
-  INSTRUCTION_GENERATION_MODEL,
-  getOpenAIModelInfo
-} from '~~/shared/openaiModels'
-
-const IMAGE_MODEL = 'gpt-image-1.5'
+import { getOpenAIModelInfo } from '~~/shared/openaiModels'
+import { getAiSetting } from '~~/server/utils/aiSettings'
 
 const BodySchema = z.object({
   prompt: z.string().min(1).max(2000),
   mode: z.enum(['text', 'image']),
   contextDoc: z.any().optional()
 })
-
-const TEXT_SYSTEM_PROMPT = `Ты — встроенный ИИ-помощник в редакторе инструкций к товарам. Пользователь пишет короткий запрос прямо в редакторе, в нужном месте документа. Тебе передаётся вся текущая инструкция в JSON, где место запроса помечено маркером <<HERE>> (другие неотправленные блоки помечены <<PROMPT>> — их игнорируй).
-
-Твоя задача:
-- Сгенерировать ровно ту часть инструкции, которую просит пользователь, и которая логично продолжает / дополняет контекст вокруг <<HERE>>
-- Опираться на стиль, тон, язык и уровень детализации, заданные текущей инструкцией
-- Не повторять то, что уже написано выше или ниже в документе
-- Не выдумывать характеристики, артикулы, гарантии и цены — если данных нет, описывай общими формулировками
-
-Используй те же типы блоков, что и основной генератор инструкций (heading, paragraph, bullet_list, numbered_list, task_list, quote, code_block, table, safety, toggle, image_placeholder). Не используй image — у тебя нет URL картинок (для изображений пользователь выберет режим "image" отдельно). Не вставляй section/module refs.
-
-Тип toggle — это сворачиваемая секция: summary всегда видна (короткий заголовок-вопрос или название раздела), text раскрывается по клику. Используй для FAQ-стиля, опциональных деталей и длинных пояснений, которые засоряют основной поток.
-
-Технические правила JSON: строгая схема — каждое поле обязательно. Для неиспользуемых полей: level=0, text="", summary="", items=[], taskItems=[], rows=[], hasHeaderRow=false, severity="", description="", url="", codeLanguage="", links=[]. Поле slug всегда пустая строка. Поле title — короткий заголовок ответа (не отображается, используется как метка), description — пустая строка, language — язык документа.`
-
-const IMAGE_SYSTEM_PREFIX = `Ты — встроенный помощник, который генерирует одну иллюстрацию для конкретного места в инструкции к товару. Тебе передан запрос пользователя и краткий контекст из соседних блоков. На выходе нужен один промпт для модели генерации изображений: подробное визуальное описание сцены (что в кадре, ракурс, стиль, фон), без вступлений и комментариев. Стиль — фотореалистичный/чистый, без текста на картинке (если пользователь явно не попросил).`
 
 export default defineEventHandler(async (event) => {
   const { tenant, user } = await requireTenant(event, { minRole: 'EDITOR' })
@@ -121,16 +101,22 @@ ${prompt}
     userContent.push({ type: 'input_image', image_url: img.url })
   }
 
+  const aiConfig = await getAiSetting('instruction.inlinePrompt.text')
+  const activeModel = aiConfig.model
+
   try {
     const res = await client.responses.create({
-      model: INSTRUCTION_GENERATION_MODEL,
+      model: activeModel,
       input: [
-        { role: 'system', content: TEXT_SYSTEM_PROMPT },
+        { role: 'system', content: aiConfig.systemPrompt },
         { role: 'user', content: userContent }
       ],
       text: {
         format: { type: 'json_schema', name: 'instruction', schema: RESPONSE_SCHEMA as any, strict: true }
-      }
+      },
+      ...(aiConfig.reasoningEffort !== 'none'
+        ? { reasoning: { effort: aiConfig.reasoningEffort } }
+        : {})
     })
 
     const usageRaw = (res as any).usage
@@ -138,7 +124,7 @@ ${prompt}
       inputTokens = Number(usageRaw.input_tokens) || 0
       outputTokens = Number(usageRaw.output_tokens) || 0
       totalTokens = Number(usageRaw.total_tokens) || inputTokens + outputTokens
-      const pricing = getOpenAIModelInfo(INSTRUCTION_GENERATION_MODEL).pricingUsdPer1M
+      const pricing = getOpenAIModelInfo(activeModel).pricingUsdPer1M
       if (pricing) {
         estimatedCostUsd = (inputTokens * pricing.input + outputTokens * pricing.output) / 1_000_000
       }
@@ -167,7 +153,7 @@ ${prompt}
       tenantId: tenant.id,
       userId: user.id,
       feature: 'inline-prompt-text',
-      model: INSTRUCTION_GENERATION_MODEL,
+      model: activeModel,
       status: usageStatus,
       errorMessage: usageError,
       inputTokens,
@@ -198,6 +184,12 @@ async function handleImage(args: ImageArgs) {
   let usageError: string | null = null
   let publicUrl: string | null = null
 
+  // Два конфига: текстовый prompt-expansion и сама генерация картинки.
+  // Они настраиваются как разные фичи, потому что модели и режимы разные
+  // (chat-completion vs images endpoint).
+  const expansionConfig = await getAiSetting('instruction.inlinePrompt.imageExpansion')
+  const imageConfig = await getAiSetting('image.generate')
+
   try {
     // Expand the short user prompt into a rich image prompt using the
     // surrounding context. Cheap and short, so worth the extra hop.
@@ -215,20 +207,23 @@ async function handleImage(args: ImageArgs) {
       expansionContent.push({ type: 'input_image', image_url: img.url })
     }
     const promptExpansion = await client.responses.create({
-      model: INSTRUCTION_GENERATION_MODEL,
+      model: expansionConfig.model,
       input: [
-        { role: 'system', content: IMAGE_SYSTEM_PREFIX },
+        { role: 'system', content: expansionConfig.systemPrompt },
         { role: 'user', content: expansionContent }
-      ]
+      ],
+      ...(expansionConfig.reasoningEffort !== 'none'
+        ? { reasoning: { effort: expansionConfig.reasoningEffort } }
+        : {})
     })
     const expanded = extractOutputText(promptExpansion)?.trim() || prompt
     const imagePrompt = expanded.length > 1800 ? expanded.slice(0, 1800) : expanded
 
     const result = await client.images.generate({
-      model: IMAGE_MODEL,
+      model: imageConfig.model,
       prompt: imagePrompt,
-      size: '1024x1024',
-      n: 1
+      size: imageConfig.size,
+      n: imageConfig.n
     })
     const first = result.data?.[0]
     if (!first) throw createError({ statusCode: 502, statusMessage: 'OpenAI не вернул изображение' })
@@ -256,7 +251,7 @@ async function handleImage(args: ImageArgs) {
       tenantId: tenant.id,
       userId: user.id,
       feature: 'inline-prompt-image',
-      model: IMAGE_MODEL,
+      model: imageConfig.model,
       status: usageStatus,
       errorMessage: usageError,
       imageCount: usageStatus === 'success' ? 1 : 0,

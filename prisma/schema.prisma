@@ -36,6 +36,7 @@ model User {
   payments      Payment[]
   moduleSeen   ModuleSeen[]
   instructionImportJobs InstructionImportJob[]
+  aiSettingVersions AiSettingVersion[]
 }
 
 model Session {
@@ -1066,4 +1067,34 @@ model InstructionImportJob {
 
   @@index([tenantId, status, createdAt])
   @@index([tenantId, fileHash])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Глобальные настройки AI: модели и системные промпты для каждой фичи.
+// Управляется из админки. activeVersion = null означает «используется
+// дефолт из кода» — записей в AiSettingVersion при этом тоже может не быть.
+// История версий хранится в AiSettingVersion и не удаляется при сбросе.
+// ─────────────────────────────────────────────────────────────────────────────
+model AiSetting {
+  key            String   @id
+  activeVersion  Int?
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  versions       AiSettingVersion[]
+}
+
+model AiSettingVersion {
+  id          String     @id @default(cuid())
+  settingKey  String
+  setting     AiSetting  @relation(fields: [settingKey], references: [key], onDelete: Cascade)
+  version     Int
+  value       Json
+  note        String?
+  createdById String?
+  createdBy   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+
+  @@unique([settingKey, version])
+  @@index([settingKey, createdAt])
 }

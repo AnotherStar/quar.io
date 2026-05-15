@@ -4,16 +4,17 @@ import { uploadObject } from '~~/server/utils/storage'
 import { getOpenAIApiKey, getOpenAIBaseUrl } from '~~/server/utils/openai'
 import { requireTenant } from '~~/server/utils/tenant'
 import { recordAiUsage, type AiUsageStatus } from '~~/server/utils/aiUsage'
+import { getAiSetting } from '~~/server/utils/aiSettings'
 
 const BodySchema = z.object({
   prompt: z.string().min(3).max(2000)
 })
 
-const IMAGE_GENERATE_MODEL = 'gpt-image-1.5'
-
 export default defineEventHandler(async (event) => {
   const { tenant, user } = await requireTenant(event, { minRole: 'EDITOR' })
   const body = await readValidatedBody(event, BodySchema.parse)
+
+  const imageConfig = await getAiSetting('image.generate')
 
   const startedAt = Date.now()
   let status: AiUsageStatus = 'error'
@@ -28,10 +29,10 @@ export default defineEventHandler(async (event) => {
     })
 
     const result = await client.images.generate({
-      model: IMAGE_GENERATE_MODEL,
+      model: imageConfig.model,
       prompt: body.prompt,
-      size: '1024x1024',
-      n: 1
+      size: imageConfig.size,
+      n: imageConfig.n
     })
 
     const first = result.data?.[0]
@@ -61,7 +62,7 @@ export default defineEventHandler(async (event) => {
       tenantId: tenant.id,
       userId: user.id,
       feature: 'image-generate',
-      model: IMAGE_GENERATE_MODEL,
+      model: imageConfig.model,
       status,
       errorMessage,
       imageCount,

@@ -9,8 +9,6 @@ import OpenAI from 'openai'
 import { requireTenant } from '~~/server/utils/tenant'
 import { prisma } from '~~/server/utils/prisma'
 import {
-  SYSTEM_PROMPT,
-  SYSTEM_PROMPT_FROM_PROMPT,
   RESPONSE_SCHEMA,
   aiBlocksToTipTap,
   type AiBlock,
@@ -21,11 +19,8 @@ import { extractImagesFromPdf } from '~~/server/utils/pdfImageExtractor'
 import { generateShortId } from '~~/server/utils/slug'
 import { getOpenAIApiKey, getOpenAIBaseUrl } from '~~/server/utils/openai'
 import { recordAiUsage, type AiUsageStatus } from '~~/server/utils/aiUsage'
-import {
-  INSTRUCTION_GENERATION_MODEL,
-  getOpenAIModelInfo,
-  type OpenAIModelId
-} from '~~/shared/openaiModels'
+import { getOpenAIModelInfo, type OpenAIModelId } from '~~/shared/openaiModels'
+import { getAiSetting } from '~~/server/utils/aiSettings'
 
 const MAX_BYTES = 25 * 1024 * 1024
 const MAX_TOTAL_BYTES = 60 * 1024 * 1024
@@ -245,16 +240,27 @@ export default defineEventHandler(async (event) => {
   let usageStatus: AiUsageStatus = 'error'
   let usageError: string | null = null
 
+  // Конфиги: разный системный промпт в зависимости от наличия файлов. Каждая
+  // фича настраивается отдельно через админку, модель/effort у них могут
+  // отличаться.
+  const aiConfig = await getAiSetting(
+    files.length ? 'instruction.generate.fromFiles' : 'instruction.generate.fromPrompt'
+  )
+  const activeModel = aiConfig.model
+
   try {
     const stream = await client.responses.create({
-      model: INSTRUCTION_GENERATION_MODEL,
+      model: activeModel,
       input: [
-        { role: 'system', content: files.length ? SYSTEM_PROMPT : SYSTEM_PROMPT_FROM_PROMPT },
+        { role: 'system', content: aiConfig.systemPrompt },
         { role: 'user', content: userContent }
       ],
       text: {
         format: { type: 'json_schema', name: 'instruction', schema: RESPONSE_SCHEMA as any, strict: true }
       },
+      ...(aiConfig.reasoningEffort !== 'none'
+        ? { reasoning: { effort: aiConfig.reasoningEffort } }
+        : {}),
       stream: true
     }, { signal: requestAbort.signal } as any)
 
@@ -262,7 +268,7 @@ export default defineEventHandler(async (event) => {
       throwIfAborted()
       const t = chunk?.type as string | undefined
       if (t === 'response.completed') {
-        usage = normalizeResponseUsage(chunk.response?.usage, INSTRUCTION_GENERATION_MODEL)
+        usage = normalizeResponseUsage(chunk.response?.usage, activeModel)
         if (usage) sse('usage', usage)
       }
       const delta: string | undefined = t === 'response.output_text.delta' ? chunk.delta : undefined
@@ -363,7 +369,7 @@ export default defineEventHandler(async (event) => {
       tenantId: tenant.id,
       userId: user.id,
       feature: 'instruction-generation',
-      model: INSTRUCTION_GENERATION_MODEL,
+      model: activeModel,
       status: usageStatus,
       errorMessage: usageError,
       inputTokens: usage?.inputTokens ?? null,

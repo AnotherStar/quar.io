@@ -21,18 +21,14 @@ import { recordAiUsage, type AiUsageStatus } from './aiUsage'
 import { generateShortId, slugify, isReservedSlug } from './slug'
 import { extractImagesFromPdf } from './pdfImageExtractor'
 import {
-  SYSTEM_PROMPT,
   RESPONSE_SCHEMA,
   aiBlocksToTipTap,
   type AiBlock,
   type AiInstruction
 } from './aiInstructionGenerator'
 import { normalizeBlock } from './streamingBlockExtractor'
-import {
-  INSTRUCTION_GENERATION_MODEL,
-  getOpenAIModelInfo,
-  type OpenAIModelId
-} from '~~/shared/openaiModels'
+import { getOpenAIModelInfo, type OpenAIModelId } from '~~/shared/openaiModels'
+import { getAiSetting } from './aiSettings'
 
 const MAX_CONCURRENT = 3
 
@@ -276,6 +272,11 @@ async function processJob(jobId: string): Promise<void> {
   let usageError: string | null = null
   let usage: ReturnType<typeof normalizeResponseUsage> = null
   let createdInstructionId: string | null = job.instructionId
+  // Конфиг фичи. Читаем один раз в начале джоба — так модель/промпт стабильны
+  // в рамках одного джоба, даже если админ переключит активную версию во
+  // время обработки.
+  const aiConfig = await getAiSetting('instruction.import')
+  const activeModel = aiConfig.model
 
   try {
     await setStage(jobId, 'downloading', 5)
@@ -339,9 +340,9 @@ async function processJob(jobId: string): Promise<void> {
     }
 
     const response = await client.responses.create({
-      model: INSTRUCTION_GENERATION_MODEL,
+      model: activeModel,
       input: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: aiConfig.systemPrompt },
         { role: 'user', content: userContent }
       ],
       text: {
@@ -351,10 +352,13 @@ async function processJob(jobId: string): Promise<void> {
           schema: RESPONSE_SCHEMA as any,
           strict: true
         }
-      }
+      },
+      ...(aiConfig.reasoningEffort !== 'none'
+        ? { reasoning: { effort: aiConfig.reasoningEffort } }
+        : {})
     })
 
-    usage = normalizeResponseUsage((response as any).usage, INSTRUCTION_GENERATION_MODEL)
+    usage = normalizeResponseUsage((response as any).usage, activeModel)
 
     const outputText = (response as any).output_text as string | undefined
     if (!outputText) throw new Error('Пустой ответ модели')
@@ -449,7 +453,7 @@ async function processJob(jobId: string): Promise<void> {
       tenantId: job.tenantId,
       userId: job.createdById,
       feature: 'instruction-import',
-      model: INSTRUCTION_GENERATION_MODEL,
+      model: activeModel,
       status: usageStatus,
       errorMessage: usageError,
       inputTokens: usage?.inputTokens ?? null,

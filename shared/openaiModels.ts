@@ -168,8 +168,6 @@ export const AI_MODEL_CATALOG: Record<OpenAIModelId, OpenAIModelInfo> = {
   }
 }
 
-export const INSTRUCTION_GENERATION_MODEL: OpenAIModelId = 'gpt-5.4-mini'
-
 export function getOpenAIModelInfo(model: OpenAIModelId) {
   return AI_MODEL_CATALOG[model]
 }
