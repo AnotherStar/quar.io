@@ -10,9 +10,11 @@ import { AI_MODEL_CATALOG, type OpenAIModelId } from '~~/shared/openaiModels'
 import {
   IMAGE_GENERATION_MODELS,
   IMAGE_GENERATION_SIZES,
+  PROMPT_WRAPPER_PLACEHOLDER,
   REASONING_EFFORTS,
   type AiSettingKey,
   type ImageGenerationConfig,
+  type PromptWrapperConfig,
   type ReasoningEffort,
   type TextLlmConfig
 } from '~~/shared/aiSettings'
@@ -30,12 +32,15 @@ interface ActiveVersionInfo {
   createdBy: { id: string; name: string | null; email: string } | null
 }
 
+type SettingKind = 'text-llm' | 'image-generation' | 'prompt-wrapper'
+type SettingValue = TextLlmConfig | ImageGenerationConfig | PromptWrapperConfig
+
 interface AiSettingItem {
   key: AiSettingKey
   label: string
   description: string
-  kind: 'text-llm' | 'image-generation'
-  effective: TextLlmConfig | ImageGenerationConfig | null
+  kind: SettingKind
+  effective: SettingValue | null
   isConfigured: boolean
   activeVersion: ActiveVersionInfo | null
   totalVersions: number
@@ -43,18 +48,21 @@ interface AiSettingItem {
 
 // Стартовые значения формы, когда у фичи нет активной версии. Это не
 // «дефолты» в продуктовом смысле — runtime ими не пользуется, они нужны
-// только чтобы форма открылась хоть с чем-то. Промпт остаётся пустым, его
+// только чтобы форма открылась хоть с чем-то. Содержательную часть
 // заполняет администратор.
-function blankDraft(kind: 'text-llm' | 'image-generation'): TextLlmConfig | ImageGenerationConfig {
+function blankDraft(kind: SettingKind): SettingValue {
   if (kind === 'text-llm') {
     return { model: 'gpt-5.4-mini', systemPrompt: '', reasoningEffort: 'none' }
   }
-  return { model: 'gpt-image-1.5', size: '1024x1024', n: 1 }
+  if (kind === 'image-generation') {
+    return { model: 'gpt-image-1.5', size: '1024x1024', n: 1 }
+  }
+  return { template: `${PROMPT_WRAPPER_PLACEHOLDER}` }
 }
 
 interface VersionItem {
   version: number
-  value: TextLlmConfig | ImageGenerationConfig
+  value: SettingValue
   note: string | null
   createdAt: string
   createdBy: { id: string; name: string | null; email: string } | null
@@ -69,7 +77,7 @@ const { data, pending, refresh } = await useAsyncData(
 // Локальные копии форм по ключу — редактируются независимо от effective.
 // При раскрытии строки копируем effective → drafts[key]. При «Сохранить»
 // шлём drafts[key]. После refresh сбрасываем.
-const drafts = reactive<Record<string, TextLlmConfig | ImageGenerationConfig>>({})
+const drafts = reactive<Record<string, SettingValue>>({})
 const notes = reactive<Record<string, string>>({})
 const expanded = reactive(new Set<string>())
 const savingKey = ref<string | null>(null)
@@ -306,8 +314,11 @@ const effortLabels: Record<ReasoningEffort, string> = {
               </p>
             </div>
             <div class="shrink-0 text-right text-caption text-steel">
-              <div v-if="item.effective" class="font-mono">
+              <div v-if="item.effective && item.kind !== 'prompt-wrapper'" class="font-mono">
                 {{ (item.effective as any).model }}
+              </div>
+              <div v-else-if="item.effective" class="font-mono">
+                шаблон · {{ (item.effective as PromptWrapperConfig).template.length }} симв.
               </div>
               <div v-else class="text-error">—</div>
               <div class="mt-xs">{{ item.totalVersions }} версий</div>
@@ -373,7 +384,7 @@ const effortLabels: Record<ReasoningEffort, string> = {
             </template>
 
             <!-- Поля для image-generation -->
-            <template v-else>
+            <template v-else-if="item.kind === 'image-generation'">
               <div class="grid gap-md md:grid-cols-3">
                 <label class="block">
                   <span class="mb-1 block text-body-sm-md text-charcoal">Модель</span>
@@ -413,6 +424,30 @@ const effortLabels: Record<ReasoningEffort, string> = {
                   </p>
                 </label>
               </div>
+            </template>
+
+            <!-- Поля для prompt-wrapper -->
+            <template v-else>
+              <label class="block">
+                <span class="mb-1 block text-body-sm-md text-charcoal">Шаблон обвязки</span>
+                <textarea
+                  v-model="(drafts[item.key] as PromptWrapperConfig).template"
+                  rows="14"
+                  class="block w-full rounded-md border border-transparent bg-canvas px-md py-sm font-mono text-body-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                <p class="mt-xs text-caption text-steel">
+                  Длина: {{ (drafts[item.key] as PromptWrapperConfig).template.length }} символов.
+                  Обязательный плейсхолдер
+                  <span class="font-mono text-ink">{{ PROMPT_WRAPPER_PLACEHOLDER }}</span> —
+                  на его место подставляется пользовательский ввод.
+                </p>
+                <p
+                  v-if="!(drafts[item.key] as PromptWrapperConfig).template.includes(PROMPT_WRAPPER_PLACEHOLDER)"
+                  class="mt-xs text-caption text-error"
+                >
+                  Шаблон должен содержать {{ PROMPT_WRAPPER_PLACEHOLDER }} — иначе пользовательский ввод никуда не подставится.
+                </p>
+              </label>
             </template>
 
             <!-- Комментарий + действия -->
@@ -485,18 +520,19 @@ const effortLabels: Record<ReasoningEffort, string> = {
                         {{ userLabel(v.createdBy) }} · {{ formatDateTime(v.createdAt) }}
                         <span v-if="v.note"> · «{{ v.note }}»</span>
                       </p>
-                      <p
-                        v-if="(v.value as any).model"
-                        class="mt-xs font-mono text-caption text-steel"
-                      >
-                        {{ (v.value as any).model }}
+                      <p class="mt-xs font-mono text-caption text-steel">
                         <template v-if="item.kind === 'text-llm'">
+                          {{ (v.value as TextLlmConfig).model }}
                           · effort: {{ (v.value as TextLlmConfig).reasoningEffort }}
                           · prompt: {{ (v.value as TextLlmConfig).systemPrompt.length }} симв.
                         </template>
-                        <template v-else>
+                        <template v-else-if="item.kind === 'image-generation'">
+                          {{ (v.value as ImageGenerationConfig).model }}
                           · {{ (v.value as ImageGenerationConfig).size }}
                           · n={{ (v.value as ImageGenerationConfig).n }}
+                        </template>
+                        <template v-else>
+                          шаблон · {{ (v.value as PromptWrapperConfig).template.length }} симв.
                         </template>
                       </p>
                     </div>

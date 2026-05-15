@@ -126,9 +126,14 @@ export default defineEventHandler(async (event) => {
   }
 })
 
+// Доступ: свой шаблон или публичный. Чужие приватные → 404.
 async function loadCustomTemplate(tenantId: string, id: string) {
   const record = await prisma.printTemplateDesign.findFirst({
-    where: { id, tenantId, archivedAt: null }
+    where: {
+      id,
+      archivedAt: null,
+      OR: [{ tenantId }, { isPublic: true }]
+    }
   })
   return record ? customPrintTemplate(record) : undefined
 }

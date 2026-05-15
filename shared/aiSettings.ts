@@ -42,6 +42,15 @@ export interface ImageGenerationConfig {
   n: number
 }
 
+// Статическая обвязка вокруг пользовательского промпта: админ задаёт шаблон
+// с плейсхолдером {{prompt}}, сервер подставляет туда ввод пользователя
+// перед отправкой в image-gen. Никакого LLM-вызова посередине нет.
+export interface PromptWrapperConfig {
+  template: string
+}
+
+export const PROMPT_WRAPPER_PLACEHOLDER = '{{prompt}}'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod-схемы. Применяются на чтении из БД и при сохранении из админки.
 // model-поле валидируется по AI_MODEL_CATALOG, не enum'ом, чтобы добавление
@@ -66,6 +75,17 @@ export const imageGenerationConfigSchema = z.object({
   n: z.number().int().min(1).max(4)
 })
 
+export const promptWrapperConfigSchema = z.object({
+  template: z
+    .string()
+    .min(1)
+    .max(20000)
+    .refine(
+      (t) => t.includes(PROMPT_WRAPPER_PLACEHOLDER),
+      `Шаблон должен содержать плейсхолдер ${PROMPT_WRAPPER_PLACEHOLDER}`
+    )
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Каталог фич
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +95,8 @@ export const AI_SETTING_KEYS = [
   'instruction.import',
   'instruction.inlinePrompt.text',
   'instruction.inlinePrompt.imageExpansion',
-  'image.generate'
+  'image.generate',
+  'sticker.promptWrapper'
 ] as const
 
 export type AiSettingKey = (typeof AI_SETTING_KEYS)[number]
@@ -96,7 +117,12 @@ interface ImageGenerationFeature extends BaseFeatureMeta {
   schema: typeof imageGenerationConfigSchema
 }
 
-export type AiFeatureMeta = TextLlmFeature | ImageGenerationFeature
+interface PromptWrapperFeature extends BaseFeatureMeta {
+  kind: 'prompt-wrapper'
+  schema: typeof promptWrapperConfigSchema
+}
+
+export type AiFeatureMeta = TextLlmFeature | ImageGenerationFeature | PromptWrapperFeature
 
 export const AI_FEATURE_CATALOG: Record<AiSettingKey, AiFeatureMeta> = {
   'instruction.generate.fromFiles': {
@@ -146,6 +172,14 @@ export const AI_FEATURE_CATALOG: Record<AiSettingKey, AiFeatureMeta> = {
     description:
       'Эндпоинт генерации изображений по текстовому промпту пользователя и inline-генерация картинок в редакторе.',
     schema: imageGenerationConfigSchema
+  },
+  'sticker.promptWrapper': {
+    key: 'sticker.promptWrapper',
+    kind: 'prompt-wrapper',
+    label: 'Обвязка промпта для стикеров',
+    description:
+      'Шаблон, в который заворачивается ввод пользователя при генерации фона стикера. Сюда удобно вынести технические требования (чистая зона под QR-код, без текста, печатное качество и т.п.). Плейсхолдер {{prompt}} обязателен — на его место подставляется текст из формы.',
+    schema: promptWrapperConfigSchema
   }
 }
 
@@ -161,6 +195,7 @@ export interface AiSettingValueMap {
   'instruction.inlinePrompt.text': TextLlmConfig
   'instruction.inlinePrompt.imageExpansion': TextLlmConfig
   'image.generate': ImageGenerationConfig
+  'sticker.promptWrapper': PromptWrapperConfig
 }
 
 export type AiSettingValue<K extends AiSettingKey> = AiSettingValueMap[K]

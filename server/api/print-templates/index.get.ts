@@ -19,21 +19,31 @@ export default defineEventHandler(async (event) => {
     kind: 'system'
   }))
 
+  // Свои шаблоны + все публичные. Чужие приватные не попадают сюда никогда.
   const customTemplates = await prisma.printTemplateDesign.findMany({
-    where: { tenantId: tenant.id, archivedAt: null },
+    where: {
+      archivedAt: null,
+      OR: [{ tenantId: tenant.id }, { isPublic: true }]
+    },
     orderBy: { createdAt: 'desc' }
   })
 
   templates.push(...customTemplates.map((t) => {
     const code = customTemplateCode(t.id)
+    const isOwn = t.tenantId === tenant.id
+    const kind: 'custom' | 'public' = isOwn ? 'custom' : 'public'
     return {
       code,
       name: t.name,
-      description: 'Ваш шаблон: фон + настраиваемый QR-код.',
+      description: isOwn
+        ? 'Ваш шаблон: фон + настраиваемый QR-код.'
+        : 'Общий шаблон: фон + настраиваемый QR-код.',
       size: { widthMm: t.widthMm, heightMm: t.heightMm },
       previewUrl: `/api/print-templates/${encodeURIComponent(code)}/preview`,
       version: 1,
-      kind: 'custom' as const
+      kind,
+      // isPublic экспортируем только для своих — у чужих это уже отражено в kind='public'.
+      isPublic: isOwn ? t.isPublic : undefined
     }
   }))
 

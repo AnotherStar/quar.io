@@ -24,7 +24,8 @@ export const printTemplateDesignCreateSchema = z.object({
   qrYmm: z.number().min(0).max(500),
   qrSizeMm: z.number().min(8).max(300),
   qrDarkColor: hexColorSchema,
-  qrLightColor: hexColorSchema
+  qrLightColor: hexColorSchema,
+  qrLightTransparent: z.boolean().optional().default(false)
 }).refine((v) => v.qrXmm + v.qrSizeMm <= v.widthMm, {
   message: 'QR выходит за правый край',
   path: ['qrXmm']
@@ -65,5 +66,12 @@ export interface PrintTemplateListItem {
   size: { widthMm: number; heightMm: number }
   previewUrl: string | null
   version: number
-  kind?: 'system' | 'custom'
+  // 'system' — встроенный в код, 'custom' — кастомный шаблон своего тенанта,
+  // 'public' — кастомный шаблон, помеченный админом как публичный, виден
+  // всем тенантам в каталоге.
+  kind?: 'system' | 'custom' | 'public'
+  // True, если шаблон сейчас публичный. Заполняется только для своих
+  // шаблонов (kind='custom'); у чужих публичных это и так подразумевается
+  // самим kind='public', а для system всегда undefined.
+  isPublic?: boolean
 }

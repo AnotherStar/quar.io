@@ -12,6 +12,7 @@
 import type {
   AiSettingKey,
   ImageGenerationConfig,
+  PromptWrapperConfig,
   TextLlmConfig
 } from '../shared/aiSettings'
 
@@ -118,7 +119,19 @@ const INLINE_TEXT_SYSTEM_PROMPT = `Ты — встроенный ИИ-помощ
 
 const INLINE_IMAGE_EXPANSION_PROMPT = `Ты — встроенный помощник, который генерирует одну иллюстрацию для конкретного места в инструкции к товару. Тебе передан запрос пользователя и краткий контекст из соседних блоков. На выходе нужен один промпт для модели генерации изображений: подробное визуальное описание сцены (что в кадре, ракурс, стиль, фон), без вступлений и комментариев. Стиль — фотореалистичный/чистый, без текста на картинке (если пользователь явно не попросил).`
 
-export const AI_SEED_DEFAULTS: Record<AiSettingKey, TextLlmConfig | ImageGenerationConfig> = {
+const STICKER_PROMPT_WRAPPER = `Создай иллюстрацию для печатного стикера / вкладыша с QR-кодом, который будет размещаться на упаковке товара.
+
+Технические требования:
+- В одной из четвертей композиции оставь спокойную светлую или однотонную зону для размещения QR-кода. Не помещай в эту зону крупные объекты, мелкие узоры и яркие пятна.
+- Не добавляй текст, надписи, логотипы, штрих-коды и циферблаты.
+- Композиция должна заполнять весь холст до краёв, без рамок и белых полей.
+- Стиль — лаконичный, читаемый, без перегруза мелкими деталями.
+- Качество — печатное: чистые цвета, без артефактов, муара и шумов.
+
+Описание от пользователя:
+{{prompt}}`
+
+export const AI_SEED_DEFAULTS: Record<AiSettingKey, TextLlmConfig | ImageGenerationConfig | PromptWrapperConfig> = {
   'instruction.generate.fromFiles': {
     model: 'gpt-5.4-mini',
     systemPrompt: SYSTEM_PROMPT_FROM_FILES,
@@ -148,5 +161,8 @@ export const AI_SEED_DEFAULTS: Record<AiSettingKey, TextLlmConfig | ImageGenerat
     model: 'gpt-image-1.5',
     size: '1024x1024',
     n: 1
+  },
+  'sticker.promptWrapper': {
+    template: STICKER_PROMPT_WRAPPER
   }
 }

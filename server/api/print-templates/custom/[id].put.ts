@@ -1,16 +1,28 @@
+// Обновление кастомного шаблона печати. Тот же контракт, что и POST на
+// создание (Zod-схема одна). Доступ — EDITOR+ владельца-тенанта.
 import { requireTenant } from '~~/server/utils/tenant'
 import { prisma } from '~~/server/utils/prisma'
 import { customTemplateCode } from '~~/print-templates/custom'
 import { printTemplateDesignCreateSchema } from '~~/shared/schemas/printBatch'
 
 export default defineEventHandler(async (event) => {
-  const { tenant, user } = await requireTenant(event, { minRole: 'EDITOR' })
+  const { tenant } = await requireTenant(event, { minRole: 'EDITOR' })
+  const id = getRouterParam(event, 'id')!
   const body = await readValidatedBody(event, printTemplateDesignCreateSchema.parse)
 
-  const design = await prisma.printTemplateDesign.create({
+  // Проверяем владельца до апдейта — чтобы 404 не выдал, что чужой ID
+  // существует.
+  const existing = await prisma.printTemplateDesign.findFirst({
+    where: { id, tenantId: tenant.id, archivedAt: null },
+    select: { id: true }
+  })
+  if (!existing) {
+    throw createError({ statusCode: 404, statusMessage: 'Шаблон не найден' })
+  }
+
+  const design = await prisma.printTemplateDesign.update({
+    where: { id },
     data: {
-      tenantId: tenant.id,
-      createdById: user.id,
       name: body.name,
       backgroundUrl: body.backgroundUrl,
       backgroundMimeType: body.backgroundMimeType ?? null,

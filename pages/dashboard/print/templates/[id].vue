@@ -5,6 +5,12 @@ import { uploadFile } from '~~/composables/useMediaUpload'
 
 const api = useApi()
 const router = useRouter()
+const route = useRoute()
+
+// Режим: 'new' → создание, иначе → редактирование шаблона по id.
+// Маршрут один файл [id].vue: /templates/new и /templates/<cuid>.
+const templateId = computed(() => String(route.params.id ?? 'new'))
+const isEdit = computed(() => templateId.value !== 'new')
 
 const name = ref('Новый стикер')
 const widthMm = ref(50)
@@ -24,6 +30,7 @@ const qrYmm = ref(5)
 const qrSizeMm = ref(40)
 const qrDarkColor = ref('#000000')
 const qrLightColor = ref('#ffffff')
+const qrLightTransparent = ref(false)
 const qrDataUrl = ref('')
 
 const prompt = ref('Яркий стикер для QR-кода на упаковку, место справа под QR, белая подложка, дружелюбный стиль')
@@ -89,7 +96,7 @@ const stickerStyle = computed(() => ({
   height: `${heightMm.value / 10}cm`
 }))
 
-watch([qrDarkColor, qrLightColor], renderQr, { immediate: true })
+watch([qrDarkColor, qrLightColor, qrLightTransparent], renderQr, { immediate: true })
 watch([widthMm, heightMm], () => {
   backgroundWidthMm.value = Math.max(1, backgroundWidthMm.value)
   backgroundHeightMm.value = Math.max(1, backgroundHeightMm.value)
@@ -98,12 +105,16 @@ watch([widthMm, heightMm], () => {
 
 async function renderQr() {
   const QRCode = await import('qrcode')
+  // Прозрачный фон: библиотека qrcode принимает 8-знаковый hex с альфой.
+  // '#00000000' = полностью прозрачный. Cветлые модули (quiet-зона тоже)
+  // станут прозрачными, под ними проступит фон стикера.
+  const light = qrLightTransparent.value ? '#00000000' : qrLightColor.value
   qrDataUrl.value = await QRCode.toDataURL('https://quar.io/s/preview', {
     width: 512,
     margin: 0,
     color: {
       dark: qrDarkColor.value,
-      light: qrLightColor.value
+      light
     }
   })
 }
@@ -137,7 +148,11 @@ async function generateBackground() {
   try {
     const result = await api<{ url: string }>('/api/ai/image-generate', {
       method: 'POST',
-      body: { prompt: prompt.value.trim() }
+      body: {
+        prompt: prompt.value.trim(),
+        canvasWidth: widthMm.value,
+        canvasHeight: heightMm.value
+      }
     })
     const dims = await readImageDimensions(result.url)
     backgroundUrl.value = result.url
@@ -287,8 +302,84 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+const loadingTemplate = ref(false)
+
+// Eyedropper API (Chrome/Edge 95+). В Firefox/Safari window.EyeDropper нет —
+// прячем кнопку. Не делаем canvas-fallback: проще и предсказуемее показать
+// only-Chromium-only фичу там, где она есть, чем поддерживать суррогат на
+// тех браузерах, где пользователь может тыкать только по миниатюре в редакторе.
+const eyeDropperSupported = ref(false)
+if (typeof window !== 'undefined' && 'EyeDropper' in window) {
+  eyeDropperSupported.value = true
+}
+
+async function pickColor(target: 'dark' | 'light') {
+  if (!eyeDropperSupported.value) return
+  try {
+    const ED = (window as any).EyeDropper
+    const result = (await new ED().open()) as { sRGBHex: string }
+    const hex = result?.sRGBHex
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return
+    if (target === 'dark') qrDarkColor.value = hex
+    else qrLightColor.value = hex
+  } catch {
+    // Пользователь нажал Escape — это нормально, не показываем ошибку.
+  }
+}
+
+async function loadExisting() {
+  if (!isEdit.value) return
+  loadingTemplate.value = true
+  error.value = null
+  try {
+    type TemplateRecord = {
+      name: string
+      backgroundUrl: string
+      backgroundMimeType: string | null
+      backgroundWidthPx: number
+      backgroundHeightPx: number
+      widthMm: number
+      heightMm: number
+      backgroundXmm: number
+      backgroundYmm: number
+      backgroundWidthMm: number
+      backgroundHeightMm: number
+      qrXmm: number
+      qrYmm: number
+      qrSizeMm: number
+      qrDarkColor: string
+      qrLightColor: string
+      qrLightTransparent: boolean
+    }
+    const record = await api<TemplateRecord>(`/api/print-templates/custom/${templateId.value}`)
+    name.value = record.name
+    backgroundUrl.value = record.backgroundUrl
+    backgroundMimeType.value = record.backgroundMimeType
+    backgroundWidthPx.value = record.backgroundWidthPx
+    backgroundHeightPx.value = record.backgroundHeightPx
+    widthMm.value = record.widthMm
+    heightMm.value = record.heightMm
+    backgroundXmm.value = record.backgroundXmm
+    backgroundYmm.value = record.backgroundYmm
+    backgroundWidthMm.value = record.backgroundWidthMm || record.widthMm
+    backgroundHeightMm.value = record.backgroundHeightMm || record.heightMm
+    qrXmm.value = record.qrXmm
+    qrYmm.value = record.qrYmm
+    qrSizeMm.value = record.qrSizeMm
+    qrDarkColor.value = record.qrDarkColor
+    qrLightColor.value = record.qrLightColor
+    qrLightTransparent.value = record.qrLightTransparent
+    selectedLayer.value = 'background'
+  } catch (e: any) {
+    error.value = e?.data?.statusMessage ?? e?.message ?? 'Не удалось загрузить шаблон'
+  } finally {
+    loadingTemplate.value = false
+  }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
+  void loadExisting()
   nextTick(() => {
     if (zoomOuterRef.value && workspaceRef.value) {
       zoomObserver = new ResizeObserver(() => updateZoom())
@@ -337,28 +428,41 @@ async function save() {
   error.value = null
   saving.value = true
   try {
-    const result = await api<{ template: { code: string } }>('/api/print-templates/custom', {
-      method: 'POST',
-      body: {
-        name: name.value.trim(),
-        backgroundUrl: backgroundUrl.value,
-        backgroundMimeType: backgroundMimeType.value,
-        backgroundWidthPx: backgroundWidthPx.value,
-        backgroundHeightPx: backgroundHeightPx.value,
-        widthMm: Number(widthMm.value),
-        heightMm: Number(heightMm.value),
-        backgroundXmm: Number(backgroundXmm.value),
-        backgroundYmm: Number(backgroundYmm.value),
-        backgroundWidthMm: Number(backgroundWidthMm.value),
-        backgroundHeightMm: Number(backgroundHeightMm.value),
-        qrXmm: Number(qrXmm.value),
-        qrYmm: Number(qrYmm.value),
-        qrSizeMm: Number(qrSizeMm.value),
-        qrDarkColor: qrDarkColor.value,
-        qrLightColor: qrLightColor.value
-      }
+    const body = {
+      name: name.value.trim(),
+      backgroundUrl: backgroundUrl.value,
+      backgroundMimeType: backgroundMimeType.value,
+      backgroundWidthPx: backgroundWidthPx.value,
+      backgroundHeightPx: backgroundHeightPx.value,
+      widthMm: Number(widthMm.value),
+      heightMm: Number(heightMm.value),
+      backgroundXmm: Number(backgroundXmm.value),
+      backgroundYmm: Number(backgroundYmm.value),
+      backgroundWidthMm: Number(backgroundWidthMm.value),
+      backgroundHeightMm: Number(backgroundHeightMm.value),
+      qrXmm: Number(qrXmm.value),
+      qrYmm: Number(qrYmm.value),
+      qrSizeMm: Number(qrSizeMm.value),
+      qrDarkColor: qrDarkColor.value,
+      qrLightColor: qrLightColor.value,
+      qrLightTransparent: qrLightTransparent.value
+    }
+    const result = isEdit.value
+      ? await api<{ template: { code: string } }>(`/api/print-templates/custom/${templateId.value}`, {
+          method: 'PUT',
+          body
+        })
+      : await api<{ template: { code: string } }>('/api/print-templates/custom', {
+          method: 'POST',
+          body
+        })
+    router.push({
+      path: '/dashboard/print',
+      query: { tab: 'templates' }
     })
-    router.push({ path: '/dashboard/print/new', query: { template: result.template.code } })
+    // Preview-кэш на сервере живёт 5 минут — на /print показывается тот же URL,
+    // что и в админке, и в браузере он закэширован. Не критично, обновится сам.
+    void result
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? e?.message ?? 'Не удалось сохранить шаблон'
   } finally {
@@ -400,14 +504,25 @@ function onDimensionChange(dim: 'width' | 'height', event: Event) {
 
 <template>
   <div class="xl:flex xl:min-h-[calc(100svh-2.25rem)] xl:flex-col">
-    <PageHeader icon="lucide:palette" title="Редактор стикера">
+    <PageHeader
+      icon="lucide:palette"
+      :title="isEdit ? 'Редактирование шаблона' : 'Новый шаблон'"
+    >
       <template #actions>
-        <UiButton variant="secondary" to="/dashboard/print/new">
+        <UiButton variant="secondary" to="/dashboard/print?tab=templates">
           <Icon name="lucide:arrow-left" class="h-4 w-4" />
-          <span class="hidden md:inline">К печати</span>
+          <span class="hidden md:inline">К шаблонам</span>
         </UiButton>
       </template>
     </PageHeader>
+
+    <div
+      v-if="loadingTemplate"
+      class="mt-sm flex items-center gap-2 rounded-md border border-hairline bg-surface px-md py-sm text-body-sm text-steel"
+    >
+      <Icon name="lucide:loader-2" class="h-4 w-4 animate-spin" />
+      Загружаю шаблон…
+    </div>
 
     <div class="mt-sm grid gap-xl rounded-sm bg-surface p-xl xl:flex-1 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section class="min-w-0 space-y-md xl:flex xl:flex-col">
@@ -585,20 +700,73 @@ function onDimensionChange(dim: 'width' | 'height', event: Event) {
           <div class="grid grid-cols-2 gap-sm">
             <label class="block">
               <span class="mb-1 block text-body-sm-md text-charcoal">QR</span>
-              <input v-model="qrDarkColor" type="color" class="h-10 w-full rounded-md border border-hairline bg-canvas">
+              <div class="flex gap-1">
+                <input
+                  v-model="qrDarkColor"
+                  type="color"
+                  class="h-10 w-full rounded-md border border-hairline bg-canvas"
+                >
+                <button
+                  v-if="eyeDropperSupported"
+                  type="button"
+                  class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-hairline bg-canvas text-steel transition-colors hover:bg-surface hover:text-ink"
+                  title="Снять цвет с экрана"
+                  @click="pickColor('dark')"
+                >
+                  <Icon name="lucide:pipette" class="h-4 w-4" />
+                </button>
+              </div>
             </label>
             <label class="block">
               <span class="mb-1 block text-body-sm-md text-charcoal">Фон QR</span>
-              <input v-model="qrLightColor" type="color" class="h-10 w-full rounded-md border border-hairline bg-canvas">
+              <div class="flex gap-1">
+                <input
+                  v-model="qrLightColor"
+                  type="color"
+                  :disabled="qrLightTransparent"
+                  class="h-10 w-full rounded-md border border-hairline bg-canvas disabled:opacity-40"
+                >
+                <button
+                  v-if="eyeDropperSupported"
+                  type="button"
+                  :disabled="qrLightTransparent"
+                  class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-hairline bg-canvas text-steel transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-canvas disabled:hover:text-steel"
+                  title="Снять цвет с экрана"
+                  @click="pickColor('light')"
+                >
+                  <Icon name="lucide:pipette" class="h-4 w-4" />
+                </button>
+              </div>
             </label>
           </div>
+          <p v-if="!eyeDropperSupported" class="text-caption text-steel">
+            «Пипетка» для снятия цвета прямо с экрана работает в Chrome и Edge. В Firefox / Safari
+            доступен только обычный цветовой пикер.
+          </p>
+          <label class="flex cursor-pointer items-center gap-2">
+            <input
+              v-model="qrLightTransparent"
+              type="checkbox"
+              class="h-4 w-4 rounded border-hairline text-primary focus:ring-primary/30"
+            >
+            <span class="text-body-sm text-ink">Прозрачный фон QR</span>
+            <span class="text-caption text-steel">
+              Подложка не печатается — модули QR ложатся прямо на фон стикера.
+            </span>
+          </label>
         </section>
 
         <div class="flex justify-end gap-sm border-t border-hairline pt-md">
-          <UiButton variant="secondary" to="/dashboard/print/new" :disabled="saving">Отмена</UiButton>
+          <UiButton
+            variant="secondary"
+            to="/dashboard/print?tab=templates"
+            :disabled="saving"
+          >
+            Отмена
+          </UiButton>
           <UiButton variant="primary" :loading="saving" :disabled="!canSave" @click="save">
             <Icon name="lucide:save" class="h-4 w-4" />
-            Сохранить
+            {{ isEdit ? 'Сохранить изменения' : 'Сохранить шаблон' }}
           </UiButton>
         </div>
       </aside>

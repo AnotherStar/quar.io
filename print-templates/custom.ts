@@ -22,6 +22,7 @@ export interface CustomPrintTemplateRecord {
   qrSizeMm: number
   qrDarkColor: string
   qrLightColor: string
+  qrLightTransparent?: boolean
 }
 
 export function customTemplateCode(id: string) {
@@ -56,7 +57,8 @@ export function customPrintTemplate(record: CustomPrintTemplateRecord): PrintTem
         qrYmm: record.qrYmm,
         qrSizeMm: record.qrSizeMm,
         qrDarkColor: record.qrDarkColor,
-        qrLightColor: record.qrLightColor
+        qrLightColor: record.qrLightColor,
+        qrLightTransparent: record.qrLightTransparent ?? false
       }
     },
 
@@ -99,7 +101,8 @@ async function buildCustomDoc(record: CustomPrintTemplateRecord, ctx: PrintRende
       sizeMm: record.qrSizeMm,
       value: item.url,
       dark,
-      light
+      light,
+      lightTransparent: record.qrLightTransparent ?? false
     })
   }
 

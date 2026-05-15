@@ -39,6 +39,10 @@ const planBadgeVariant = (code: string) => {
           <Icon name="lucide:bot" class="h-4 w-4" />
           AI-настройки
         </UiButton>
+        <UiButton to="/dashboard/admin/print-templates" variant="secondary" size="sm">
+          <Icon name="lucide:layout-template" class="h-4 w-4" />
+          Шаблоны стикеров
+        </UiButton>
         <UiButton to="/dashboard/admin/ui" variant="secondary" size="sm">
           <Icon name="lucide:palette" class="h-4 w-4" />
           Интерфейс

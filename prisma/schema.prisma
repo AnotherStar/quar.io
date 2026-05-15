@@ -438,6 +438,14 @@ model PrintTemplateDesign {
   qrSizeMm    Float
   qrDarkColor String   @default("#000000")
   qrLightColor String  @default("#ffffff")
+  // Если true, светлая подложка QR не рисуется — модули кладутся поверх фона
+  // как есть. Удобно для декоративных стикеров, где фон уже однотонный в зоне
+  // QR. Совместимость сканирования при этом — на ответственности дизайнера.
+  qrLightTransparent Boolean @default(false)
+
+  // Публичный шаблон доступен всем тенантам в каталоге. Переключается только
+  // глобальным админом через /api/admin/print-templates/[id].
+  isPublic    Boolean  @default(false)
 
   archivedAt  DateTime?
   createdAt   DateTime @default(now())
@@ -445,6 +453,7 @@ model PrintTemplateDesign {
 
   @@index([tenantId, createdAt])
   @@index([tenantId, archivedAt])
+  @@index([isPublic, archivedAt])
 }
 
 // Immutable snapshot. Created on publish or explicit "save version".

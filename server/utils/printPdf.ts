@@ -30,7 +30,7 @@ export interface PrintPage {
 type PageOp =
   | { kind: 'rect'; xMm: number; yMm: number; wMm: number; hMm: number; fill: [number, number, number] }
   | { kind: 'text'; xMm: number; yMm: number; text: string; sizePt: number; bold?: boolean; align?: 'left' | 'center' | 'right'; color?: [number, number, number] }
-  | { kind: 'qr'; xMm: number; yMm: number; sizeMm: number; value: string; dark?: [number, number, number]; light?: [number, number, number] }
+  | { kind: 'qr'; xMm: number; yMm: number; sizeMm: number; value: string; dark?: [number, number, number]; light?: [number, number, number]; lightTransparent?: boolean }
   | { kind: 'image'; xMm: number; yMm: number; wMm: number; hMm: number; imageId: number }
 
 export interface PdfDoc {
@@ -64,8 +64,8 @@ export function drawText(page: PrintPage, opts: { x: number; y: number; text: st
   })
 }
 
-export function drawQr(page: PrintPage, opts: { x: number; y: number; sizeMm: number; value: string; dark?: [number, number, number]; light?: [number, number, number] }) {
-  page.ops.push({ kind: 'qr', xMm: opts.x, yMm: opts.y, sizeMm: opts.sizeMm, value: opts.value, dark: opts.dark, light: opts.light })
+export function drawQr(page: PrintPage, opts: { x: number; y: number; sizeMm: number; value: string; dark?: [number, number, number]; light?: [number, number, number]; lightTransparent?: boolean }) {
+  page.ops.push({ kind: 'qr', xMm: opts.x, yMm: opts.y, sizeMm: opts.sizeMm, value: opts.value, dark: opts.dark, light: opts.light, lightTransparent: opts.lightTransparent })
 }
 
 export function drawImage(page: PrintPage, opts: { imageId: number; x: number; y: number; wMm: number; hMm: number }) {
@@ -99,7 +99,7 @@ export async function renderPagePng(
       ctx.fillStyle = rgbCss(op.fill)
       ctx.fillRect(x(op.xMm), y(op.yMm), x(op.wMm), y(op.hMm))
     } else if (op.kind === 'qr') {
-      drawQrCanvas(ctx, op.value, x(op.xMm), y(op.yMm), x(op.sizeMm), op.dark, op.light)
+      drawQrCanvas(ctx, op.value, x(op.xMm), y(op.yMm), x(op.sizeMm), op.dark, op.light, op.lightTransparent)
     } else if (op.kind === 'image') {
       const image = doc.images[op.imageId]
       if (!image) continue
@@ -226,7 +226,7 @@ function renderPageOps(page: PrintPage, widthPt: number, heightPt: number): stri
       lines.push(`${num(xPt)} ${num(yPt + op.sizePt * 0.8)} Td (${escapePdfText(op.text)}) Tj`)
       lines.push('ET')
     } else if (op.kind === 'qr') {
-      drawQrMatrix(lines, op.value, op.xMm * MM_TO_PT, pdfY(op.yMm + op.sizeMm), op.sizeMm * MM_TO_PT, op.dark, op.light)
+      drawQrMatrix(lines, op.value, op.xMm * MM_TO_PT, pdfY(op.yMm + op.sizeMm), op.sizeMm * MM_TO_PT, op.dark, op.light, op.lightTransparent)
     } else if (op.kind === 'image') {
       const x = op.xMm * MM_TO_PT
       const wPt = op.wMm * MM_TO_PT
@@ -252,7 +252,8 @@ function drawQrMatrix(
   yBottom: number,
   sizePt: number,
   dark: [number, number, number] = [0, 0, 0],
-  light: [number, number, number] = [1, 1, 1]
+  light: [number, number, number] = [1, 1, 1],
+  lightTransparent = false
 ) {
   const QUIET = 2
   const qr = QRCode.create(value, { errorCorrectionLevel: 'M' })
@@ -260,8 +261,14 @@ function drawQrMatrix(
   const data = qr.modules.data
   const unit = sizePt / (matrixSize + QUIET * 2)
 
-  lines.push(`${num(light[0])} ${num(light[1])} ${num(light[2])} rg`)
-  lines.push(`${num(xLeft)} ${num(yBottom)} ${num(sizePt)} ${num(sizePt)} re f`)
+  // Подложку рисуем только если она не прозрачная. В PDF не существует
+  // alpha-канала в простом rg-операторе — единственный способ «не закрасить
+  // фон» это пропустить заливку, чтобы то, что нарисовано ниже (фон стикера),
+  // осталось видимым в зоне QR.
+  if (!lightTransparent) {
+    lines.push(`${num(light[0])} ${num(light[1])} ${num(light[2])} rg`)
+    lines.push(`${num(xLeft)} ${num(yBottom)} ${num(sizePt)} ${num(sizePt)} re f`)
+  }
   lines.push(`${num(dark[0])} ${num(dark[1])} ${num(dark[2])} rg`)
 
   for (let row = 0; row < matrixSize; row += 1) {
@@ -281,7 +288,8 @@ function drawQrCanvas(
   yTop: number,
   size: number,
   dark: [number, number, number] = [0, 0, 0],
-  light: [number, number, number] = [1, 1, 1]
+  light: [number, number, number] = [1, 1, 1],
+  lightTransparent = false
 ) {
   const QUIET = 2
   const qr = QRCode.create(value, { errorCorrectionLevel: 'M' })
@@ -289,8 +297,10 @@ function drawQrCanvas(
   const data = qr.modules.data
   const unit = size / (matrixSize + QUIET * 2)
 
-  ctx.fillStyle = rgbCss(light)
-  ctx.fillRect(xLeft, yTop, size, size)
+  if (!lightTransparent) {
+    ctx.fillStyle = rgbCss(light)
+    ctx.fillRect(xLeft, yTop, size, size)
+  }
   ctx.fillStyle = rgbCss(dark)
 
   for (let row = 0; row < matrixSize; row += 1) {
